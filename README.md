@@ -1,1 +1,4 @@
 # DirectX
+objRenderer reads and parses a single 3D object's description from a Wavefront .obj file and renders the object. This is a C++ Windows Desktop application using the Windows (Win32) API and the DirectX API for rendering.
+
+Author: This program, except for its objReader function that reads and parses a single 3D object's description from a Wavefront .obj file, is based on "DirectX 11 Win32 Desktop: Direct3D: Moving to 3D: Lesson 3: Simple Modeling" and earlier lessons by Chris Hanson (https://DirectXTutorial.com). The objReader function, and any and all deficiencies of this program, are soley the creation and responsibility of Robert John Tortorelli.
