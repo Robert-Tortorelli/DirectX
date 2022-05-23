@@ -6,6 +6,8 @@
 
 // Global Declarations: Start
 
+#define _CRT_SECURE_NO_WARNINGS
+
 using namespace std;
 
 // Standard Encapsulated Data and Functions for Manipulating String Data.
