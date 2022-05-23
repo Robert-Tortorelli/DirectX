@@ -1226,3 +1226,13 @@ void CleanD3D(void)
 
 	// End 2. Close Direct3D and release its memory.
 }
+
+// processString function: Definition
+//   This function is only included as a test of the CodeQL workflow on GitHub.
+void processString(const char* input)
+{
+	char* buffer = (char*)malloc(strlen(input));
+
+	strcpy(buffer, input);                                  // This statement intentionally contains a security issue to test that the GitHub CodeQL workflow is working and produces the aforementioned security alert.
+
+}
