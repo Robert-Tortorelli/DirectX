@@ -136,9 +136,9 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Text.obj">
+    <None Include="Text.obj">
       <FileType>Document</FileType>
-    </Text>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

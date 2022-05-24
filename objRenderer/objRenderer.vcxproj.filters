@@ -23,6 +23,6 @@
     <FxCompile Include="shaders.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Text.obj" />
+    <None Include="Text.obj" />
   </ItemGroup>
 </Project>
