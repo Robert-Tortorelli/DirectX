@@ -1,5 +1,5 @@
 ﻿// objRenderer
-// Version 3.0
+// Version 3.1
 // 
 // README
 // This project consists of the program objRenderer, which parses a single 3D object's description from a Wavefront .obj file and renders the object.
