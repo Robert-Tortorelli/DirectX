@@ -5,7 +5,7 @@
 // This project consists of the program objRenderer, which parses a single 3D object's description from a Wavefront .obj file and renders the object.
 // This is a C++ Windows Desktop application using the Windows (Win32) API and the DirectX 11 API.
 // Authorship: This program, except for the objReader function that parses the Wavefront.obj file, is based on "DirectX 11 Win32 Desktop: Direct3D: Moving to 3D: Lesson 3: Simple Modeling" and earlier lessons by Chris Hanson(https ://DirectXTutorial.com).
-// All defects in this program are soley the responsibility of Robert John Tortorelli.
+// All defects in this program are solely the responsibility of Robert John Tortorelli.
 
 // Global Declarations: Start
 
@@ -994,7 +994,7 @@ void objReader(void)
 //
 //     2. Clear the render target, in this case one back buffer texture interface, and the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
 //
-//     3. Specify the vertex buffers, the index buffer, and the primitve type used when drawing.
+//     3. Specify the vertex buffers, the index buffer, and the primitive type used when drawing.
 //
 //     4. Render the object.
 void RenderFrame(void)
@@ -1123,7 +1123,7 @@ void RenderFrame(void)
 	// End: 2. Clear the render target, in this case one back buffer texture interface, and the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
 
 	// ***
-	// 3. Specify the vertex buffers, the index buffer, and the primitve type used when drawing.
+	// 3. Specify the vertex buffers, the index buffer, and the primitive type used when drawing.
 	//    Specify the vertex buffers to draw.
 	//      This program uses only one vertex buffer.
 	//    Specify the index buffer to use when drawing.
@@ -1155,7 +1155,7 @@ void RenderFrame(void)
 	//   Set information about the primitive type, and data order that describes input data for the input-assembler stage of the graphics pipeline.
 	devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // A value of the  D3D11_PRIMITIVE_TOPOLOGY enumerated type, i.e., D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST: Interpret the vertex data as a list of triangles.
 
-	// End: 3. Specify the vertex buffers, the index buffer, and the primitve type used when drawing..
+	// End: 3. Specify the vertex buffers, the index buffer, and the primitive type used when drawing..
 
 	// ***
 	// 4. Render the object.
