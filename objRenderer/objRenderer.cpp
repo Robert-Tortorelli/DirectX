@@ -1008,12 +1008,12 @@ void RenderFrame(void)
 	//		The world transform converts model vertices to world coordinates.
 	//		In other words, it places a model in a world at an exact point defined by coordinates, and involves:
 	//		1. Translation (movement)
-	//		   It's defined by a single matrix (matTranslate), using a single DirectX function.
+	//		   It's defined by a single matrix (matTranslate), using a single DirectX function (XMMatrixTranslation).
 	//		2. Rotation
-	//		   It's defined by one to three matrices (matRotateX, matRotateY and / or matRotateZ), using one to three DirectX functions for x, y, and / or z axis rotation.
+	//		   It's defined by one to three matrices (matRotateX, matRotateY and / or matRotateZ), using one to three DirectX functions for x, y, and / or z axis rotation (XMMatrixRotationX, XMMatrixRotationY, XMMatrixRotationZ).
 	//		   In this program, only rotation is performed.
 	//		3. Scaling
-	//		   It's defined by a single matrix (matScale), using a single DirectX function.
+	//		   It's defined by a single matrix (matScale), using a single DirectX function (XMMatrixScaling).
 	//		World Matrix (matWorld) Examples:
 	//		  matWorld = matScale x matRotateX
 	//		  matWorld = matRotateX x matRotateY x matRotateZ x matScale x matTranslate (translate last, which is most commonly used)
@@ -1028,7 +1028,7 @@ void RenderFrame(void)
 	//		3. Orientation of the camera
 	//		   This is the direction of "up" for the camera; i.e., the direction pointing to the top of the screen. Usually, game programmers use the y-axis as the "up" direction.
 	//		   To orient the camera this way, specify (0, 1, 0), or 1 on the y axis and 0 on the x and z axes; i.e., (0.0f, 1.0f, 0.0f).
-	//		4. It's defined by a single matrix (matView), using a single DirectX function.
+	//		4. It's defined by a single matrix (matView), using a single DirectX function (XMMatrixLookAtLH).
 	//
 	// iii. Define the projection matrix, matProjection.
 	//		What is the purpose of the projection transform?
@@ -1039,12 +1039,14 @@ void RenderFrame(void)
 	//		2. View-Plane Clipping
 	//		   View-plane clipping omits the parts of an image that are unnecessary to draw; e.g., parts too far to see because of fog or the horizon.
 	//		   Direct3D asks for a near view-plane and a far view-plane, and only draws the graphics that are between them; i.e., in the viewing frustum.
-	//		3. It's defined by a single matrix (matProjection), using a single DirectX function.
+	//		3. It's defined by a single matrix (matProjection), using a single DirectX function (XMMatrixPerspectiveFovLH).
 	//		   However, it's probably the most complex type of transformation, and the underlying math performed by the DirectX function is complicated.
 	//
 	//  iv.	Define the final transform matrix, matFinal.
-	//		Multiply each vertex by the final transform matrix (matFinal): matFinal = matWorld x matView x matProjection
-	//		For efficiency, this multiplication is performed by the GPU's vertex shader.
+	//		matFinal = matWorld x matView x matProjection
+	//		Each vertex is multiplied by the final transform matrix.
+	//		The final transform matrix is a C++ structure matching the constant buffer in HLSL. It contains data that will be copied to the HLSL constant buffer variable matFinal (they are, but do not have to be, named the same).
+	//		Using the HLSL constant buffer is efficient, as multiplication is performed by the GPU's vertex shader.
 	// ***
 
 	// Declare all transformation matrices.
@@ -1091,7 +1093,6 @@ void RenderFrame(void)
 		FarZ);												// Distance to the far clipping plane. Must be greater than zero.
 
 	// Define the final transform matrix, matFinal.
-	//   The final transform matrix is a C++ structure matching the constant buffer in HLSL. It contains data that will be copied to the HLSL constant buffer variable matFinal (they are, but do not have to be, named the same).
 	matFinal = matWorld * matView * matProjection;
 
 	// End: 1. Define the final transform matrix, matFinal, which contains all the information necessary to transform each vertex of the object being rendered.
