@@ -1163,6 +1163,10 @@ void RenderFrame(void)
 	//   i.	Copy the final transform matrix to the constant buffer defined in the GPU's vertex shader.
 	//  ii. Draw the object's primitives to the back buffer.
 	// iii. Switch the back buffer and the front buffer to present the rendered image to the user.
+	//
+	//    Each UpdateSubresource() and DrawIndexed() pair draws one instance of the object.
+	//    A second instance of the same object is also drawn to the scene.
+	//
 	// ***
 
 	// ID3D11DeviceContext::UpdateSubresource member function:
@@ -1177,6 +1181,32 @@ void RenderFrame(void)
 
 	// ID3D11DeviceContext::DrawIndexed member function:
 	//   Draw indexed, non-instanced primitives.
+	devcon->DrawIndexed(In * 3,								// Number of indices to draw. Three vertex indices (each pointing to a vertex in OurVertices) describe each triangle, and "In" is the number of triangles comprising the object. Therefore In * 3.
+		0,													// The location of the first index read by the GPU from the index buffer.
+		0);													// A value added to each index before reading a vertex from the vertex buffer.
+	
+	// Draw a second instance of the same object to the scene, using different world coordinates that offset it from the first instance of the object.
+	// 
+	// Update the final transform matrix, matFinal, using different world coordinates that offset the second instance of the object from the first instance of the object.
+	// Translate the second instance of the object in a positive direction along the y-axis. This is the first use of translation in this program.
+	XMMATRIX matTranslateY = XMMatrixTranslation(0.0f, 3.0f, 0.0f);
+	// Rotate the second instance of the object counterclockwise.
+	static float Angle2 = 0.0f; Angle2 -= 0.001f;
+	matRotateY = XMMatrixRotationY(Angle2);
+	// Update the world matrix, matWorld, by multiplying the new translation matrix by the updated rotation matrix.
+	matWorld = matTranslateY * matRotateY;
+	// Update the final transform matrix, matFinal, by multiplying the new world matrix by the original view and projection matrices.
+	matFinal = matWorld * matView * matProjection;
+	//
+	// Update the constant buffer with the updated final transform matrix.
+	devcon->UpdateSubresource(pCBuffer,						// A pointer to the destination resource, in this case the constant buffer interface.
+		0,													// A zero-based index that identifies the destination subresource.
+		0,													// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
+		&matFinal,											// &matFinal is the address of matFinal, and therefore a pointer to the source data in memory, in this case the final transform matrix.
+		0,													// The size of one row of the source data.
+		0);													// The size of one depth slice of source data.
+	//
+	// Draw the second instance of the object using the updated constant buffer.
 	devcon->DrawIndexed(In * 3,								// Number of indices to draw. Three vertex indices (each pointing to a vertex in OurVertices) describe each triangle, and "In" is the number of triangles comprising the object. Therefore In * 3.
 		0,													// The location of the first index read by the GPU from the index buffer.
 		0);													// A value added to each index before reading a vertex from the vertex buffer.
