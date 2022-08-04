@@ -1183,14 +1183,12 @@ void RenderFrame(void)
 	//    Each UpdateSubresource() and DrawIndexed() pair draws one instance of the object.
 	//    A second instance of the same object is also drawn to the scene.
 	//
-	//    For a single triangle, the vertex shader is called by the graphics driver three times, once per vertex.
-	//    Based on the output clip positions, the rasterizer identifies the pixels covered by the triangle, perspectively interpolates the vertex attributes at those pixels, and then calls the pixel shader for each pixel.
-	//
 	// ***
 
 	// ID3D11DeviceContext::UpdateSubresource member function:
 	//   The CPU copies data from memory		   to a subresource created in non-mappable memory.
-	//   The CPU copies the final transform matrix to the constant buffer defined in the GPU's vertex shader.
+	//   Specifically:
+	//   The CPU copies the final transform matrix to the constant buffer used by the GPU's vertex shader.
 	devcon->UpdateSubresource(pCBuffer,						// A pointer to the destination resource, in this case the constant buffer interface.
 		0,													// A zero-based index that identifies the destination subresource.
 		0,													// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
