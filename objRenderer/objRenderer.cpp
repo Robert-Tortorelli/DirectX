@@ -1,13 +1,18 @@
 ﻿// objRenderer
 // Version 3.1
-// 
-// README
+//
+// Description
 // This project consists of the program objRenderer, which parses a single 3D object's description from a Wavefront .obj file and renders the object.
 // This is a C++ Windows Desktop application using the Windows (Win32) API and the DirectX 11 API.
-// Authorship: This program, except for the objReader function that parses the Wavefront.obj file, is based on "DirectX 11 Win32 Desktop: Direct3D: Moving to 3D: Lesson 3: Simple Modeling" and earlier lessons by Chris Hanson(https ://DirectXTutorial.com).
+//
+// Authorship
+// This program, except for the objReader function that parses the Wavefront.obj file, is based on "DirectX 11 Win32 Desktop: Direct3D: Moving to 3D: Lesson 3: Simple Modeling" and earlier lessons by Chris Hanson (https://DirectXTutorial.com).
 // All defects in this program are solely the responsibility of Robert John Tortorelli.
 
 // Global Declarations: Start
+
+// All variables and functions coded in HLSL (.hlsl files) are stored in GPU memory.
+// All variables and functions coded in C++ (.cpp files) are stored in CPU memory.
 
 using namespace std;
 
@@ -519,14 +524,17 @@ void InitPipeline(void)
 	// 1. Create the shader objects and set them to the associated shader stage of the graphics pipeline.
 	//    Create the vertex shader object and set it to the vertex shader stage of the graphics pipeline.
 	//    Create the pixel  shader object and set it to the pixel  shader stage of the graphics pipeline.
-	//    Shaders are small, low-level programs that are compiled and run at specific stages in the graphics pipeline.
+	//    Shader functions are small, low-level, programs that are compiled by the CPU and then run by the GPU at specific stages in the graphics pipeline. They automatically receive data from shader functions in previous stages, and return data to shader functions in successive stages, of the graphics pipeline.
 	//    Their specialty is very fast floating-point mathematical operations. The most common shader programs are:
 	//    Vertex shader:
-	//      Executed for each vertex in a scene.
-	//      This shader operates on vertex buffer elements provided to it by the calling program, and minimally results in a 4-component position vector that will be rasterized into a pixel position.
+	//      This shader is executed for each vertex in the scene.
+	//      This shader operates on vertex buffer elements provided to it by the calling program (this program) and at a minimum returns a 4-component position vector that will be rasterized into a pixel position.
+	//      Optionally, this shader can output texture coordinates, vertex color, vertex lighting, fog factors, and other characteristics of a single vertex.
 	//    Pixel shader:
-	//      Executed for each pixel in a render target.
-	//      This shader receives rasterized coordinates from previous shader stages (in the simplest pipelines, this would be the vertex shader) and returns a color (or other 4-component value) for that pixel position, which is then written into a render target.
+	//      This shader is also known as a fragment shader.
+	//      This shader is executed for each pixel (fragment) in the render target.
+	//      This shader receives rasterized coordinates from previous shader stages (in the simplest pipelines, this would be the vertex shader) and at a minimum returns a color (or other 4-component value) for that pixel position, which is then written into a render target.
+	//      Optionally, this shader can output the color, brightness, contrast, and other characteristics of a single pixel.
 	// ***
 
 	ID3DBlob *VS, *PS;										// VS (Vertex Shader) and PS (Pixel Shader) are pointers to the ID3DBlob interface used to return Direct3D data of arbitrary length.
@@ -552,14 +560,14 @@ void InitPipeline(void)
 		0,													// A combination of shader compile options that are combined by using a bitwise OR operation. The resulting value specifies how the compiler compiles the HLSL code.
 		0,													// A combination of effect compile options that are combined by using a bitwise OR operation. The resulting value specifies how the compiler compiles the effect. When you compile a shader and not an effect file, D3DCompileFromFile ignores this parameter (set it to zero).
 		&PS,												// &PS is the address of a pointer, PS, to the interface that you can use to access the compiled code.
-		0);													// An optional pointer to a variable that receives a pointer to the ID3DBlob interface that you can use to access compiler error messages
+		0);													// An optional pointer to a variable that receives a pointer to the ID3DBlob interface that you can use to access compiler error messages.
 
 	// ID3D11Device::CreateVertexShader member function:
 	//   Create the vertex shader object from a compiled shader.
 	dev->CreateVertexShader(VS->GetBufferPointer(),			// A pointer to the compiled vertex shader.
 		VS->GetBufferSize(),								// Size of the compiled vertex shader.
 		NULL,												// An optional pointer to a class linkage ID3D11ClassLinkage interface.
-		&pVS);												// &pVS is the address of a pointer, pVS, to a vertex shader ID3D11VertexShader interface.
+		&pVS);												// &pVS is the address of a pointer, pVS, to the vertex shader ID3D11VertexShader interface.
 
 	// ID3D11DeviceContext::VSSetShader member function:
 	//   Set the vertex shader object to the vertex shader stage of the graphics pipeline.
@@ -572,7 +580,7 @@ void InitPipeline(void)
 	dev->CreatePixelShader(PS->GetBufferPointer(),			// A pointer to the compiled pixel shader.
 		PS->GetBufferSize(),								// Size of the compiled pixel shader.
 		NULL,												// An optional pointer to a class linkage ID3D11ClassLinkage interface. 
-		&pPS);												// &pPS is the address of a pointer, pPS, to a pixel shader ID3D11PixelShader interface.
+		&pPS);												// &pPS is the address of a pointer, pPS, to the pixel shader ID3D11PixelShader interface.
 
 	// ID3D11DeviceContext::PSSetShader member function:
 	//   Set the pixel shader object to the pixel shader stage of the graphics pipeline.
@@ -626,14 +634,22 @@ void InitPipeline(void)
 
 	// ***
 	// 3. Create the constant buffer object and set it to the vertex shader stage of the graphics pipeline.
-	//    Constant buffer and texture buffer shader constants:
-	//      In this program, the final transform matrix, matFinal, a C++ structure matching the constant buffer defined in HLSL (and optionally named the same in C++ and HLSL), is copied to the constant buffer pointed to by pCBuffer using the ID3D11DeviceContext::UpdateSubresource member function.
+	//      Constant buffers are optimized for constant variable usage, which is characterized by lower-latency access and more frequent update from the CPU.
+	//      Constant buffers are used to store data that is shared by all shaders in the graphics pipeline.
+	//      The constant buffer resource must be a multiple of 16 bytes, because constants are sent to the GPU in packs of 16 bytes, regardless of the size of the C++ structure that matches it (in this program this C++ structure is matFinal, which as it happens is 4 x 16 = 64 bytes).
+	//      A constant buffer can be a structure containing multiple constants. The order and size of these structure's members must match in both C++ and HLSL.
+	//      Any one constant (structure member) cannot be split between two 16-byte areas of memory. Therefore, if the first constant in the structure is less than 16 bytes then the second constant will be aligned on the next 16-byte boundary. When it occurs, this automatic alignment must be accounted for in the C++ constant buffer structure in C++, otherwise it will not match the HLSL constant buffer structure, even if their code looks identical.
+	//
+	//      In this program, the final transform matrix, matFinal, is a C++ structure matching the constant buffer, which is a HLSL structure. They are optionally named the same in C++ and HLSL.
+	//      matFinal is copied to the constant buffer pointed to by pCBuffer using the ID3D11DeviceContext::UpdateSubresource member function.
 	//      Copying to the constant buffer always provides		  position information for the object rendered, as it does in this program.
 	//      Copying to the constant buffer may optionally provide scene    information for the object rendered, such as lighting information, timing information, among other details.
+	//
 	//      Multiple constant buffers: Rendering multiple object instances per frame using multiple constant buffers
 	//        If you are rendering 1,000 instances of an object each frame, position information must be sent 1,000 times, while scene information need only be sent once (you could also send scene information 1,000 times, but that would be inefficient).
 	//        For how to do this efficiently, see Rendering multiple object instances per frame using multiple constant buffers.docx
 	//
+	//    Constant buffer and texture buffer shader constants:
 	//      In Shader Model 4 (used in this program), shader constants are stored in one or more buffer resources in memory. They can be organized into two types of buffer: constant buffers (cbuffer) and texture buffers (tbuffer).
 	//
 	//      Constant buffers are optimized for constant-variable usage, which is characterized by lower-latency access and more frequent update from the CPU.
@@ -658,7 +674,7 @@ void InitPipeline(void)
 	ZeroMemory(&bd, sizeof(D3D11_BUFFER_DESC));				// ZeroMemory macro: Fills a block of memory with zeros.
 
 	// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-	bd.ByteWidth = 64;										// Assigned a value specifying the size of the buffer in bytes. The constant buffer resource must be a multiple of 16 bytes (because constants are sent to the GPU in packs of 16 bytes, regardless of the size of the C++ structure that matches it (in this program it's matFinal, which as it happens is 4 x 16 = 64 bytes).
+	bd.ByteWidth = 64;										// Assigned a value specifying the size of the buffer in bytes. The constant buffer resource must be a multiple of 16 bytes, because constants are sent to the GPU in packs of 16 bytes, regardless of the size of the C++ structure that matches it.
 	bd.Usage = D3D11_USAGE_DEFAULT;							// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor. A value of the D3D11_USAGE enumerated type,		i.e., D3D11_USAGE_DEFAULT:		  A resource that requires read and write access by the GPU. This is likely to be the most common usage choice.
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;				// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,	i.e., D3D11_BIND_CONSTANT_BUFFER: Bind a buffer as a constant buffer to a shader stage of the graphics pipeline; this flag may NOT be combined with any other bind flag.
 
@@ -1166,6 +1182,9 @@ void RenderFrame(void)
 	//
 	//    Each UpdateSubresource() and DrawIndexed() pair draws one instance of the object.
 	//    A second instance of the same object is also drawn to the scene.
+	//
+	//    For a single triangle, the vertex shader is called by the graphics driver three times, once per vertex.
+	//    Based on the output clip positions, the rasterizer identifies the pixels covered by the triangle, perspectively interpolates the vertex attributes at those pixels, and then calls the pixel shader for each pixel.
 	//
 	// ***
 
