@@ -644,10 +644,7 @@ void InitPipeline(void)
 	//      matFinal is copied to the constant buffer pointed to by pCBuffer using the ID3D11DeviceContext::UpdateSubresource member function.
 	//      Copying to the constant buffer always provides		  position information for the object rendered, as it does in this program.
 	//      Copying to the constant buffer may optionally provide scene    information for the object rendered, such as lighting information, timing information, among other details.
-	//
-	//      Multiple constant buffers: Rendering multiple object instances per frame using multiple constant buffers
-	//        If you are rendering 1,000 instances of an object each frame, position information must be sent 1,000 times, while scene information need only be sent once (you could also send scene information 1,000 times, but that would be inefficient).
-	//        For how to do this efficiently, see Rendering multiple object instances per frame using multiple constant buffers.docx
+	//      A constant buffer's information should be sent to the GPU only as needed, matching its frequency of update. For example, if position information and scene information are updated at different frequencies (at different times), then create two constant buffers, one for position information and one for scene information.
 	//
 	//    Constant buffer and texture buffer shader constants:
 	//      In Shader Model 4 (used in this program), shader constants are stored in one or more buffer resources in memory. They can be organized into two types of buffer: constant buffers (cbuffer) and texture buffers (tbuffer).
