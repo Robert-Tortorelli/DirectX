@@ -39,13 +39,13 @@ struct VERTEX
 // "Vn" is computed at run time to be the number of vertices comprising an object.
 // After "Vn" is computed, allocate OurVertices as an array (OurVertices[VertexNo]) of type VERTEX using "OurVertices = new VERTEX[Vn]".
 int Vn = 0;													// The number of vertices comprising the object.
-VERTEX* OurVertices;										// The vertex buffer, an array of VERTEX structures, with each structure representing the vertex elements of one vertex of an object.
+VERTEX *OurVertices;										// The vertex buffer, a pointer to the first element in the array of VERTEX structures, with each structure representing the vertex elements of one vertex of an object.
 
 // Declare the index buffer.
 // "In" is computed at run time to be the number of triangle primitives comprising an object.
 // After "In" is computed, allocate OurIndices as an array (OurIndices[FaceElementNo]) of type DWORD using OurIndices = new DWORD[In * 3]. Three vertex indices (each pointing to a vertex in OurVertices) describe each triangle, and "In" is the number of triangles comprising the object. Therefore In * 3.
 int In = 0;													// The number of primitives comprising the object. In this program, they are triangle primitives.
-DWORD* OurIndices;											// The index buffer, an array of vertex indices of an object.
+DWORD *OurIndices;											// The index buffer, a pointer to the first element in the array of vertex indices of an object.
 
 // DirectX Declarations: Start
 
