@@ -18,11 +18,19 @@
     <ClCompile Include="objRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="objReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shaders.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Text.obj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="objReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
