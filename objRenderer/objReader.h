@@ -3,7 +3,7 @@
 //
 // Description
 // This header file declares external global variables that support Wavefront .obj file I/O via the objReader function.
-// Include it in all source files that reference these external global variables, and always in the objReader function source file.
+// Include it in all source files that reference these external global variables, and always in the objReader function source file that defines them.
 // Then define these external global variables, and optionally initialize them, in one and only one source file, in this case the objReader function source file.
 // An objReader function prototype is declared in any source file that calls the objReader function, but need not be declared in the objReader function itself. Therefore, an objReader function prototype is not included in this header file, because this header file is always included in the objReader function source file.
 
