@@ -7,7 +7,7 @@
 // Then define these external global variables, and optionally initialize them, in one and only one source file, in this case the objReader function source file.
 // An objReader function prototype is declared in any source file that calls the objReader function, but need not be declared in the objReader function itself. Therefore, an objReader function prototype is not included in this header file, because this header file is always included in the objReader function source file.
 
-// #pragma once is a non-standard but widely supported preprocessor directive designed to cause the current source file to be included only once in a single compilation. Thus, #pragma once serves the same purpose as include guards, but with several advantages, including: less code, avoidance of name clashes, and sometimes improvement in compilation speed. On the other hand, #pragma once is not necessarily available in all compilers and its implementation is tricky and might not always be reliable (Wikipedia).
+// Specify that the compiler include this header file only once, when compiling source code files.
 #pragma once												// Automatically included by Visual Studio 2022 when creating a header file.
 
 // Declare the VERTEX structure with a member list representing the vertex elements of one vertex of an object.
