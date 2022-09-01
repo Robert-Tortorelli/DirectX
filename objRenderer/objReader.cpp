@@ -5,8 +5,6 @@
 // This function reads and parses a single 3D object's descriptive information from a Wavefront .obj file and uses it to define the data structures needed to render the 3D object.
 // Read and store vertex information in OurVertices, and index information in OurIndices.
 
-using namespace std;
-
 // Standard Encapsulated Data and Functions for Manipulating String Data.
 #include <string>
 
@@ -27,6 +25,15 @@ int Vn = 0;
 VERTEX* OurVertices;
 int In = 0;
 DWORD* OurIndices;
+
+// Each of the following using declarations brings one identifier, referenced in this source file, into scope. These multiple individual using declarations are preferred to the single using directive using namespace std; as the latter brings everything in the std namespace into scope.
+// Using declarations must appear after their respective header file includes.
+using std::fill;
+using std::getline;
+using std::ifstream;
+using std::ios;
+using std::stof;
+using std::string;
 
 void objReader(void)
 {

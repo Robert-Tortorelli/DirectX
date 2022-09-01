@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="objRenderer.cpp">
+    <ClCompile Include="objReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="objReader.cpp">
+    <ClCompile Include="objRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

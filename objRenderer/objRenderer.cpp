@@ -16,8 +16,6 @@
 // All variables and functions coded in HLSL (.hlsl files) are stored in GPU memory.
 // All variables and functions coded in C++ (.cpp files) are stored in CPU memory.
 
-using namespace std;
-
 // Standard Encapsulated Data and Functions for Manipulating String Data.
 #include <string>
 
@@ -45,7 +43,9 @@ using namespace std;
 // DirectXMath header files.								// The DirectXMath API provides SIMD-friendly C++ types and functions for common linear algebra and graphics math operations common to DirectX programs.
 #include <DirectXMath.h>
 
-using namespace DirectX;									// This statement must appear after the DirectX header file includes.
+// Use this using directive to bring everything in the DirectX namespace into scope.
+// Using directives must appear after their respective header file includes.
+using namespace DirectX;
 
 // The #pragma directives offer machine-specific and operating system-specific features while retaining overall compatibility with the C and C++ languages.
 // Direct3D Library files.
