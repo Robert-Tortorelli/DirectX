@@ -16,31 +16,21 @@
 // All variables and functions coded in HLSL (.hlsl files) are stored in GPU memory.
 // All variables and functions coded in C++ (.cpp files) are stored in CPU memory.
 
-// Standard Encapsulated Data and Functions for Manipulating String Data.
-#include <string>
+// Windows API Header File.
+#include <windows.h>										// The Windows API (Win32 API) header file enables you to create 32-bit and 64-bit applications. It includes declarations for both Unicode and ANSI versions of the API. For more information, see Unicode in the Windows API.
 
-// Standard I/O (Console Screen and Keyboard).
-#include <iostream>											// Stream objects cin, cout, cerr, clog, etc.
-
-// File I/O.
-#include <fstream>											// Stream object member functions get, close, etc.
-
-// Windows Basic.
-#include <windows.h>
-
-// Wavefront .obj file I/O (objReader function).
+// Wavefront .obj file I/O (objReader function) Header File.
 #include "objReader.h"										// Declare external global variables in this header file, and include it in all source files that reference these external global variables.
 
 // ***
 // DirectX Declarations.
 // ***
 
-// Direct3D header files.
-#include <windowsx.h>										// This header is used by Windows Controls. A control is a UI element that displays content or enables interaction.
+// Direct3D Header Files.
 #include <d3d11.h>											// This header is used by Direct3D 11 Graphics.
 #include <d3dcompiler.h>									// Needed by D3DCompileFromFile, which compiles shaders.
 
-// DirectXMath header files.								// The DirectXMath API provides SIMD-friendly C++ types and functions for common linear algebra and graphics math operations common to DirectX programs.
+// DirectXMath Header File.									// The DirectXMath API provides SIMD-friendly C++ types and functions for common linear algebra and graphics math operations common to DirectX programs.
 #include <DirectXMath.h>
 
 // Use this using directive to bring everything in the DirectX namespace into scope.
@@ -161,7 +151,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 	//   Returns the HWND handle "hWnd" for the window.
 	hWnd = CreateWindowEx(NULL,								// NULL: Use all defaults for the extended window style of the window being created.
 						  L"WindowClass1",					// Name of the window class. The same name is assigned to wc.lpszClassName.
-						  L"Our First Direct3D Program",	// Title of the window.
+						  L"objRenderer",					// Title of the window.
 						  WS_OVERLAPPEDWINDOW,				// Window style. The same style is passed to AdjustWindowRectEx.
 						  900,								// x-position of the window's true top-left corner, in screen coordinates.
 						  900,								// y-position of the window's true top-left corner, in screen coordinates.
@@ -750,7 +740,7 @@ void InitGraphics(void)
 	// ***
 
 	// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-	bd.ByteWidth = sizeof(DWORD) * (In * 3);				// Assigned a value specifying the size of the buffer in bytes. The index buffer resource's size is the size of a DWORD structure * (In * 3). Three vertex indices (each pointing to a vertex in OurVertices) describe each triangle, and "In" is the number of triangles comprising the object. Therefore In * 3.
+	bd.ByteWidth = sizeof(DWORD) * (In * 3);				// Assigned a value specifying the size of the buffer in bytes. The index buffer resource's size is the size of a DWORD structure * (In * 3). Three vertex indices (each pointing to a vertex in the vertex buffer) describe each triangle, and "In" is the number of triangles comprising the object. Therefore In * 3.
 	bd.Usage = D3D11_USAGE_DYNAMIC;							// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	 A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;					// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_INDEX_BUFFER: Bind a buffer as an index buffer to the input-assembler stage of the graphics pipeline.
 	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;				// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	 The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
@@ -974,7 +964,7 @@ void RenderFrame(void)
 
 	// ID3D11DeviceContext::DrawIndexed member function:
 	//   Draw indexed, non-instanced primitives.
-	devcon->DrawIndexed(In * 3,								// Number of indices to draw. Three vertex indices (each pointing to a vertex in OurVertices) describe each triangle, and "In" is the number of triangles comprising the object. Therefore In * 3.
+	devcon->DrawIndexed(In * 3,								// Number of indices to draw. Three vertex indices (each pointing to a vertex in the vertex buffer) describe each triangle, and "In" is the number of triangles comprising the object. Therefore In * 3.
 		0,													// The location of the first index read by the GPU from the index buffer.
 		0);													// A value added to each index before reading a vertex from the vertex buffer.
 	
@@ -1000,7 +990,7 @@ void RenderFrame(void)
 		0);													// The size of one depth slice of source data.
 	//
 	// Draw the second instance of the object using the updated constant buffer.
-	devcon->DrawIndexed(In * 3,								// Number of indices to draw. Three vertex indices (each pointing to a vertex in OurVertices) describe each triangle, and "In" is the number of triangles comprising the object. Therefore In * 3.
+	devcon->DrawIndexed(In * 3,								// Number of indices to draw. Three vertex indices (each pointing to a vertex in the vertex buffer) describe each triangle, and "In" is the number of triangles comprising the object. Therefore In * 3.
 		0,													// The location of the first index read by the GPU from the index buffer.
 		0);													// A value added to each index before reading a vertex from the vertex buffer.
 
