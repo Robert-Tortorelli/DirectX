@@ -671,7 +671,7 @@ void InitPipeline(void)
 
 // InitGraphics function: Definition
 //   This function loads and initializes all graphics data.
-//     1. Call the objReader function, which reads and parses a single 3D object's descriptive information from a Wavefront .obj file and uses it to define the data structures needed to render the 3D object, i.e., OurVertices and OurIndices.
+//     1. Call the objReader function, which reads and parses a single 3D object's descriptive information from a Wavefront .obj file and uses it to define the variables needed to render the 3D object, i.e., OurVertices and OurIndices.
 //
 //     2. Create the structures used to define the vertex buffer and index buffer.
 //
@@ -681,12 +681,12 @@ void InitPipeline(void)
 void InitGraphics(void)
 {
 	// ***
-	// 1. Call the objReader function, which reads and parses a single 3D object's descriptive information from a Wavefront .obj file and uses it to define the data structures needed to render the 3D object, i.e., OurVertices and OurIndices.
+	// 1. Call the objReader function, which reads and parses a single 3D object's descriptive information from a Wavefront .obj file and uses it to define the variables needed to render the 3D object, i.e., OurVertices and OurIndices.
 	// ***
 
 	objReader();
 
-	// End: 1. Call the objReader function, which reads and parses a single 3D object's descriptive information from a Wavefront .obj file and uses it to define the data structures needed to render the 3D object, i.e., OurVertices and OurIndices.
+	// End: 1. Call the objReader function, which reads and parses a single 3D object's descriptive information from a Wavefront .obj file and uses it to define the variables needed to render the 3D object, i.e., OurVertices and OurIndices.
 
 	// ***
 	// 2. Create the structures used to define the vertex buffer and index buffer.
