@@ -15,26 +15,14 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="objReader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="objRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="objReader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <FxCompile Include="shaders.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Text.obj" />
-    <None Include="shaders.hlsl" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="Wood.png">
-      <Filter>Resource Files</Filter>
-    </Image>
+    <Object Include="Text.obj" />
   </ItemGroup>
 </Project>
