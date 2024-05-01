@@ -20,9 +20,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="shaders.hlsl" />
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="Text.obj" />
+    <None Include="shaders.hlsl" />
+    <None Include="Text.obj" />
   </ItemGroup>
 </Project>

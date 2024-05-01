@@ -22,10 +22,14 @@
     <ClCompile Include="objRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="shaders.hlsl" />
+    <None Include="shaders.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Object Include="Text.obj" />
+    <None Include="Text.obj">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
