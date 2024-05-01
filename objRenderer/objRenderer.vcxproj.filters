@@ -30,5 +30,11 @@
   <ItemGroup>
     <None Include="Text.obj" />
     <None Include="shaders.hlsl" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Wood.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
