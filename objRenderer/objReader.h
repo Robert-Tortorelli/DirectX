@@ -1,17 +1,15 @@
 // objReader Header File
-// Version 3.1
+// Version 3.2
 //
 // Description
-// Wavefront .obj file I/O Header File
-// Version 3.1
+// objReader Header File for Wavefront .obj file I/O.
 //
-// Description
 // This header file contains all global declarations, including external variables, functions, structures, and classes.
 // Include it in all source files that reference these global declarations.
 // The only variables declared here are external. The objReader function source file defines the external variables declared here.
 // Internal variables are declared in the source files that define them.
 //
-// Header files should not contain "using directives" (such as "using namespace std") or "using declarations" (such as "using std::cout").
+// Header files should not contain "using directives" (such as using namespace std;) or "using declarations" (such as using std::cout;).
 //
 // Authorship
 // Robert John Tortorelli
@@ -33,18 +31,19 @@
 #include <intsafe.h>										// Required for the DWORD data type. Note the main objRenderer program (with the WinMain function) includes the larger windows.h, containing IntSafe.h, instead.
 
 //***
+// Global Function Declarations.
+// Function prototypes for functions (e.g., objReader) called by programs (e.g., objRenderer) that include this header file. They are optional in the functions named here (e.g., objReader).
+//***
+int objReader(void);										// The objReader function parses a single 3D object's Wavefront .obj file and uses it to populate the external global variables OurVertices and OurIndices.
+
+// End: Global Function Declarations.
+
+//***
 // DirectX Global Declarations.
 //***
 
 // DirectXMath Header File.									// The DirectXMath API provides SIMD-friendly C++ types and functions for common linear algebra and graphics math operations common to DirectX programs.
-#include <directxmath.h>                                    // Used with the namespace DirectX.
-
-// Using Declarations and Directives.
-// Using declarations such as using std::string;   bring one identifier	 in the named namespace into scope.
-// Using directives	  such as using namespace std; bring all identifiers in the named namespace into scope.
-// Using declarations are preferred to using directives.
-// Using declarations and directives must appear after their respective header file includes.
-using namespace DirectX;									// The DirectXMath API is in the DirectX namespace.
+#include <directxmath.h>                                    // It is associated with the namespace DirectX.
 
 // End: DirectX Global Declarations.
 
@@ -57,10 +56,11 @@ using namespace DirectX;									// The DirectXMath API is in the DirectX namesp
 // Declare the VERTEX 'named structure' data type, a dynamic array of structures.
 // The input element description structure is used to define the input-layout object that describes the VERTEX structure.
 // If the VERTEX structure is changed then the input element description structure (defined in objRenderer.cpp) must be changed accordingly.
+// In this source code file fully qualified identifiers (e.g., DirectX::XMFLOAT3 instead of using namespace DirectX;) are used to define the VERTEX structure.
 struct VERTEX {												// Vertex attributes.
-	XMFLOAT3 GeometricVertex;								// Geometric vertex attribute:			.x, .y, .z	("v " element in the Wavefront .obj file)
-	XMFLOAT3 VertexNormalVector;							// Vertex normal vector attribute:		.x, .y, .z	("vn" element in the Wavefront .obj file)
-	XMFLOAT2 VertexTextureCoordinate;						// Vertex texture coordinate attribute:	.x, .y		("vt" element in the Wavefront .obj file)
+	DirectX::XMFLOAT3 GeometricVertex;						// Geometric vertex attribute:			.x, .y, .z	("v " element in the Wavefront .obj file)
+	DirectX::XMFLOAT3 VertexNormalVector;					// Vertex normal vector attribute:		.x, .y, .z	("vn" element in the Wavefront .obj file)
+	DirectX::XMFLOAT2 VertexTextureCoordinate;				// Vertex texture coordinate attribute:	.x, .y		("vt" element in the Wavefront .obj file)
 };
 
 // End: Structure Declarations.
@@ -89,14 +89,5 @@ extern int OurIndicesi;										// The index variable OurIndicesi of array vari
 extern int PrimitivesTotal;									// The total number of triangle primitives comprising a single 3D object, e.g., 12 triangle primitives specify a cube and the total number of array elements in OurIndices is PrimitivesTotal * 3 = 36.
 
 // End: External Variable Global Declarations.
-
-//***
-// Global Function Declarations.
-// Function prototypes for functions (e.g., objReader) called by programs (e.g., objRenderer) that include this header file. They are optional in the functions named here (e.g., objReader).
-//***
-
-int objReader(void);										// The objReader function parses a single 3D object's Wavefront .obj file and uses it to populate the external global variables OurVertices and OurIndices.
-
-// End: Global Function Declarations.
 
 // End: Global Declarations.

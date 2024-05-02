@@ -1,5 +1,5 @@
 // Shader Functions
-// Version 3.1
+// Version 3.2
 //
 // Description
 // Shader functions are small, low-level, programs that are compiled by the CPU and then run by the GPU at specific stages in the graphics pipeline. They automatically receive data from shader functions in previous stages, and return data to shader functions in successive stages, of the graphics pipeline.

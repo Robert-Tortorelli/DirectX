@@ -1,5 +1,5 @@
 ﻿// objRenderer
-// Version 3.1
+// Version 3.2
 //
 // Description
 // The project objRenderer parses a single 3D object's description from a Wavefront .obj file, and renders that object one or more times.
@@ -34,15 +34,16 @@
 //   2. The terms texture buffer, texture array, and texture interface refer to DirectX programming constructs.
 //      These terms are distinct from the term texture images defined above.
 
-// Wavefront .obj file I/O Header File.
-// Declare external global variables in this header file, and include it in all source files that reference these external global variables.
-// Includes the DirectXMath Header File.
+// objReader Header File for Wavefront .obj file I/O.
 #include "objReader.h"
 
 // Windows API Header File.
 #include <windows.h>										// The Windows API (Win32 API) header file enables you to create 32-bit and 64-bit applications. It includes declarations for both Unicode and ANSI versions of the API. For more information, see Unicode in the Windows API.
 
-// Global Function Declarations: Function prototypes for functions defined in this program.
+//***
+// Global Function Declarations.
+// Function prototypes for functions defined in this program.
+//***
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 int InitD3D(HWND hWnd);
@@ -66,6 +67,8 @@ void CleanD3D(void);
 //   ID3D11DeviceContext::IASetVertexBuffers		Input-Assembler					RenderFrame()
 //   ID3D11DeviceContext::IASetIndexBuffer			Input-Assembler					RenderFrame()
 //   ID3D11DeviceContext::IASetPrimitiveTopology	Input-Assembler					RenderFrame()
+
+// End: Global Function Declarations.
 
 //***
 // DirectX Global Declarations.
@@ -143,6 +146,10 @@ struct {
 // End: DirectX Global Declarations.
 
 // End: Global Declarations.
+
+//***
+// Function Definitions.
+//***
 
 // WinMain function: Definition
 //   This function is the entry point for a Windows program (vs. main for a console program) that is called by a hidden function that is the real entry point.
@@ -950,7 +957,7 @@ void RenderFrame(void)
 	//   Create a vector using four floating-point values: EyePosition
 	//   Returns an instance XMVECTOR each of whose four components (x,y,z, and w) is a floating-point number with the same value as the corresponding input argument to XMVectorSet.
 	//     XMVECTOR is a portable type used to represent a vector of four 32-bit floating-point or integer components, each aligned optimally and mapped to a hardware vector register.
-	//       The DirectXMath.h header file uses aliases to the XMVECTOR object, specifically CXMVECTOR and FXMVECTOR.
+	//       The DirectXMath.h header file (see objReader.h) uses aliases to the XMVECTOR object, specifically CXMVECTOR and FXMVECTOR.
 	XMVECTOR EyePosition = XMVectorSet(0.0f,				// The x component of the vector to return.
 		9.0f,												// The y component of the vector to return.
 		24.0f,												// The z component of the vector to return.

@@ -1,5 +1,5 @@
 // objReader
-// Version 3.1
+// Version 3.2
 //
 // Description
 // This function parses a Wavefront .obj file for a single 3D object's descriptive information and assigns it to the external global variables used by the calling program when rendering the object.
@@ -13,9 +13,7 @@
 // This ensures it does not point to any memory location until it is explicitly initialized.
 //***
 
-// Wavefront .obj file I/O Header File.
-// Declare external global variables in the following header file, and include it in all source files that reference these external global variables.
-// Includes the DirectXMath Header File.
+// objReader Header File for Wavefront .obj file I/O.
 #include "objReader.h"
 
 // Standard Encapsulated Data and Functions for Manipulating String Data.
@@ -58,9 +56,10 @@ vector<DWORD> OurIndices;	int OurIndicesi = -1;	int PrimitivesTotal = 0;
 //   vt is the intermediate array of structures for vertex texture coordinates, where each structure contains two   floating-point values (x, y; usually named U, V in computer graphics).
 //   vn is the intermediate array of structures for vertex normal vectors,		where each structure contains three floating-point values (x, y, z).
 //   Each intermediate array is indexed by a variable, vi, vni, or vti, initialized to -1, that is incremented by 1 each time a new vertex attribute is stored in the intermediate array.
-vector<XMFLOAT3> v;  int vi = -1;							// Geometric vertices		  dynamically allocated intermediate array, and index (v[vi]).
-vector<XMFLOAT2> vt; int vti = -1;							// Vertex texture coordinates dynamically allocated intermediate array, and index (vt[vti]).
-vector<XMFLOAT3> vn; int vni = -1;							// Vertex normal vectors	  dynamically allocated intermediate array, and index (vn[vni]).
+// In this source code file fully qualified identifiers (e.g., DirectX::XMFLOAT3 instead of using namespace DirectX;) are used to define these intermediate arrays.
+vector<DirectX::XMFLOAT3> v;  int vi = -1;					// Geometric vertices		  dynamically allocated intermediate array, and index (v[vi]).
+vector<DirectX::XMFLOAT2> vt; int vti = -1;					// Vertex texture coordinates dynamically allocated intermediate array, and index (vt[vti]).
+vector<DirectX::XMFLOAT3> vn; int vni = -1;					// Vertex normal vectors	  dynamically allocated intermediate array, and index (vn[vni]).
 // Intermediate array variable OurIndicesFaceTriplet temporarily stores three indices of array variable OurVertices. Each index is derived from one of the three face element triplets in a face element statement (e.g., v1/vt1/vn1) that represent the set of vertex attributes for one of the three vertices of a triangle.
 // The three indices are stored in the counter-clockwise drawing order specified by the order of face element statements in the Wavefront .obj file. These indices will be converted to the clockwise drawing order used by DirectX, and then stored in the array variable OurIndices.
 int OurIndicesFaceTriplet[3];
