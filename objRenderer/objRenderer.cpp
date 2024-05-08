@@ -174,7 +174,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 	wc.style = CS_HREDRAW | CS_VREDRAW;						// Assigned a value specifying Class Style(s), in any combination:
 															// CS_HREDRAW Redraws the entire window if a movement or size adjustment changes the width of the client area.
 															// CS_VREDRAW Redraws the entire window if a movement or size adjustment changes the height of the client area.
-	wc.lpfnWndProc = WindowProc;							// Assigned a value specifying a pointer to the window procedure, i.e., the WindowProc function, which is the main message handler function for this program.
+	wc.lpfnWndProc = WindowProc;							// Assigned a value specifying a pointer to the window procedure, i.e., the WindowProc function, which is the main message handler function for this program (The WindowProc function is not called here because WindowProc, not WindowProc(), is assigned to wc.lpfnWndProc).
 	wc.hInstance = hInstance;								// Assigned a value specifying the "handle to an instance" or "handle to a module" (WinMain) that contains the window procedure for the class.
 	wc.hCursor =											// Assigned a value specifying a handle to the class cursor, a cursor resource.
 		LoadCursor(NULL, IDC_CROSS);						// The LoadCursor function loads the specified cursor:
@@ -225,7 +225,13 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			   nCmdShow);									// Indicates if the main program window will be minimized, maximized, or shown normally.
 
 	// InitD3D function initializes and prepares Direct3D for use.
-	InitD3D(hWnd);
+	if (int InitD3DRC = InitD3D(hWnd); InitD3DRC != 0)		// objReader returns 1 if it cannot open the Wavefront .obj file.
+	{
+		// Cannot open the Wavefront .obj file.
+
+		// Terminate this function with a return code indicating an error.
+		return InitD3DRC;
+	}
 
 	msg = { 0 };											// Set the entire structure holding window and thread messages to null.
 
@@ -238,7 +244,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 		//   Checks (and dispatches) incoming nonqueued messages on the thread message queue for a posted window message (where the window belongs to the current thread) or a posted thread message (on the current thread).
 		//   Retrieves incoming sent messages.
 		// Unlike GetMessage, the PeekMessage function does not wait for a message to be posted before returning. This allows processing to continue between "peeking" at the thread message queue.
-		if(PeekMessage(&msg,								// A pointer to the MSG structure that holds window message and thread message information.
+		if (PeekMessage(&msg,								// A pointer to the MSG structure that holds window message and thread message information.
 					   NULL,								// A handle to the window whose messages are to be retrieved.
 															// If the handle is NULL, PeekMessage retrieves window messages for any window, and thread messages whose handle value is NULL (see the MSG structure).
 															// Therefore, if the handle is NULL, all window messages for any window on the current thread and some thread messages can be processed.
@@ -269,7 +275,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			//     message = WM_QUIT is processed next.
 			
 			// Check to see if it's time to quit; i.e., this program's window has been closed manually.
-			if(msg.message == WM_QUIT)
+			if (msg.message == WM_QUIT)
 				break;										// Break out of the loop.
 			// Stay in the loop.							// <-- Or not.
 		}
@@ -314,9 +320,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			//   Posts a new WM_QUIT message (message = WM_QUIT) to the thread message queue and returns immediately, indicating to the operating system that the thread is requesting to quit at some time in the future.
 			//     The exit value returned to the operating system must be the wParam parameter value of the WM_QUIT message (here wParam = 0).
 			// When the thread retrieves the WM_QUIT message from its message queue, it should exit its message loop and return the exit value, and control, to the operating system.
-			PostQuitMessage(0);							// PostQuitMessage(x), where x is the wParam parameter value of the WM_QUIT message (here wParam = 0).
-			return 0;									// The WindowProc function returns 0.
-		} break;										// Break out of the switch block.
+			PostQuitMessage(0);								// PostQuitMessage(x), where x is the wParam parameter value of the WM_QUIT message (here wParam = 0).
+			return 0;										// The WindowProc function returns 0.
+		} break;											// Break out of the switch block.
 	}
 
 	// Handle messages the switch block does not:
@@ -342,6 +348,10 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 //     4. Set the render target (back buffer) and the depth buffer (z-buffer) to the output-merger stage of the graphics pipeline.
 //
 //     5. Set the viewport to the rasterizer stage of the graphics pipeline.
+//
+//     6. Initialize the graphics pipeline.
+//
+//     7. Load and initialize all graphics data.
 int InitD3D(HWND hWnd)										// The HWND handle for the window.
 {
 	//***
@@ -533,17 +543,27 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 
 	// End: 5. Set the viewport to the rasterizer stage of the graphics pipeline.
 
-	// Initialize the graphics pipeline.
+	//***
+	// 6. Initialize the graphics pipeline.
+	//***
+
 	InitPipeline();
 
-	// Load and initialize all graphics data.
-	if (InitGraphics() == 1)								// objReader returns 1 if it cannot open the Wavefront .obj file.
+	// End 6. Initialize the graphics pipeline.
+
+	//***
+	// 7. Load and initialize all graphics data.
+	//***
+
+	if (int InitGraphicsRC = InitGraphics(); InitGraphicsRC != 0)	// objReader returns 1 if it cannot open the Wavefront .obj file.
 	{
 		// Cannot open the Wavefront .obj file.
 
 		// Terminate this function with a return code indicating an error.
-		return 1;
+		return InitGraphicsRC;
 	}
+
+	// End: 7. Load and initialize all graphics data.
 
 	// Return to the calling program with a return code indicating success.
 	return 0;
@@ -756,12 +776,12 @@ int InitGraphics(void)
 	// 1. Call the objReader function, which reads and parses a single 3D object's descriptive information from a Wavefront .obj file and uses it to define the variables needed to render the 3D object, i.e., OurVertices and OurIndices.
 	//***
 
-	if (objReader() == 1)									// objReader returns 1 if it cannot open the Wavefront .obj file.
+	if (int objReaderRC = objReader(); objReaderRC != 0)	// objReader returns 1 if it cannot open the Wavefront .obj file.
 	{
 		// Cannot open the Wavefront .obj file.
 
 		// Terminate this function with a return code indicating an error.
-		return 1;
+		return objReaderRC;
 	}
 
 	// End: 1. Call the objReader function, which reads and parses a single 3D object's descriptive information from a Wavefront .obj file and uses it to define the variables needed to render the 3D object, i.e., OurVertices and OurIndices.
@@ -1137,7 +1157,7 @@ void RenderFrame(void)
 	swapchain->Present(0,									// An integer that specifies how to synchronize presentation of a frame with the vertical blank. '0' indicates the presentation occurs immediately,i.e., there is no synchronization.
 		0);													// An integer value that contains swap-chain presentation options. These options are defined by the DXGI_PRESENT constants.
 	
-	// End: 5. Render the object.
+	// End: 5. Render the objects.
 }
 
 // CleanD3D function: Definition
