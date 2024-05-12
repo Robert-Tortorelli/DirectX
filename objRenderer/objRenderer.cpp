@@ -12,6 +12,11 @@
 //
 // All variables and functions coded in HLSL (.hlsl files) are stored in GPU memory.
 // All variables and functions coded in C++ (.cpp files) are stored in CPU memory.
+// 
+// Return codes
+// RC 0: All Functions:		 Normal
+// RC 1: Function objReader: Abnormal: Error opening the Wavefront .obj file.
+// RC 2: Function objReader: Abnormal: Error in		 the Wavefront .obj file: Required vertex attributes are missing.
 //
 // Authorship
 // This program is based on "DirectX 11 Win32 Desktop: Direct3D: Moving to 3D: Lesson 3: Simple Modeling" and earlier lessons by Chris Hanson (http://DirectXTutorial.com).
@@ -224,12 +229,10 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 	ShowWindow(hWnd,										// The HWND handle for the window.
 			   nCmdShow);									// Indicates if the main program window will be minimized, maximized, or shown normally.
 
-	// InitD3D function initializes and prepares Direct3D for use.
-	if (int InitD3DRC = InitD3D(hWnd); InitD3DRC != 0)		// objReader returns 1 if it cannot open the Wavefront .obj file.
+	// Initialize and prepare Direct3D for use.
+	if (int InitD3DRC = InitD3D(hWnd); InitD3DRC != 0)		// Call the InitD3D function and check its return code.
 	{
-		// Cannot open the Wavefront .obj file.
-
-		// Terminate this function with a return code indicating an error.
+		// The InitD3D function terminated abnormally. Terminate the WinMain function with the return code of the InitD3D function.
 		return InitD3DRC;
 	}
 
@@ -293,7 +296,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 	// Terminate Direct3D.
 	CleanD3D();
 
-	// Terminate this program with a return code indicating success.
+	// End: WinMain Function
 	return msg.wParam;										// The exit value returned to the operating system must be the wParam parameter value of the WM_QUIT message (see PostQuitMessage).
 }
 
@@ -335,6 +338,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 						 message,							// The message.
 						 wParam,							// Additional data that pertains to the message. The exact meaning depends on the message.
 						 lParam);							// Additional data that pertains to the message. The exact meaning depends on the message.
+
+	// End: WindowProc Function
 }
 
 // InitD3D function: Definition
@@ -555,17 +560,15 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	// 7. Load and initialize all graphics data.
 	//***
 
-	if (int InitGraphicsRC = InitGraphics(); InitGraphicsRC != 0)	// objReader returns 1 if it cannot open the Wavefront .obj file.
+	if (int InitGraphicsRC = InitGraphics(); InitGraphicsRC != 0)	// Call the InitGraphics function and check its return code.
 	{
-		// Cannot open the Wavefront .obj file.
-
-		// Terminate this function with a return code indicating an error.
+		// The InitGraphics function terminated abnormally. Terminate the InitD3D function with the return code of the InitGraphics function.
 		return InitGraphicsRC;
 	}
 
 	// End: 7. Load and initialize all graphics data.
 
-	// Return to the calling program with a return code indicating success.
+	// End: InitD3D Function
 	return 0;
 }
 
@@ -757,6 +760,8 @@ void InitPipeline(void)
 		&pCBuffer);											// &pCBuffer is the address of a pointer, pCBuffer, to the constant buffer interface.
 
 	// End: 3. Create the constant buffer object and set it to the vertex shader stage of the graphics pipeline.
+
+	// End: InitPipeline Function
 }
 
 // InitGraphics function: Definition
@@ -776,11 +781,9 @@ int InitGraphics(void)
 	// 1. Call the objReader function, which reads and parses a single 3D object's descriptive information from a Wavefront .obj file and uses it to define the variables needed to render the 3D object, i.e., OurVertices and OurIndices.
 	//***
 
-	if (int objReaderRC = objReader(); objReaderRC != 0)	// objReader returns 1 if it cannot open the Wavefront .obj file.
+	if (int objReaderRC = objReader(); objReaderRC != 0)	// Call the objReader function and check its return code.
 	{
-		// Cannot open the Wavefront .obj file.
-
-		// Terminate this function with a return code indicating an error.
+		// The objReader function terminated abnormally. Terminate the InitGraphics function with the return code of the objReader function.
 		return objReaderRC;
 	}
 
@@ -889,7 +892,7 @@ int InitGraphics(void)
 
 	// End: 5. Create the texture image from an image file.
 
-	// Return to the calling program with a return code indicating success.
+	// End: InitGraphics function
 	return 0;
 }
 
@@ -1158,6 +1161,8 @@ void RenderFrame(void)
 		0);													// An integer value that contains swap-chain presentation options. These options are defined by the DXGI_PRESENT constants.
 	
 	// End: 5. Render the objects.
+
+	// End: RenderFrame function
 }
 
 // CleanD3D function: Definition
@@ -1203,4 +1208,6 @@ void CleanD3D(void)
 	devcon->Release();
 
 	// End: 2. Free memory.
+
+	// End: CleanD3D function
 }

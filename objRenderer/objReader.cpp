@@ -137,6 +137,16 @@ int objReader(void)
 			//   This results in storing sets of vertex attributes in array variable OurVertices in the order that the face element statements appear in the Wavefront .obj file, which is the order in which the triangles must be drawn.
 			//   Note: A set of vertex attributes is only stored in array variable OurVertices if it is unique, i.e., if it has not been previously found in the Wavefront .obj file.
 
+			// Check if any of the dynamic intermediate arrays v, vt, or vn is empty, i.e., if geometric vertex statements, vertex texture coordinate statements, or vertex normal vector statements are not specified in the Wavefront .obj file.
+			// This can occur when the Wavefront .obj file is valid but only contains geometric vertex statements and face element statements, but not vertex texture coordinate statements and vertex normal vectors statements.
+			if (vi == -1 || vti == -1 || vni == -1)			// If vi or vti or vni is -1, then the Wavefront .obj file does not contain the required vertex attribute statements.
+			{
+				// Cannot process the Wavefront .obj file.
+
+				// Terminate this function with a return code indicating an error.
+				return 2;
+			}
+
 			// Parse each of the three triplets in the face element statement.
 			OurIndicesFaceTripleti = -1;					// Reset the index variable OurIndicesFaceTripleti of intermediate array variable OurIndicesFaceTriplet[OurIndicesFaceTripleti] to -1 for each new face element statement.
 			for (int i = 0; i <= 2; i++)
