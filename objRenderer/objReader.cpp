@@ -81,15 +81,21 @@ int objReader(void)
 	// - Supported and required statements are:
 	//   Vertex attribute statements: geometric vertex statements (v x y z), vertex texture coordinate statements (vt u v), and vertex normal vector statements (vn x y z).
 	//
-	//   Face element statements: f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3
+	//   Face element statements: (f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3)
 	//   These specify three triplets, one triplet (e.g., v1/vt1/vn1) for each of the three vertices of a triangle, where v1, v2, v3 are geometric vertex indices, vt1, vt2, vt3 are vertex texture coordinate indices, and vn1, vn2, vn3 are vertex normal vector indices.
 	//   These indices are positive numbers referring to vertex attribute statements by the order in which the vertex attribute statements appear in the Wavefront .obj file.
 	//
-	//   Vertex attribute statements are listed first, and will therefore be parsed before any face element statements.
+	// - Vertex attribute statements are listed first, and will therefore be parsed before any face element statements.
 	//   The order of the face element statements determines the order in which the triangles must be drawn. This order is important when dealing with overlapping triangles, as the later triangles will be drawn on top of the earlier ones. Face element statements are parsed in this order.
 	//   All other statements are ignored.
+	//
+	// - Multiple objects are not supported.
+	//   This is because objReader as written requires that no vertex attributes follow face elements, and this happens when one object is defined after another.
+	//
 	// - No spaces are permitted before or after a slash ('/').
+	//
 	// - Statements can start in any column.
+	//
 	// - Statements can be logically joined with the line continuation character ( \ ) at the end of a line. (This is *not* supported by this program)
 	//
 	// Open the Wavefront .obj file for input.

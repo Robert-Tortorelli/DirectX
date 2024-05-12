@@ -28,7 +28,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Text-Blender-Suzanne.obj" />
+    <None Include="Text.Blender-Suzanne.obj" />
     <None Include="shaders.hlsl" />
     <None Include="packages.config" />
   </ItemGroup>

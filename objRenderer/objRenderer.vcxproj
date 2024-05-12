@@ -141,7 +141,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Text-Blender-Suzanne.obj">
+    <None Include="Text.Blender-Suzanne.obj">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
