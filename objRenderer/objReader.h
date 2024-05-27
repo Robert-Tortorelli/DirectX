@@ -59,8 +59,8 @@ int objReader(void);										// The objReader function parses a single 3D objec
 // In this source code file fully qualified identifiers (e.g., DirectX::XMFLOAT3 instead of using namespace DirectX;) are used to define the VERTEX structure.
 struct VERTEX {												// Vertex attributes.
 	DirectX::XMFLOAT3 GeometricVertex;						// Geometric vertex attribute:			.x, .y, .z	("v " element in the Wavefront .obj file)
-	DirectX::XMFLOAT3 VertexNormalVector;					// Vertex normal vector attribute:		.x, .y, .z	("vn" element in the Wavefront .obj file)
 	DirectX::XMFLOAT2 VertexTextureCoordinate;				// Vertex texture coordinate attribute:	.x, .y		("vt" element in the Wavefront .obj file)
+	DirectX::XMFLOAT3 VertexNormalVector;					// Vertex normal vector attribute:		.x, .y, .z	("vn" element in the Wavefront .obj file)
 };
 
 // End: Structure Declarations.

@@ -590,7 +590,7 @@ void InitPipeline(void)
 	//    Vertex shader:
 	//      This shader is executed for each vertex in the scene.
 	//      This shader operates on vertex buffer array elements provided to it by the calling program (this program) and at a minimum returns a 4-component position vector that will be rasterized into a pixel position.
-	//      Optionally, this shader can output vertex texture coordinates, vertex color, vertex lighting, fog factors, and other attributes of a single vertex.
+	//      Optionally, this shader can output Vertex color, vertex texture coordinates, vertex lighting, fog factors, and other characteristics of a single vertex, are optional.
 	//    Pixel shader:
 	//      This shader is also known as a fragment shader.
 	//      This shader is executed for each pixel (fragment) in the render target.
@@ -671,19 +671,19 @@ void InitPipeline(void)
 	ied[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;	// Assigned a value specifying the input data slot class for a single input slot. A value of the D3D11_INPUT_CLASSIFICATION enumerated type, i.e., D3D11_INPUT_PER_VERTEX_DATA: Input data is per-vertex data.
 	ied[0].InstanceDataStepRate = 0;						// Assigned a value specifying the number of instances to draw using the same per-instance data before advancing in the buffer by one element. This value must be 0 for an element that contains per-vertex data (the slot class is set to D3D11_INPUT_PER_VERTEX_DATA).
 
-	// Define the normal   input element of the VERTEX structure OurVertices.
-	ied[1].SemanticName = "NORMAL";							// Assigned a value specifying the HLSL semantic name associated with this element in a shader input signature.
+	// Define the texture  input element of the VERTEX structure OurVertices.
+	ied[1].SemanticName = "TEXCOORD";						// Assigned a value specifying the HLSL semantic name associated with this element in a shader input signature.
 	ied[1].SemanticIndex = 0;								// Assigned a value specifying the semantic index for the element. A semantic index modifies a semantic with an integer index number. A semantic index is only needed in a case where there is more than one element with the same semantic name.
-	ied[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;			// Assigned a value specifying the data type of the element.					  A value of the DXGI_FORMAT enumerated type,				 i.e., DXGI_FORMAT_R32G32B32_FLOAT: A three-component, 96-bit floating-point format that supports 32 bits for the red channel, 32 bits for the green channel and 32 bits for the blue channel.
+	ied[1].Format = DXGI_FORMAT_R32G32_FLOAT;				// Assigned a value specifying the data type of the element.					  A value of the DXGI_FORMAT enumerated type,				 i.e., DXGI_FORMAT_R32G32_FLOAT:	A two-component, 64-bit floating-point format that supports 32 bits for the red channel and 32 bits for the green channel.
 	ied[1].InputSlot = 0;									// Assigned a value specifying the integer value that identifies the input-assembler (see input slot).
 	ied[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;// Assigned a value specifying the optional offset (in bytes) from the start of the vertex. Use D3D11_APPEND_ALIGNED_ELEMENT for convenience to define the current element directly after the previous one, including any packing if necessary. Normal has an offset of 12 in this program.
 	ied[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;	// Assigned a value specifying the input data slot class for a single input slot. A value of the D3D11_INPUT_CLASSIFICATION enumerated type, i.e., D3D11_INPUT_PER_VERTEX_DATA: Input data is per-vertex data.
 	ied[1].InstanceDataStepRate = 0;						// Assigned a value specifying the number of instances to draw using the same per-instance data before advancing in the buffer by one element. This value must be 0 for an element that contains per-vertex data (the slot class is set to D3D11_INPUT_PER_VERTEX_DATA).
 
-	// Define the texture  input element of the VERTEX structure OurVertices.
-	ied[2].SemanticName = "TEXCOORD";						// Assigned a value specifying the HLSL semantic name associated with this element in a shader input signature.
+	// Define the normal   input element of the VERTEX structure OurVertices.
+	ied[2].SemanticName = "NORMAL";							// Assigned a value specifying the HLSL semantic name associated with this element in a shader input signature.
 	ied[2].SemanticIndex = 0;								// Assigned a value specifying the semantic index for the element. A semantic index modifies a semantic with an integer index number. A semantic index is only needed in a case where there is more than one element with the same semantic name.
-	ied[2].Format = DXGI_FORMAT_R32G32_FLOAT;				// Assigned a value specifying the data type of the element.					  A value of the DXGI_FORMAT enumerated type,				 i.e., DXGI_FORMAT_R32G32_FLOAT:	A two-component, 64-bit floating-point format that supports 32 bits for the red channel and 32 bits for the green channel.
+	ied[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;			// Assigned a value specifying the data type of the element.					  A value of the DXGI_FORMAT enumerated type,				 i.e., DXGI_FORMAT_R32G32B32_FLOAT: A three-component, 96-bit floating-point format that supports 32 bits for the red channel, 32 bits for the green channel and 32 bits for the blue channel.
 	ied[2].InputSlot = 0;									// Assigned a value specifying the integer value that identifies the input-assembler (see input slot).
 	ied[2].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;// Assigned a value specifying the optional offset (in bytes) from the start of the vertex. Use D3D11_APPEND_ALIGNED_ELEMENT for convenience to define the current element directly after the previous one, including any packing if necessary. Normal has an offset of 12 in this program.
 	ied[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;	// Assigned a value specifying the input data slot class for a single input slot. A value of the D3D11_INPUT_CLASSIFICATION enumerated type, i.e., D3D11_INPUT_PER_VERTEX_DATA: Input data is per-vertex data.
@@ -842,7 +842,7 @@ int InitGraphics(void)
 	//***
 
 	// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-	bd.ByteWidth = sizeof(DWORD) * (PrimitivesTotal * 3);	// Assigned a value specifying the size of the buffer in bytes. Three geometric vertex indices (each pointing to a vertex in the vertex buffer) describe each triangle primitive, and PrimitivesTotal is the total number of triangles comprising the object. Therefore PrimitivesTotal * 3.
+	bd.ByteWidth = sizeof(DWORD) * (PrimitivesTotal * 3);	// Assigned a value specifying the size of the buffer in bytes. Three indices in the index buffer, each pointing to one set of vertex attributes in the vertex buffer, describe each triangle primitive, and PrimitivesTotal is the total number of triangles comprising the object. Therefore PrimitivesTotal * 3.
 	bd.Usage = D3D11_USAGE_DYNAMIC;							// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	 A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;					// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_INDEX_BUFFER: Bind a buffer as an index buffer to the input-assembler stage of the graphics pipeline.
 	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;				// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	 The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
@@ -1119,7 +1119,7 @@ void RenderFrame(void)
 	// Draw the first instance of the object using the updated constant buffer.
 	// ID3D11DeviceContext::DrawIndexed member function:
 	//   Draw indexed, non-instanced primitives.
-	devcon->DrawIndexed(PrimitivesTotal * 3,				// Number of indices to draw. Three geometric vertex indices (each pointing to a vertex in the vertex buffer) describe each triangle primitive, and PrimitivesTotal is the total number of triangles comprising the object. Therefore PrimitivesTotal * 3.
+	devcon->DrawIndexed(PrimitivesTotal * 3,				// Number of indices to draw. Three indices in the index buffer, each pointing to one set of vertex attributes in the vertex buffer, describe each triangle primitive, and PrimitivesTotal is the total number of triangles comprising the object. Therefore PrimitivesTotal * 3.
 		0,													// The location of the first index read by the GPU from the index buffer.
 		0);													// A value added to each index before reading a vertex from the vertex buffer.
 	
@@ -1150,7 +1150,7 @@ void RenderFrame(void)
 		0);													// The size of one depth slice of source data.
 	//
 	// Draw the second instance of the object using the updated constant buffer.
-	devcon->DrawIndexed(PrimitivesTotal * 3,				// Number of indices to draw. Three geometric vertex indices (each pointing to a vertex in the vertex buffer) describe each triangle primitive, and PrimitivesTotal is the total number of triangles comprising the object. Therefore PrimitivesTotal * 3.
+	devcon->DrawIndexed(PrimitivesTotal * 3,				// Number of indices to draw. Three indices in the index buffer, each pointing to one set of vertex attributes in the vertex buffer, describe each triangle primitive, and PrimitivesTotal is the total number of triangles comprising the object. Therefore PrimitivesTotal * 3.
 		0,													// The location of the first index read by the GPU from the index buffer.
 		0);													// A value added to each index before reading a vertex from the vertex buffer.
 

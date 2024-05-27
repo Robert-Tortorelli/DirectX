@@ -38,7 +38,7 @@
 //           3.0f, 4.0f);			 // This definition is valid after "matrix" is declared.
 //
 // HLSL variables may be larger than the corresponding C++ variables used to indirectly (by way of the vertex buffer) assign them data.
-// For example, a HLSL float4 variable, such as "position3D" in "float4 position3D : POSITION;" is assigned values from the vertex buffer, that were originally copied to the vertex buffer (using C++), from the smaller C++ variable OurVertices.
+// For example, a HLSL float4 variable, such as "position3D" in "float4 position3D : POSITION;" is assigned values from the vertex buffer, that were originally copied to the vertex buffer (using C++), from the smaller C++ variable OurVertices (defined as the VERTEX structure).
 // OurVertices only specifies three floats for geometric vertex position, and they are assigned to the first three floats of "position3D", leaving the last float of "position3D" undefined.
 
 // Declare the constant buffer.
@@ -81,19 +81,21 @@ SamplerState ss;											// A SamplerState sampler type.
 // A vertex shader function executes once for each vertex, e.g., for a single triangle, it is called by the graphics driver three times, once per vertex.
 // A vertex shader function always operates on a single input vertex and produces a single output vertex.
 // A vertex shader function may return multiple variables. In such case it returns a struct, e.g., structure VOut with its member variables, and consequently it specifies the associated semantics in that struct's definition.
-// A vertex shader function must return the geometric vertex's 2D position. Vertex color, vertex lighting, vertex texture coordinates, fog factors, and other characteristics of a single vertex, are optional.
+// A vertex shader function must return the geometric vertex's 2D position. Vertex color, vertex texture coordinates, vertex lighting, fog factors, and other characteristics of a single vertex, are optional.
 //
 // The number of times a vertex shader function has been executed can be queried from the CPU using the VSInvocations pipeline statistic.
-// 
-// The vertex shader function's input parameters may be specified in any order. However, when passing multiple variables between shader functions (e.g., return values output by the vertex shader function -> input parameters of the pixel shader function), they must be passed in the same order.
-//   The C++ input element description array of structures is used to define the input-layout object that describes the input elements of the C++ VERTEX structure definition. These input element descriptions agree in number and type with the vertex shader function's input parameters.
-//   Because each C++ input element description specifies the HLSL semantic name associated with each input element of the C++ VERTEX structure, the vertex shader function's input parameters, which include the HLSL semantic name, may be specified in any order.
+//
+// The C++ input element description array of structures is used to define the input-layout object that describes the input elements of the C++ VERTEX structure definition.
+// These input element descriptions agree in number and type with the vertex shader function's input parameters.
+// The vertex shader function's input parameters may be specified in any order.
+//   This is because each C++ input element description specifies the HLSL semantic name associated with each input element of the C++ VERTEX structure. This allows the vertex shader function's input parameters, which include the HLSL semantic name, to be specified in any order.
+// When passing multiple variables between shader functions (e.g., return values output by the vertex shader function -> input parameters of the pixel shader function), they must be passed in the same order.
 //
 // Semantics:
 // POSITION:    Vertex position in 3D space.                                                                    -> Vertex shader
-// NORMAL:      Normal vector.                                                                                  -> Vertex shader
 // TEXCOORD:	Texture Coordinates.																			-> Vertex shader | Vertex shader -> Pixel shader
-VOut VShader(float4 position3D : POSITION, float4 normal : NORMAL, float2 texcoord : TEXCOORD)
+// NORMAL:      Normal vector.                                                                                  -> Vertex shader
+VOut VShader(float4 position3D : POSITION, float2 texcoord : TEXCOORD, float4 normal : NORMAL)
 {
 	VOut output;
 

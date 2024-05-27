@@ -123,18 +123,18 @@ int objReader(void)
 			vi++;												// Increment the geometric vertex index.
 			v.emplace_back();									// Add a new element to this dynamic intermediate array.
 			lineStream >> v[vi].x >> v[vi].y >> v[vi].z;		// The >> operator extracts the next three values from the lineStream input stream object and stores them in the intermediate array variables v[vi].x, then v[vi].y, then v[vi].z.
-		} else if (type == "vn")
-		{
-			// The statement read is a vertex normal vector statement. Parse and store it in variable vn.
-			vni++;												// Increment the vertex normal vector index.
-			vn.emplace_back();									// Add a new element to this dynamic intermediate array.
-			lineStream >> vn[vni].x >> vn[vni].y >> vn[vni].z;	// The >> operator extracts the next three values from the lineStream input stream object and stores them in the intermediate array variables vn[vni].x, then vn[vni].y, then vn[vni].z.
 		} else if (type == "vt")
 		{
 			// The statement read is a vertex texture coordinate statement. Parse and store it in variable vt.
 			vti++;												// Increment the vertex texture coordinate index.
 			vt.emplace_back();									// Add a new element to this dynamic intermediate array.
 			lineStream >> vt[vti].x >> vt[vti].y;				// The >> operator extracts the next two values from the lineStream input stream object and stores them in the intermediate array variables vt[vti].x, then vt[vti].y.
+		} else if (type == "vn")
+		{
+			// The statement read is a vertex normal vector statement. Parse and store it in variable vn.
+			vni++;												// Increment the vertex normal vector index.
+			vn.emplace_back();									// Add a new element to this dynamic intermediate array.
+			lineStream >> vn[vni].x >> vn[vni].y >> vn[vni].z;	// The >> operator extracts the next three values from the lineStream input stream object and stores them in the intermediate array variables vn[vni].x, then vn[vni].y, then vn[vni].z.
 		} else if (type == "f")
 		{
 			// The statement read is a face element statement, therefore all vertex attribute statements in the Wavefront .obj file have previously been read, parsed, and stored in the array variables v, vt, and vn.
