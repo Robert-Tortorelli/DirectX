@@ -113,9 +113,9 @@ int objReader(void)
 	while (getline(obj, stringtext))						// Read an entire statement, from the input file stream object obj, into the string variable stringtext. At eof getline becomes false and the while loop is exited.
 	{
 		istringstream lineStream(stringtext);				// Declaring object lineStream inside the loop ensures that it is reset and ready to parse the next line of the file in each iteration of the loop.
-		string type;										// Wavefront .obj file statement type: #, v, vn, vt, f, etc.
+		string type;										// Wavefront .obj file statement type: #, v, vt, vn, f, etc.
 															// Declaring variable "type" inside the while loop ensures that it is reset at the start of each iteration, which is generally what you want when reading a new line from the file.
-		lineStream >> type;									// The >> operator extracts the next value from the lineStream input stream object and stores it in the variable "type". At this point, the value is the first word of the statement: #, v, vn, vt, f, etc.
+		lineStream >> type;									// The >> operator extracts the next value from the lineStream input stream object and stores it in the variable "type". At this point, the value is the first word of the statement: #, v, vt, vn, f, etc.
 
 		if (type == "v")
 		{
