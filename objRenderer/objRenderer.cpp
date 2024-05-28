@@ -7,6 +7,9 @@
 // - Object geometry
 // - Light
 // - Texture
+// Change Log:
+// - Version 3.1 April 23, 2024
+//   Added support in objReader.cpp for parsing vertex texture statements and vertex normal vector statements in a Wavefront .obj file.
 //
 // This program, objRenderer, renders the object.
 // This program is a C++ Windows Desktop application using the Windows (Win32) API and the DirectX 11 API.
