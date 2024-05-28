@@ -6,6 +6,7 @@
 // Implemented:
 // - Object geometry
 // - Light
+// - Texture
 //
 // This program, objRenderer, renders the object.
 // This program is a C++ Windows Desktop application using the Windows (Win32) API and the DirectX 11 API.
