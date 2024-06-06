@@ -18,9 +18,9 @@
 // All variables and functions coded in C++ (.cpp files) are stored in CPU memory.
 // 
 // Return codes
-// RC 0: All Functions:		 Normal
-// RC 1: Function objReader: Abnormal: Error opening the Wavefront .obj file.
-// RC 2: Function objReader: Abnormal: Error in		 the Wavefront .obj file: Required vertex attributes are missing.
+// RC 0: All functions:		 Normal
+// RC 1: objReader function: Abnormal: Error opening the Wavefront .obj file.
+// RC 2: objReader function: Abnormal: Error in		 the Wavefront .obj file: Required vertex attributes are missing.
 //
 // Authorship
 // This program is based on "DirectX 11 Win32 Desktop: Direct3D: Moving to 3D: Lesson 3: Simple Modeling" and earlier lessons by Chris Hanson (http://DirectXTutorial.com).
@@ -244,7 +244,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 
 	// Create the infinite message loop and process the thread message queue, a FIFO queue consisting of window and thread messages.
 	// You create the message loop using the PeekMessage (or GetMessage), TranslateMessage and DispatchMessage functions.
-	// This loop breaks (is ended) when this program's window is closed manually.
+	// This loop breaks (is ended) when a WM_QUIT message (message = WM_QUIT) is posted to the thread message queue.
 	while(TRUE)
 	{
 		// PeekMessage function:
@@ -267,7 +267,11 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			//   If your program must obtain character input from the user, include this function in the infinite message loop.
 			//     See https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues.
 			//   Translates a virtual-key message into a new character message (no translation, or new character message creation, occurs if there is no virtual-key message).
-			//   It does not modify the message pointed to by its first and only parameter. Instead, if translation occurs, it creates a new character message.
+			//   A virtual-key message is a message that the system posts to the thread message queue when a key is pressed or released.
+			//   The message contains a virtual-key code to identify which key was pressed or released, along with additional information such as whether the key is being held down.
+			//   The WM_KEYDOWN and WM_KEYUP messages are examples of virtual-key messages. These messages are sent to the window procedure, which can handle them to perform actions in response to key presses.
+			//
+			//   TranslateMessage does not modify the message pointed to by its first and only parameter. Instead, if translation occurs, it creates a new character message.
 			//   The new character message is posted as a new message to the calling thread message queue, to be read the next time the thread (in the infinite message loop) calls the PeekMessage (or GetMessage) function.
 			//   Therefore both the original virtual-key message (if any) and the new character message (if any) are retrieved by the PeekMessage (or GetMessage) function and dispatched by the DispatchMessage function.
 			TranslateMessage(&msg);							// A pointer to the MSG structure that holds window message and thread message information.
@@ -277,14 +281,16 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			DispatchMessage(&msg);
 
 			// The WindowProc function returns here after being called by the DispatchMessage function.
+
+			// Check whether it's time to quit this program by breaking out of the infinite message loop, e.g., Has this program's window been closed manually by clicking its close button or by pressing the Escape key?
+			//
 			// If a WM_DESTROY message (message = WM_DESTROY) was dispatched to the WindowProc function, then:
-			//   The PostQuitMessage function called from the WindowProc function has at this point posted a new WM_QUIT message (message = WM_QUIT) to the thread message queue.
-			//     message = WM_QUIT is processed next.
-			
-			// Check to see if it's time to quit; i.e., this program's window has been closed manually.
+			// The PostQuitMessage function called from the WindowProc function has posted a WM_QUIT message (message = WM_QUIT) to the thread message queue.
+			// The WM_QUIT message is not associated with a window and therefore will never be received through a window procedure. It is only retrieved by the PeekMessage (or GetMessage) function.
+			// The WM_QUIT message is processed here.
 			if (msg.message == WM_QUIT)
-				break;										// Break out of the loop.
-			// Stay in the loop.							// <-- Or not.
+				break;										// Break out of the infinite message loop.
+			// Stay in the infinite message loop.			// <-- Or not.
 		}
 		else
 		{
@@ -300,13 +306,14 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 	// Terminate Direct3D.
 	CleanD3D();
 
-	// End: WinMain Function
+	// End: WinMain function
 	return msg.wParam;										// The exit value returned to the operating system must be the wParam parameter value of the WM_QUIT message (see PostQuitMessage).
 }
 
 // WindowProc function: Definition
 //   This function is the window procedure, the main message handler for this program (see wc.lpfnWndProc = WindowProc). It handles both window messages and thread messages.
 //   It is application-defined.
+//   There is one instance of this function for each window class.
 //   Its parameters are the elements of the MSG structure that defines "msg".
 //   CALLBACK is a Microsoft Windows data type used to define a function return value, in this case indicating the calling convention for callback functions. It expands to __stdcall.
 LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
@@ -326,24 +333,58 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			//   Indicates to the operating system that a thread has made a request to terminate (quit). It is typically called in response to a WM_DESTROY message.
 			//   Posts a new WM_QUIT message (message = WM_QUIT) to the thread message queue and returns immediately, indicating to the operating system that the thread is requesting to quit at some time in the future.
 			//     The exit value returned to the operating system must be the wParam parameter value of the WM_QUIT message (here wParam = 0).
-			// When the thread retrieves the WM_QUIT message from its message queue, it should exit its message loop and return the exit value, and control, to the operating system.
+			// When the thread retrieves the WM_QUIT message from its thread message queue, it should exit its message loop and return the exit value, and control, to the operating system.
 			PostQuitMessage(0);								// PostQuitMessage(x), where x is the wParam parameter value of the WM_QUIT message (here wParam = 0).
 			return 0;										// The WindowProc function returns 0.
-		} break;											// Break out of the switch block.
+		}
+		case WM_KEYDOWN:
+			// WM_KEYDOWN message: message = WM_KEYDOWN
+			//   This message is sent to the thread message queue of the window with the keyboard focus when a non-system key is pressed.
+			//   A non-system key is a key that is pressed when the ALT key is not pressed.
+			switch (wParam)
+			{
+				case VK_ESCAPE:
+					// The virtual-key code of the non-system key is VK_ESCAPE, the Escape key.
+					//
+					// PostMessage function:
+					//   Places (posts) a message in the thread message queue associated with the thread that created the specified window and returns without waiting for the thread to process the message.
+					//   Posts a WM_CLOSE message (message = WM_CLOSE) to the thread message queue of the window being closed.
+					//   WM_CLOSE is sent as a signal that a window or an application should terminate.
+					//   WM_CLOSE is received by a window through its WindowProc function.
+					//     By default, the WindowProc function's default window procedure, its DefWindowProc function, calls the DestroyWindow function to destroy the window.
+					//     The DestroyWindow function,
+					//     1. Sends WM_DESTROY and WM_NCDESTROY messages to the window to deactivate it and remove the keyboard focus from it.
+					//     2. Destroys the window's menu, flushes the thread message queue, destroys timers, removes clipboard ownership, and breaks the clipboard viewer chain (if the window is at the top of the viewer chain).
+					//     3. If the specified window is a parent or owner window, DestroyWindow automatically destroys the associated child or owned windows when it destroys the parent or owner window.
+					//        The function first destroys child or owned windows, and then it destroys the parent or owner window.
+					//     4. Destroys modeless dialog boxes created by the CreateDialog function.
+					PostMessage(hWnd, WM_CLOSE, 0, 0);
+					break;/*
+				default:
+					// DefWindowProc function:
+					//   This function is the default window procedure, called to provide default processing for any window messages that a program does not otherwise explicitly process in its WindowProc function.
+					//   It is called with the same parameters received by the WindowProc function.
+					//   The return value is the result of the message processing and depends on the message.
+					// If the DefWindowProc function is not called then no window is displayed by this program (return 0 is not a sufficient alternative to the DefWindowProc function).
+					return DefWindowProc(hWnd,			// The HWND handle for the window.
+						message,						// The message.
+						wParam,							// Additional data that pertains to the message. The exact meaning depends on the message.
+						lParam);						// Additional data that pertains to the message. The exact meaning depends on the message.*/
+			}
+			break;
+		default:
+			// DefWindowProc function:
+			//   This function is the default window procedure, called to provide default processing for any window messages that a program does not otherwise explicitly process in its WindowProc function.
+			//   It is called with the same parameters received by the WindowProc function.
+			//   The return value is the result of the message processing and depends on the message.
+			// If the DefWindowProc function is not called then no window is displayed by this program (return 0 is not a sufficient alternative to the DefWindowProc function).
+			return DefWindowProc(hWnd,			// The HWND handle for the window.
+				message,						// The message.
+				wParam,							// Additional data that pertains to the message. The exact meaning depends on the message.
+				lParam);						// Additional data that pertains to the message. The exact meaning depends on the message.
 	}
 
-	// Handle messages the switch block does not:
-	// DefWindowProc function:
-	//   This function is the default window procedure, called to provide default processing for any window messages that a program does not otherwise explicitly process in its WindowProc function.
-	//   It is called with the same parameters received by the WindowProc function.
-	//   The return value is the result of the message processing and depends on the message.
-	// If the DefWindowProc function is not called then no window is displayed by this program (return 0 is not a sufficient alternative to the DefWindowProc function).
-	return DefWindowProc(hWnd,								// The HWND handle for the window.
-						 message,							// The message.
-						 wParam,							// Additional data that pertains to the message. The exact meaning depends on the message.
-						 lParam);							// Additional data that pertains to the message. The exact meaning depends on the message.
-
-	// End: WindowProc Function
+	// End: WindowProc function
 }
 
 // InitD3D function: Definition
@@ -558,7 +599,7 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 
 	InitPipeline();
 
-	// End 6. Initialize the graphics pipeline.
+	// End: 6. Initialize the graphics pipeline.
 
 	//***
 	// 7. Load and initialize all graphics data.
@@ -572,7 +613,7 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 
 	// End: 7. Load and initialize all graphics data.
 
-	// End: InitD3D Function
+	// End: InitD3D function
 	return 0;
 }
 
@@ -765,7 +806,7 @@ void InitPipeline(void)
 
 	// End: 3. Create the constant buffer object and set it to the vertex shader stage of the graphics pipeline.
 
-	// End: InitPipeline Function
+	// End: InitPipeline function
 }
 
 // InitGraphics function: Definition
