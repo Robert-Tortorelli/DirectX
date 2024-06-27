@@ -12,7 +12,7 @@
 //   Added support in X for X.
 //
 // This program, objRenderer, renders the object.
-// This program is a C++ Windows Desktop application using the Windows (Win32) API and the DirectX 11 API.
+// This program is a C++ Windows Desktop program using the Windows (Win32) API and the DirectX 11 API.
 //
 // All variables and functions coded in HLSL (.hlsl files) are stored in GPU memory.
 // All variables and functions coded in C++ (.cpp files) are stored in CPU memory.
@@ -47,7 +47,7 @@
 #include "objReader.h"
 
 // Windows API Header File.
-#include <windows.h>										// The Windows API (Win32 API) header file enables you to create 32-bit and 64-bit applications. It includes declarations for both Unicode and ANSI versions of the API. For more information, see Unicode in the Windows API.
+#include <windows.h>										// The Windows API (Win32 API) header file enables you to create 32-bit and 64-bit programs. It includes declarations for both Unicode and ANSI versions of the API. For more information, see Unicode in the Windows API.
 
 //***
 // Global Function Declarations.
@@ -119,7 +119,7 @@ ID3D11RenderTargetView* backbuffer;							// The pointer to the render target vi
 
 ID3D11InputLayout* pLayout;									// The pointer to the input-layout interface.		An input-layout interface holds a definition of how to feed vertex data that is laid out in memory into the input-assembler stage of the graphics pipeline.
 ID3D11VertexShader* pVS;									// The pointer to the vertex shader interface.		A vertex shader interface manages an executable program (a vertex shader) that controls the vertex shader stage of the graphics pipeline.
-ID3D11PixelShader* pPS;										// The pointer to the pixel shader interface.		A pixel shader interface manages an executable program (a pixel shader) that controls the pixel shader stage of the graphics pipeline.
+ID3D11PixelShader* pPS;										// The pointer to the pixel shader interface.		A pixel  shader interface manages an executable program (a pixel shader)  that controls the pixel shader stage of the graphics pipeline.
 ID3D11Buffer* pVBuffer;										// The pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the vertex buffer.
 ID3D11Buffer* pIBuffer;										// The pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the index buffer.
 ID3D11Buffer* pCBuffer;										// The pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the constant buffer.
@@ -242,20 +242,32 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 
 	msg = { 0 };											// Set the entire structure holding window and thread messages to null.
 
-	// Create the infinite message loop and process the thread message queue, a FIFO queue consisting of window and thread messages.
-	// You create the message loop using the PeekMessage (or GetMessage), TranslateMessage and DispatchMessage functions.
-	// This loop breaks (is ended) when a WM_QUIT message (message = WM_QUIT) is posted to the thread message queue.
+	// Message Processing
+	//   All messages, both thread messages and window messages, are on the thread message queue.
+	//
+	// In the Win32 API, both thread messages and window messages are used for communication between the operating system and the program, or within the program itself.
+	//   Thread messages are retrieved from a specific thread message queue by the PeekMessage (or GetMessage) function in the infinite message loop.
+	//     Since they are not associated with a specific window, they are processed directly in the infinite message loop or dispatched to a handler function designed for thread messages.
+	//   Window messages are retrieved from a specific thread message queue by the PeekMessage (or GetMessage) function in the infinite message loop.
+	//     Since they are	  associated with a specific window, they are dispatched by the DispatchMessage function in the infinite message loop to the window procedure, WindowProc, associated with the specific window for processing.
+
+	// The Infinite Message Loop
+	//   All messages, both thread messages and window messages, are retrieved in the infinite message loop.
+	//
+	// Create the infinite message loop and retrieve and process window messages and thread messages from the thread message queue.
+	// You create the infinite message loop using the PeekMessage (or GetMessage), TranslateMessage and DispatchMessage functions.
+	// The infinite message loop breaks (is ended) when a WM_QUIT thread message is posted to the thread message queue and processed.
 	while(TRUE)
 	{
 		// PeekMessage function:
-		//   Checks (and dispatches) incoming nonqueued messages on the thread message queue for a posted window message (where the window belongs to the current thread) or a posted thread message (on the current thread).
-		//   Retrieves incoming sent messages.
+		//   Dispatches incoming nonqueued messages, checks the thread message queue for a posted message, and retrieves the message (if any exist).
 		// Unlike GetMessage, the PeekMessage function does not wait for a message to be posted before returning. This allows processing to continue between "peeking" at the thread message queue.
+		// The PeekMessage function retrieves both thread messages and window messages.
 		if (PeekMessage(&msg,								// A pointer to the MSG structure that holds window message and thread message information.
-					   NULL,								// A handle to the window whose messages are to be retrieved.
-															// If the handle is NULL, PeekMessage retrieves window messages for any window, and thread messages whose handle value is NULL (see the MSG structure).
-															// Therefore, if the handle is NULL, all window messages for any window on the current thread and some thread messages can be processed.
-															// If the handle is -1*, PeekMessage retrieves only thread messages whose handle value is NULL (see the MSG structure). *Use "PeekMessage(&msg, myHandle, ...)" with "HWND myHandle = (HWND)-1;"
+					   NULL,								// A handle to the window whose messages are to be retrieved. The window must belong to the current thread.
+															// If hWnd is NULL, PeekMessage retrieves messages for any window that belongs to the current thread, and any messages on the current thread's thread message queue whose hwnd value is NULL (see the MSG structure).
+															// Therefore if hWnd is NULL, both window messages and thread messages are processed.
+															// If hWnd is -1, PeekMessage retrieves only messages on the current thread's thread message queue whose hwnd value is NULL, that is, thread messages as posted by PostMessage (when the hWnd parameter is NULL) or PostThreadMessage.
 					   0,									// The value of the first message in the range of messages to be examined.
 					   0,									// The value of the last message in the range of messages to be examined.
 															// If the values of the first and last messages are both 0 then PeekMessage returns all available messages.
@@ -266,28 +278,24 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			// TranslateMessage function:
 			//   If your program must obtain character input from the user, include this function in the infinite message loop.
 			//     See https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues.
-			//   Translates a virtual-key message into a new character message (no translation, or new character message creation, occurs if there is no virtual-key message).
-			//   A virtual-key message is a message that the system posts to the thread message queue when a key is pressed or released.
-			//   The message contains a virtual-key code to identify which key was pressed or released, along with additional information such as whether the key is being held down.
+			//   Translates a virtual-key message, which is a window message, into a new character message (no translation, or new character message creation, occurs if there is no virtual-key message).
+			//   A virtual-key message is a window message that the system posts to the thread message queue when a key is pressed or released.
+			//   The virtual-key message contains a virtual-key code to identify which key was pressed or released, along with additional information such as whether the key is being held down.
 			//   The WM_KEYDOWN and WM_KEYUP messages are examples of virtual-key messages. These messages are sent to the window procedure, which can handle them to perform actions in response to key presses.
 			//
 			//   TranslateMessage does not modify the message pointed to by its first and only parameter. Instead, if translation occurs, it creates a new character message.
-			//   The new character message is posted as a new message to the calling thread message queue, to be read the next time the thread (in the infinite message loop) calls the PeekMessage (or GetMessage) function.
+			//   The new character message is posted as a new message to the thread message queue, to be retrieved by the next call to the PeekMessage (or GetMessage) function.
 			//   Therefore both the original virtual-key message (if any) and the new character message (if any) are retrieved by the PeekMessage (or GetMessage) function and dispatched by the DispatchMessage function.
 			TranslateMessage(&msg);							// A pointer to the MSG structure that holds window message and thread message information.
 
 			// DispatchMessage function:
-			//   Dispatches a message to the window procedure, i.e., the WindowProc function, which is the main message handler function for this program.
+			//   Dispatches a window message to the window procedure, i.e., the WindowProc function, which is the main message handler function for this program.
+			//   It is typically used to dispatch a window message retrieved by the PeekMessage (or GetMessage) function.
+			// The window procedure processes the window message and returns control back to DispatchMessage, which then returns control to the point where DispatchMessage was called, i.e., here in this program:
 			DispatchMessage(&msg);
 
-			// The WindowProc function returns here after being called by the DispatchMessage function.
-
-			// Check whether it's time to quit this program by breaking out of the infinite message loop, e.g., Has this program's window been closed manually by clicking its close button or by pressing the Escape key?
-			//
-			// If a WM_DESTROY message (message = WM_DESTROY) was dispatched to the WindowProc function, then:
-			// The PostQuitMessage function called from the WindowProc function has posted a WM_QUIT message (message = WM_QUIT) to the thread message queue.
-			// The WM_QUIT message is not associated with a window and therefore will never be received through a window procedure. It is only retrieved by the PeekMessage (or GetMessage) function.
-			// The WM_QUIT message is processed here.
+			// Check whether it's time to quit this program by breaking out of the infinite message loop, e.g., Has the user closed the window or pressed the Escape key?
+			// If a WM_DESTROY window message has been processed by the window procedure, i.e., the WindowProc function, then a WM_QUIT thread message has been posted to the thread message queue.
 			if (msg.message == WM_QUIT)
 				break;										// Break out of the infinite message loop.
 			// Stay in the infinite message loop.			// <-- Or not.
@@ -311,8 +319,8 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 }
 
 // WindowProc function: Definition
-//   This function is the window procedure, the main message handler for this program (see wc.lpfnWndProc = WindowProc). It handles both window messages and thread messages.
-//   It is application-defined.
+//   This function defines the window procedure, which is the main window message handler for this program (see wc.lpfnWndProc = WindowProc).
+//   Every window has an associated window procedure, which is a function that processes all window messages sent or posted to all windows of the class. All aspects of a window's appearance and behavior depend on the window procedure's response to these messages.
 //   There is one instance of this function for each window class.
 //   Its parameters are the elements of the MSG structure that defines "msg".
 //   CALLBACK is a Microsoft Windows data type used to define a function return value, in this case indicating the calling convention for callback functions. It expands to __stdcall.
@@ -321,67 +329,68 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 							WPARAM wParam,					// Additional data that pertains to the message. The exact meaning depends on the message.
 							LPARAM lParam)					// Additional data that pertains to the message. The exact meaning depends on the message.
 {
-	// Attempt to identify the current message on the thread message queue as WM_DESTROY and, if so identified, post a new WM_QUIT message to the thread message queue.
+	// Attempt to identify the current message on the thread message queue.
+	// This switch statement uses return statements to exit the WindowProc function when a message is identified, not the break statements normally used in a switch statement.
+	// In the context of a WindowProc function, it's common to see return statements instead of break statements in the switch clause. This is because the WindowProc function itself is expected to return a value: the result of its message processing.
 	switch(message)
 	{
 		case WM_DESTROY:
-		{
-			// WM_DESTROY message: (message = WM_DESTROY)
+			// The user closed the window      (messages =                             *WM_CLOSE* -> WM_DESTROY -> WM_QUIT), or
+			// The user pressed the Escape key (messages = WM_KEYDOWN -> *VK_ESCAPE* -> WM_CLOSE  -> WM_DESTROY -> WM_QUIT).
+			// In either case a WM_DESTROY message is sent to the thread message queue of the window being destroyed.
+			//
+			// WM_DESTROY message:
 			//   It is sent to the thread message queue of the window being destroyed after the window is removed from the screen.
-			//     This message is sent first for the window being destroyed and then for child windows (if any) as they are destroyed. During the processing of the message, it can be assumed that all child windows still exist.
+			//   This message is sent first for the window being destroyed and then for child windows (if any) as they are destroyed. During the processing of the message, it can be assumed that all child windows still exist.
+			//
 			// PostQuitMessage function:
 			//   Indicates to the operating system that a thread has made a request to terminate (quit). It is typically called in response to a WM_DESTROY message.
-			//   Posts a new WM_QUIT message (message = WM_QUIT) to the thread message queue and returns immediately, indicating to the operating system that the thread is requesting to quit at some time in the future.
-			//     The exit value returned to the operating system must be the wParam parameter value of the WM_QUIT message (here wParam = 0).
-			// When the thread retrieves the WM_QUIT message from its thread message queue, it should exit its message loop and return the exit value, and control, to the operating system.
-			PostQuitMessage(0);								// PostQuitMessage(x), where x is the wParam parameter value of the WM_QUIT message (here wParam = 0).
+			//   Posts a new WM_QUIT thread message to the thread message queue and returns immediately, indicating to the operating system that the thread is requesting to quit at some time in the future.
+			//     The WM_QUIT thread message is not associated with a window and therefore will never be received through a window's window procedure. It is retrieved only by the PeekMessage (or GetMessage) function, which in this program is in the infinite message loop.
+			//     Once the WM_QUIT thread message is retrieved and identified, the program breaks out of the infinite message loop and terminates.
+			//     Its parameter is an exit code used as the wParam parameter of the WM_QUIT thread message.
+			PostQuitMessage(0);								// PostQuitMessage(x), where x is an exit code used as the wParam parameter of the WM_QUIT thread message.
 			return 0;										// The WindowProc function returns 0.
-		}
 		case WM_KEYDOWN:
-			// WM_KEYDOWN message: message = WM_KEYDOWN
+			// The user pressed a key (message = *WM_KEYDOWN*).
+			// 
+			// WM_KEYDOWN message:
 			//   This message is sent to the thread message queue of the window with the keyboard focus when a non-system key is pressed.
 			//   A non-system key is a key that is pressed when the ALT key is not pressed.
-			switch (wParam)
+			switch (wParam)									// The virtual-key code of the non-system key.
 			{
 				case VK_ESCAPE:
-					// The virtual-key code of the non-system key is VK_ESCAPE, the Escape key.
+					// The user pressed the Escape key (messages = WM_KEYDOWN -> *VK_ESCAPE* -> WM_CLOSE -> WM_DESTROY -> WM_QUIT).
+					//
+					// VK_ESCAPE message:
+					//   The virtual-key code of the non-system key is VK_ESCAPE, the Escape key.
 					//
 					// PostMessage function:
-					//   Places (posts) a message in the thread message queue associated with the thread that created the specified window and returns without waiting for the thread to process the message.
-					//   Posts a WM_CLOSE message (message = WM_CLOSE) to the thread message queue of the window being closed.
-					//   WM_CLOSE is sent as a signal that a window or an application should terminate.
-					//   WM_CLOSE is received by a window through its WindowProc function.
-					//     By default, the WindowProc function's default window procedure, its DefWindowProc function, calls the DestroyWindow function to destroy the window.
-					//     The DestroyWindow function,
-					//     1. Sends WM_DESTROY and WM_NCDESTROY messages to the window to deactivate it and remove the keyboard focus from it.
-					//     2. Destroys the window's menu, flushes the thread message queue, destroys timers, removes clipboard ownership, and breaks the clipboard viewer chain (if the window is at the top of the viewer chain).
-					//     3. If the specified window is a parent or owner window, DestroyWindow automatically destroys the associated child or owned windows when it destroys the parent or owner window.
-					//        The function first destroys child or owned windows, and then it destroys the parent or owner window.
-					//     4. Destroys modeless dialog boxes created by the CreateDialog function.
+					//   Places (posts) a window message in the thread message queue associated with the thread that created the specified window and returns without waiting for the thread to process the message.
+					//   The form of the PostMessage function used here posts a WM_CLOSE message to the thread message queue of the window being closed.
+					//   WM_CLOSE is sent as a signal that a window or an program should terminate.
+					//   WM_CLOSE is received by a window through its window procedure, i.e., the WindowProc function.
+					//     By default, the window procedure's (the WindowProc function's) default window procedure (the DefWindowProc function) processes the WM_CLOSE message.
 					PostMessage(hWnd, WM_CLOSE, 0, 0);
-					break;/*
-				default:
-					// DefWindowProc function:
-					//   This function is the default window procedure, called to provide default processing for any window messages that a program does not otherwise explicitly process in its WindowProc function.
-					//   It is called with the same parameters received by the WindowProc function.
-					//   The return value is the result of the message processing and depends on the message.
-					// If the DefWindowProc function is not called then no window is displayed by this program (return 0 is not a sufficient alternative to the DefWindowProc function).
-					return DefWindowProc(hWnd,			// The HWND handle for the window.
-						message,						// The message.
-						wParam,							// Additional data that pertains to the message. The exact meaning depends on the message.
-						lParam);						// Additional data that pertains to the message. The exact meaning depends on the message.*/
+					return 0;								// The WindowProc function returns 0.
 			}
-			break;
 		default:
 			// DefWindowProc function:
-			//   This function is the default window procedure, called to provide default processing for any window messages that a program does not otherwise explicitly process in its WindowProc function.
+			//   This function is the default window procedure, called to provide default processing for any window messages that a program does not otherwise explicitly process in the window procedure, i.e., the WindowProc function.
 			//   It is called with the same parameters received by the WindowProc function.
 			//   The return value is the result of the message processing and depends on the message.
-			// If the DefWindowProc function is not called then no window is displayed by this program (return 0 is not a sufficient alternative to the DefWindowProc function).
-			return DefWindowProc(hWnd,			// The HWND handle for the window.
-				message,						// The message.
-				wParam,							// Additional data that pertains to the message. The exact meaning depends on the message.
-				lParam);						// Additional data that pertains to the message. The exact meaning depends on the message.
+			// If the DefWindowProc function should be called but is not, then no window is displayed by this program (return 0 is not a sufficient alternative to the DefWindowProc function).
+			// The DefWindowProc function processes the WM_CLOSE message by calling the DestroyWindow function to destroy the window. This is the default behavior: The DestroyWindow function is not coded in this program.
+			//   The DestroyWindow function,
+			//     1. Sends WM_DESTROY and WM_NCDESTROY window messages to the window to deactivate it and remove the keyboard focus from it.
+			//     2. Destroys the window's menu, flushes the thread message queue, destroys timers, removes clipboard ownership, and breaks the clipboard viewer chain (if the window is at the top of the viewer chain).
+			//     3. If the specified window is a parent or owner window, DestroyWindow automatically destroys the associated child or owned windows when it destroys the parent or owner window.
+			//        The function first destroys child or owned windows, and then it destroys the parent or owner window.
+			//     4. Destroys modeless dialog boxes created by the CreateDialog function.
+			return DefWindowProc(hWnd,						// The HWND handle for the window.
+				message,									// The message.
+				wParam,										// Additional data that pertains to the message. The exact meaning depends on the message.
+				lParam);									// Additional data that pertains to the message. The exact meaning depends on the message.
 	}
 
 	// End: WindowProc function
@@ -426,7 +435,7 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	scd.OutputWindow = hWnd;								// Assigned a value specifying the HWND handle for the window. This member must not be NULL.
 	scd.Windowed = TRUE;									// Assigned a Boolean value that specifies whether the output is in windowed mode. TRUE if the output is in windowed mode; otherwise, FALSE. "We recommend that you create a windowed swap chain and allow the end user to change the swap chain to full screen through IDXGISwapChain::SetFullscreenState."
 	// scd.SwapEffect										// Assigned a value that describes options for handling the contents of the presentation buffer after presenting a surface. A value of the DXGI_SWAP_EFFECT enumerated type.
-	scd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;		// Assigned a value that describes options for swap-chain behavior.															A value of the DXGI_SWAP_CHAIN_FLAG enumerated type, i.e., DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH: Enable an application to switch modes by calling IDXGISwapChain::ResizeTarget. When switching from windowed to full screen mode, the display mode (or monitor resolution) will be changed to match the dimensions of the application window. This allows switching to full screen via Alt-Enter.
+	scd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;		// Assigned a value that describes options for swap-chain behavior.															A value of the DXGI_SWAP_CHAIN_FLAG enumerated type, i.e., DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH: Enable an program to switch modes by calling IDXGISwapChain::ResizeTarget. When switching from windowed to full screen mode, the display mode (or monitor resolution) will be changed to match the dimensions of the program window. This allows switching to full screen via Alt-Enter.
 
 	// Create the Direct3D feature level enumeration used to describe the set of features targeted by the Direct3D device.
 	D3D_FEATURE_LEVEL pFeatureLevelsIn[] = {				// A pointer to an array of members selected from the enumerator-list defined in the D3D_FEATURE_LEVEL enumerated type.
@@ -872,7 +881,7 @@ int InitGraphics(void)
 	devcon->Map(pVBuffer,									// A pointer to the vertex buffer interface.
 		NULL,												// Index number of the subresource.
 		D3D11_MAP_WRITE_DISCARD,							// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
-		NULL,												// Flag that specifies how the CPU should respond when an application calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
+		NULL,												// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
 		&ms);												// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
 	memcpy(ms.pData, &OurVertices[0], bd.ByteWidth);		// Copy the vertex attributes from OurVertices to the vertex buffer.
 	// D3D11DeviceContext::Unmap member function:
@@ -906,7 +915,7 @@ int InitGraphics(void)
 	devcon->Map(pIBuffer,									// A pointer to the index buffer interface.
 		NULL,												// Index number of the subresource.
 		D3D11_MAP_WRITE_DISCARD,							// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
-		NULL,												// Flag that specifies how the CPU should respond when an application calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
+		NULL,												// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
 		&ms);												// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
 	memcpy(ms.pData, &OurIndices[0], bd.ByteWidth);			// Copy the index information from OurIndices to the index buffer.
 	// D3D11DeviceContext::Unmap member function:
