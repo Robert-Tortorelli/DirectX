@@ -373,6 +373,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					//     By default, the window procedure's (the WindowProc function's) default window procedure (the DefWindowProc function) processes the WM_CLOSE message.
 					PostMessage(hWnd, WM_CLOSE, 0, 0);
 					return 0;								// The WindowProc function returns 0.
+				default:
+					// The user pressed a key other than the Escape key  (messages = WM_KEYDOWN -> *return*).
+					return 0;
 			}
 		default:
 			// DefWindowProc function:
