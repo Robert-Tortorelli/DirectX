@@ -335,8 +335,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 	switch(message)
 	{
 		case WM_DESTROY:
-			// The user closed the window      (messages =                             *WM_CLOSE* -> WM_DESTROY -> WM_QUIT), or
-			// The user pressed the Escape key (messages = WM_KEYDOWN -> *VK_ESCAPE* -> WM_CLOSE  -> WM_DESTROY -> WM_QUIT).
+			// The user closed the window      (messages =                            WM_CLOSE  -> *WM_DESTROY* -> WM_QUIT), or
+			// The user pressed the Escape key (messages = WM_KEYDOWN -> VK_ESCAPE -> WM_CLOSE  -> *WM_DESTROY* -> WM_QUIT).
 			// In either case a WM_DESTROY message is sent to the thread message queue of the window being destroyed.
 			//
 			// WM_DESTROY message:
@@ -374,7 +374,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					PostMessage(hWnd, WM_CLOSE, 0, 0);
 					return 0;								// The WindowProc function returns 0.
 				default:
-					// The user pressed a key other than the Escape key  (messages = WM_KEYDOWN -> *return*).
+					// The user pressed a key other than the Escape key (messages = *WM_KEYDOWN* -> return).
 					return 0;
 			}
 		default:
