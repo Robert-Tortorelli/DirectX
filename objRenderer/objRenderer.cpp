@@ -17,6 +17,11 @@
 // All variables and functions coded in HLSL (.hlsl files) are stored in GPU memory.
 // All variables and functions coded in C++ (.cpp files) are stored in CPU memory.
 // 
+// User Interface
+// Pressing the 'A' ('a') key terminates the program regardless of whether the program has the focus.
+// Pressing the Escape	  key terminates the program only if			   the program has the focus.
+// The mouse cursor position is used to rotate the second (top) instance of the object regardless of whether the program has the focus.
+//
 // Return codes
 // RC 0: All functions:		 Normal
 // RC 1: objReader function: Abnormal: Error opening the Wavefront .obj file.
@@ -154,6 +159,12 @@ struct {
 
 // End: DirectX Global Declarations.
 
+// Other Global Declarations.
+POINT CursorPos;											// A structure containing the current x- and y-coordinates of the mouse cursor, in screen coordinates.
+float CursorMov;											// A representation of mouse cursor movement.
+
+// End: Other Global Declarations.
+
 // End: Global Declarations.
 
 //***
@@ -183,7 +194,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 	wc.style = CS_HREDRAW | CS_VREDRAW;						// Assigned a value specifying Class Style(s), in any combination:
 															// CS_HREDRAW Redraws the entire window if a movement or size adjustment changes the width of the client area.
 															// CS_VREDRAW Redraws the entire window if a movement or size adjustment changes the height of the client area.
-	wc.lpfnWndProc = WindowProc;							// Assigned a value specifying a pointer to the window procedure, i.e., the WindowProc function, which is the main message handler function for this program (The WindowProc function is not called here because WindowProc, not WindowProc(), is assigned to wc.lpfnWndProc).
+	wc.lpfnWndProc = WindowProc;							// Assigned a value specifying a pointer to the window procedure, i.e., the WindowProc function, which is the main window message handler function for this program (The WindowProc function is not called here because WindowProc, not WindowProc(), is assigned to wc.lpfnWndProc).
 	wc.hInstance = hInstance;								// Assigned a value specifying the "handle to an instance" or "handle to a module" (WinMain) that contains the window procedure for the class.
 	wc.hCursor =											// Assigned a value specifying a handle to the class cursor, a cursor resource.
 		LoadCursor(NULL, IDC_CROSS);						// The LoadCursor function loads the specified cursor:
@@ -242,31 +253,49 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 
 	msg = { 0 };											// Set the entire structure holding window and thread messages to null.
 
-	// Message Processing
-	//   All messages, both thread messages and window messages, are on the thread message queue.
+	// Keyboard Input Processing (This section of comments is also in OneNote with additional information)
+	// Key input processing types:
+	//   Non-message-driven key state checks: Checking the current state of a specific key in real-time with the GetAsyncKeyState function.
+	//     For interactive programs that need to continuously monitor key states, such as games or programs that implement custom key shortcuts, non-message-driven checks are often more appropriate.
+	//     + Continuous State Monitoring: Allows the program to continuously check the state of a key, making it suitable for scenarios where the state (pressed or not pressed) matters more than the event (key press/release).
+	//     + Immediate State Access:	  Provides immediate access to the key state without waiting for a message to be processed in the infinite message loop.
+	//     - Polling:					  Requires the program to continuously check the state of a key, which can be inefficient.
+	//     - Lack of Context:			  Does not inherently provide context about other key states or events happening concurrently.
+	//   These checks can be implemented using the GetAsyncKeyState function, especially within the context of a Windows desktop application using DirectX.
+	//   The GetAsyncKeyState function determines whether a key is up or down at the time the function is called.
+	//   *It determines this regardless of whether the program has the focus.
+	//    This can cause undesirable behavior. It is also a potential security issue as keyboard input intended for other programs can be intercepted.
+	//   *To programmatically determine whether the program has the focus, use the GetForegroundWindow function.
 	//
-	// In the Win32 API, both thread messages and window messages are used for communication between the operating system and the program, or within the program itself.
-	//   Thread messages are retrieved from a specific thread message queue by the PeekMessage (or GetMessage) function in the infinite message loop.
-	//     Since they are not associated with a specific window, they are processed directly in the infinite message loop or dispatched to a handler function designed for thread messages.
-	//   Window messages are retrieved from a specific thread message queue by the PeekMessage (or GetMessage) function in the infinite message loop.
-	//     Since they are	  associated with a specific window, they are dispatched by the DispatchMessage function in the infinite message loop to the window procedure, WindowProc, associated with the specific window for processing.
+	//   Message-driven		key state checks: Checking the Thread Message Queue in the infinite message loop and, for window messages, the window procedure, WindowProc.
+	//     For interactive programs that respond to discrete key events, message-driven checks are often more appropriate.
+	//     + Contextual:				  Actions can be context-sensitive, as the program can check the state of other keys (e.g., modifier keys) when processing an event.
+	//     + Efficient:					  It is event-driven, so it only processes key events when they occur, which can be more efficient than continuous state monitoring.
+	//     - Potentially Missed States:   If the program is busy or not processing messages quickly enough, it might miss rapid key state changes.
+	//   Thread messages and window messages are on the thread message queue.
+	//   In the Win32 API, both thread messages and window messages are used for communication between the operating system and the program, or within the program itself.
+	//     Thread messages are retrieved from a specific thread message queue by the PeekMessage (or GetMessage) function in the infinite message loop.
+	//       Since they are not associated with a specific window, they are processed directly in the infinite message loop or dispatched to a handler function designed for thread messages.
+	//     Window messages are retrieved from a specific thread message queue by the PeekMessage (or GetMessage) function in the infinite message loop.
+	//       Since they are		associated with a specific window, they are dispatched by the DispatchMessage function in the infinite message loop to the window procedure, WindowProc, associated with the specific window for processing.
+	//   *Message-driven	key state checks are performed when the program has focus.
 
 	// The Infinite Message Loop
 	//   All messages, both thread messages and window messages, are retrieved in the infinite message loop.
 	//
-	// Create the infinite message loop and retrieve and process window messages and thread messages from the thread message queue.
+	// Create the infinite message loop and retrieve and process thread messages and window messages from the thread message queue.
 	// You create the infinite message loop using the PeekMessage (or GetMessage), TranslateMessage and DispatchMessage functions.
 	// The infinite message loop breaks (is ended) when a WM_QUIT thread message is posted to the thread message queue and processed.
 	while(TRUE)
 	{
 		// PeekMessage function:
 		//   Dispatches incoming nonqueued messages, checks the thread message queue for a posted message, and retrieves the message (if any exist).
-		// Unlike GetMessage, the PeekMessage function does not wait for a message to be posted before returning. This allows processing to continue between "peeking" at the thread message queue.
-		// The PeekMessage function retrieves both thread messages and window messages.
+		//   Unlike GetMessage, the PeekMessage function does not wait for a message to be posted before returning. This allows processing to continue between "peeking" at the thread message queue.
+		//   The PeekMessage function retrieves both thread messages and window messages.
 		if (PeekMessage(&msg,								// A pointer to the MSG structure that holds window message and thread message information.
 					   NULL,								// A handle to the window whose messages are to be retrieved. The window must belong to the current thread.
 															// If hWnd is NULL, PeekMessage retrieves messages for any window that belongs to the current thread, and any messages on the current thread's thread message queue whose hwnd value is NULL (see the MSG structure).
-															// Therefore if hWnd is NULL, both window messages and thread messages are processed.
+															// Therefore if hWnd is NULL, both thread messages and window messages are processed.
 															// If hWnd is -1, PeekMessage retrieves only messages on the current thread's thread message queue whose hwnd value is NULL, that is, thread messages as posted by PostMessage (when the hWnd parameter is NULL) or PostThreadMessage.
 					   0,									// The value of the first message in the range of messages to be examined.
 					   0,									// The value of the last message in the range of messages to be examined.
@@ -281,17 +310,17 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			//   Translates a virtual-key message, which is a window message, into a new character message (no translation, or new character message creation, occurs if there is no virtual-key message).
 			//   A virtual-key message is a window message that the system posts to the thread message queue when a key is pressed or released.
 			//   The virtual-key message contains a virtual-key code to identify which key was pressed or released, along with additional information such as whether the key is being held down.
-			//   The WM_KEYDOWN and WM_KEYUP messages are examples of virtual-key messages. These messages are sent to the window procedure, which can handle them to perform actions in response to key presses.
+			//   The WM_KEYDOWN and WM_KEYUP messages are examples of virtual-key messages. These window messages are sent to the window procedure, which can handle them to perform actions in response to key presses.
 			//
-			//   TranslateMessage does not modify the message pointed to by its first and only parameter. Instead, if translation occurs, it creates a new character message.
-			//   The new character message is posted as a new message to the thread message queue, to be retrieved by the next call to the PeekMessage (or GetMessage) function.
+			//   TranslateMessage does not modify the window message pointed to by its first and only parameter. Instead, if translation occurs, it creates a new character message.
+			//   The new character message is posted as a new window message to the thread message queue, to be retrieved by the next call to the PeekMessage (or GetMessage) function.
 			//   Therefore both the original virtual-key message (if any) and the new character message (if any) are retrieved by the PeekMessage (or GetMessage) function and dispatched by the DispatchMessage function.
 			TranslateMessage(&msg);							// A pointer to the MSG structure that holds window message and thread message information.
 
 			// DispatchMessage function:
-			//   Dispatches a window message to the window procedure, i.e., the WindowProc function, which is the main message handler function for this program.
+			//   Dispatches a window message to the window procedure, i.e., the WindowProc function, which is the main window message handler function for this program.
 			//   It is typically used to dispatch a window message retrieved by the PeekMessage (or GetMessage) function.
-			// The window procedure processes the window message and returns control back to DispatchMessage, which then returns control to the point where DispatchMessage was called, i.e., here in this program:
+			//   The window procedure processes the window message and returns control back to DispatchMessage, which then returns control to the point where DispatchMessage was called, i.e., here in this program:
 			DispatchMessage(&msg);
 
 			// Check whether it's time to quit this program by breaking out of the infinite message loop, e.g., Has the user closed the window or pressed the Escape key?
@@ -306,6 +335,24 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 
 			// Execute the graphics generating code.
 			RenderFrame();									// This function renders a single frame.
+
+			// Check whether the user pressed the 'A' ('a') key ('A' ('a') key pressed -> window messages = WM_CLOSE -> WM_DESTROY -> WM_QUIT)
+			// GetAsyncKeyState function:
+			//   Determines whether a key is up or down at the time the function is called.
+			//   *It determines this regardless of whether the program has the focus.
+			//    This can cause undesirable behavior. It is also a potential security issue as keyboard input intended for other programs can be intercepted.
+			//   *To programmatically determine whether the program has the focus, use the GetForegroundWindow function.
+			if (GetAsyncKeyState(0x41) & 0x8000)			// Is the 'A' ('a') key is pressed?
+				PostMessage(hWnd, WM_CLOSE, 0, 0);			// Post a WM_CLOSE window message to the thread message queue of the window to be closed. The default window procedure, the DefWindowProc function, processes the WM_CLOSE window message.
+
+			// Retrieve the position of the mouse cursor.
+			// GetCursorPos function:
+			//   Retrieves the position of the mouse cursor, in screen coordinates.
+			//   *It determines this regardless of whether the program has the focus.
+			GetCursorPos(&CursorPos);
+			// Calculate the value of variable CursorMov, a representation of mouse cursor movement used in the subsequent calculation of Angel2, an angle of rotation around the y-axis that affects object rendering.
+			// Variable CursorMov represents mouse cursor movement based on the x-position of the mouse cursor, the native screen resolution / 2, and a constant that reduces its affect.
+			CursorMov = (CursorPos.x - 2560) * 0.00001f;
 		}
 	}
 
@@ -315,33 +362,33 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 	CleanD3D();
 
 	// End: WinMain function
-	return msg.wParam;										// The exit value returned to the operating system must be the wParam parameter value of the WM_QUIT message (see PostQuitMessage).
+	return msg.wParam;										// The exit value returned to the operating system must be the wParam parameter value of the WM_QUIT thread message (see PostQuitMessage).
 }
 
 // WindowProc function: Definition
 //   This function defines the window procedure, which is the main window message handler for this program (see wc.lpfnWndProc = WindowProc).
-//   Every window has an associated window procedure, which is a function that processes all window messages sent or posted to all windows of the class. All aspects of a window's appearance and behavior depend on the window procedure's response to these messages.
+//   Every window has an associated window procedure, which is a function that processes all window messages sent or posted to all windows of the class. All aspects of a window's appearance and behavior depend on the window procedure's response to these window messages.
 //   There is one instance of this function for each window class.
 //   Its parameters are the elements of the MSG structure that defines "msg".
 //   CALLBACK is a Microsoft Windows data type used to define a function return value, in this case indicating the calling convention for callback functions. It expands to __stdcall.
 LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
-							UINT message,					// The message, e.g., the WM_DESTROY message indicates the window is destroyed.
-							WPARAM wParam,					// Additional data that pertains to the message. The exact meaning depends on the message.
-							LPARAM lParam)					// Additional data that pertains to the message. The exact meaning depends on the message.
+							UINT message,					// The window message, e.g., the WM_DESTROY window message indicates the window is destroyed.
+							WPARAM wParam,					// Additional data that pertains to the window message. The exact meaning depends on the window message.
+							LPARAM lParam)					// Additional data that pertains to the window message. The exact meaning depends on the window message.
 {
-	// Attempt to identify the current message on the thread message queue.
-	// This switch statement uses return statements to exit the WindowProc function when a message is identified, not the break statements normally used in a switch statement.
-	// In the context of a WindowProc function, it's common to see return statements instead of break statements in the switch clause. This is because the WindowProc function itself is expected to return a value: the result of its message processing.
+	// Attempt to identify the current window message on the thread message queue.
+	// This switch statement uses return statements to exit the WindowProc function when a window message is identified, not the break statements normally used in a switch statement.
+	// In the context of a WindowProc function, it's common to see return statements instead of break statements in the switch clause. This is because the WindowProc function itself is expected to return a value: the result of its window message processing.
 	switch(message)
 	{
 		case WM_DESTROY:
-			// The user closed the window      (messages =                            WM_CLOSE  -> *WM_DESTROY* -> WM_QUIT), or
-			// The user pressed the Escape key (messages = WM_KEYDOWN -> VK_ESCAPE -> WM_CLOSE  -> *WM_DESTROY* -> WM_QUIT).
-			// In either case a WM_DESTROY message is sent to the thread message queue of the window being destroyed.
+			// The user closed the window      (window messages =                            WM_CLOSE -> *WM_DESTROY* -> WM_QUIT), or
+			// The user pressed the Escape key (window messages = WM_KEYDOWN -> VK_ESCAPE -> WM_CLOSE -> *WM_DESTROY* -> WM_QUIT).
+			// In either case a WM_DESTROY window message is sent to the thread message queue of the window being destroyed.
 			//
-			// WM_DESTROY message:
+			// WM_DESTROY window message:
 			//   It is sent to the thread message queue of the window being destroyed after the window is removed from the screen.
-			//   This message is sent first for the window being destroyed and then for child windows (if any) as they are destroyed. During the processing of the message, it can be assumed that all child windows still exist.
+			//   This window message is sent first for the window being destroyed and then for child windows (if any) as they are destroyed. During the processing of the window message, it can be assumed that all child windows still exist.
 			//
 			// PostQuitMessage function:
 			//   Indicates to the operating system that a thread has made a request to terminate (quit). It is typically called in response to a WM_DESTROY message.
@@ -352,38 +399,38 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			PostQuitMessage(0);								// PostQuitMessage(x), where x is an exit code used as the wParam parameter of the WM_QUIT thread message.
 			return 0;										// The WindowProc function returns 0.
 		case WM_KEYDOWN:
-			// The user pressed a key (message = *WM_KEYDOWN*).
+			// The user pressed a key (window message = *WM_KEYDOWN*).
 			// 
-			// WM_KEYDOWN message:
-			//   This message is sent to the thread message queue of the window with the keyboard focus when a non-system key is pressed.
+			// WM_KEYDOWN window message:
+			//   This window message is sent to the thread message queue of the window with the keyboard focus when a non-system key is pressed.
 			//   A non-system key is a key that is pressed when the ALT key is not pressed.
 			switch (wParam)									// The virtual-key code of the non-system key.
 			{
 				case VK_ESCAPE:
-					// The user pressed the Escape key (messages = WM_KEYDOWN -> *VK_ESCAPE* -> WM_CLOSE -> WM_DESTROY -> WM_QUIT).
+					// The user pressed the Escape key (window messages = WM_KEYDOWN -> *VK_ESCAPE* -> WM_CLOSE -> WM_DESTROY -> WM_QUIT).
 					//
-					// VK_ESCAPE message:
+					// VK_ESCAPE window message:
 					//   The virtual-key code of the non-system key is VK_ESCAPE, the Escape key.
 					//
 					// PostMessage function:
-					//   Places (posts) a window message in the thread message queue associated with the thread that created the specified window and returns without waiting for the thread to process the message.
-					//   The form of the PostMessage function used here posts a WM_CLOSE message to the thread message queue of the window being closed.
+					//   Places (posts) a window message in the thread message queue associated with the thread that created the specified window and returns without waiting for the thread to process the window message.
+					//   The form of the PostMessage function used here posts a WM_CLOSE window message to the thread message queue of the window being closed.
 					//   WM_CLOSE is sent as a signal that a window or an program should terminate.
 					//   WM_CLOSE is received by a window through its window procedure, i.e., the WindowProc function.
-					//     By default, the window procedure's (the WindowProc function's) default window procedure (the DefWindowProc function) processes the WM_CLOSE message.
+					//     By default, the window procedure's (the WindowProc function's) default window procedure (the DefWindowProc function) processes the WM_CLOSE window message.
 					PostMessage(hWnd, WM_CLOSE, 0, 0);
 					return 0;								// The WindowProc function returns 0.
 				default:
-					// The user pressed a key other than the Escape key (messages = *WM_KEYDOWN* -> return).
+					// The user pressed a key other than the Escape key (window messages = *WM_KEYDOWN* -> return).
 					return 0;
 			}
 		default:
 			// DefWindowProc function:
 			//   This function is the default window procedure, called to provide default processing for any window messages that a program does not otherwise explicitly process in the window procedure, i.e., the WindowProc function.
 			//   It is called with the same parameters received by the WindowProc function.
-			//   The return value is the result of the message processing and depends on the message.
+			//   The return value is the result of the window message processing and depends on the window message.
 			// If the DefWindowProc function should be called but is not, then no window is displayed by this program (return 0 is not a sufficient alternative to the DefWindowProc function).
-			// The DefWindowProc function processes the WM_CLOSE message by calling the DestroyWindow function to destroy the window. This is the default behavior: The DestroyWindow function is not coded in this program.
+			// The DefWindowProc function processes the WM_CLOSE window message by calling the DestroyWindow function to destroy the window. This is the default behavior: The DestroyWindow function is not coded in this program.
 			//   The DestroyWindow function,
 			//     1. Sends WM_DESTROY and WM_NCDESTROY window messages to the window to deactivate it and remove the keyboard focus from it.
 			//     2. Destroys the window's menu, flushes the thread message queue, destroys timers, removes clipboard ownership, and breaks the clipboard viewer chain (if the window is at the top of the viewer chain).
@@ -391,9 +438,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			//        The function first destroys child or owned windows, and then it destroys the parent or owner window.
 			//     4. Destroys modeless dialog boxes created by the CreateDialog function.
 			return DefWindowProc(hWnd,						// The HWND handle for the window.
-				message,									// The message.
-				wParam,										// Additional data that pertains to the message. The exact meaning depends on the message.
-				lParam);									// Additional data that pertains to the message. The exact meaning depends on the message.
+				message,									// The window message.
+				wParam,										// Additional data that pertains to the window message. The exact meaning depends on the window message.
+				lParam);									// Additional data that pertains to the window message. The exact meaning depends on the window message.
 	}
 
 	// End: WindowProc function
@@ -1190,8 +1237,9 @@ void RenderFrame(void)
 	//   Builds a translation matrix from the specified offsets.
 	// Translate the second instance of the object in a positive direction along the y-axis.
 	XMMATRIX matTranslateY = XMMatrixTranslation(0.0f, 3.0f, 0.0f);
-	// Rotate the second instance of the object counterclockwise.
-	static float Angle2 = 0.0f; Angle2 -= 0.001f;			// Angle2 must be declared static so that its value is preserved though multiple calls of the function that contains it. This supports incremental frame by frame changes to the rendered object.
+	// Calculate variable Angle2 as a function of mouse cursor movement, as represented by variable CursorMov.
+	static float Angle2 = 0.0f;								// Angle2 must be declared static so that its value is preserved though multiple calls of the function that uses it. This supports incremental frame by frame changes to the rendered object.
+	Angle2 += CursorMov * 0.01f;							// Multiplying by 0.01f further reduces the rate of rotation of the object.
 	matRotateY = XMMatrixRotationY(Angle2);					// Angle of rotation around the y-axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
 	ConstantBuffer.matRotate = matRotateY;					// The final rotation matrix is the product of all defined rotation matrices.				Here, only matRotateY is defined.
 	matWorld = matTranslateY * ConstantBuffer.matRotate;	// The world transformation is a function of translation (movement), rotation, and scaling. Here, only translation and rotation are used.
