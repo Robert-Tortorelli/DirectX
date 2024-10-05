@@ -3,29 +3,31 @@
 //
 // Description
 // The project objRenderer parses a single 3D object's description from a Wavefront .obj file, and renders that object one or more times.
+// This program, objRenderer, renders the object.
+// This program is a C++ Windows Desktop program using the Windows (Win32) API and the DirectX 11 API.
+// All variables and functions coded in HLSL (.hlsl files) are stored in GPU memory.
+// All variables and functions coded in C++ (.cpp files) are stored in CPU memory.
+//
 // Implemented:
 // - Object geometry
 // - Light
 // - Texture
+// - User Interface
+//	 Pressing the 'A' ('a') key terminates the program regardless of whether the program has the focus.
+//	 Pressing the Escape	  key terminates the program only if			   the program has the focus.
+//	 The mouse cursor position is used to rotate the second (top) instance of the object regardless of whether the program has the focus.
+// - Return values
+//	 RC 0: All functions:	   Normal
+//	 RC 1: objReader function: Abnormal: Error opening the Wavefront .obj file.
+//	 RC 2: objReader function: Abnormal: Error in		 the Wavefront .obj file: Required vertex attributes are missing.
+//	 In addition, while debugging this program some function return values may be checked and returned unchanged if the function fails. Such checks usually use if statements with an initializer.
+//	 These checks are not included in the return value list above because they are not intended to be part of the final program.
+//
 // Change Log:
 // - Version 3.2 XXXXX XX, 202X
-//   Added support in X for X.
-//
-// This program, objRenderer, renders the object.
-// This program is a C++ Windows Desktop program using the Windows (Win32) API and the DirectX 11 API.
-//
-// All variables and functions coded in HLSL (.hlsl files) are stored in GPU memory.
-// All variables and functions coded in C++ (.cpp files) are stored in CPU memory.
-// 
-// User Interface
-// Pressing the 'A' ('a') key terminates the program regardless of whether the program has the focus.
-// Pressing the Escape	  key terminates the program only if			   the program has the focus.
-// The mouse cursor position is used to rotate the second (top) instance of the object regardless of whether the program has the focus.
-//
-// Return codes
-// RC 0: All functions:		 Normal
-// RC 1: objReader function: Abnormal: Error opening the Wavefront .obj file.
-// RC 2: objReader function: Abnormal: Error in		 the Wavefront .obj file: Required vertex attributes are missing.
+//	 1. Example User Interface:
+//		Keyboard input and mouse cursor movement
+//	 2. DirectX 2D and DirectWrite Initialization
 //
 // Authorship
 // This program is based on "DirectX 11 Win32 Desktop: Direct3D: Moving to 3D: Lesson 3: Simple Modeling" and earlier lessons by Chris Hanson (http://DirectXTutorial.com).
@@ -65,6 +67,8 @@ void InitPipeline(void);
 int InitGraphics(void);
 void RenderFrame(void);
 void CleanD3D(void);
+//*HERE* Test 4
+void InitMenu(HWND hWnd);
 
 // Note:
 // DirectX member functions associated with a stage of the graphics pipeline usually have names prefixed with two capital letters identifying the related stage, e.g., the OMSetRenderTargets member function is related to the output-merger stage of the graphics pipeline.
@@ -99,37 +103,65 @@ void CleanD3D(void);
 #include <d3dcompiler.h>									// Needed by D3DCompileFromFile, which compiles shaders.
 #include <wictextureloader.h>								// DirectXTK library module WICTextureLoader is a Direct3D 2D texture loader using Windows Imaging Component to load, resize, and format convert a supported bitmap and then create a 2D texture from it.
 
+// Direct2D Header File.
+#include <d2d1.h>
+
+// DirectWrite Header File.
+#include <dwrite.h>
+
+//#include <memory>											//*HERE* Test 3// Defines a class, an operator, and several templates that help allocate and free objects. Add this include for std::unique_ptr
+//#include <SpriteBatch.h>									//*HERE* Test 3// Used to render 2D sprites. Add this include for DirectXTK's (DirectX Tool Kit's) SpriteBatch class.
+//#include <SpriteFont.h>									//*HERE* Test 3// Used to render text. Add this include for DirectXTK's (DirectX Tool Kit's) SpriteFont class.
+
+#include "resource.h"										// Test 4 Microsoft Visual C++ generated include file used by resource.rc.
+
+//#include <string>											// Test 3
+
 // Using Declarations and Directives.
 // Using declarations such as using std::string;   bring one identifier	 in the named namespace into scope.
 // Using directives	  such as using namespace std; bring all identifiers in the named namespace into scope.
 // Using declarations are preferred to using directives.
 // Using declarations and directives must appear after their respective header file includes.
-using namespace DirectX;
+using namespace DirectX;									// The DirectX namespace is used to access the DirectX Direct3D and DirectXMath APIs.
+using namespace D2D1;										// The D2D1	   namespace is used to access the DirectX Direct2D API.
+//using namespace std;										//*HERE* Test 3// The std	   namespace is used to access the C++ Standard Library.
+
+//wstring inputText;											// Test 3
 
 // Defines.
 // Define the screen resolution of the client area.
 #define SCREEN_WIDTH  800									// Visual Studio recommends converting macros to expressions: constexpr auto SCREEN_WIDTH = 800;
 #define SCREEN_HEIGHT 600									// Visual Studio recommends converting macros to expressions: constexpr auto SCREEN_HEIGHT = 600;
 
-// DirectX Global Interface Declarations.
-IDXGISwapChain* swapchain;									// The pointer to the swap chain interface.			The swap chain interface implements one or more surfaces (image-data objects) for storing rendered data before presenting it to an output. It is the series of buffer resources (front buffer, back buffers) which take turns being rendered on.
-ID3D11Device* dev;											// The pointer to the device interface.				A device is the virtual representation of the computer's display adapter. It is used to access video memory and create other Direct3D COM objects, such as graphics and special effects.
-ID3D11DeviceContext* devcon;								// The pointer to the device context interface.		A device context is responsible for managing the graphics pipeline. It control the rendering sequence and the process that translates 3D models into the final 2D image that appears on the screen.
+// DirectX Global Interface Declarations: Direct3D
+IDXGISwapChain* swapchain = nullptr;						// Pointer to the swap chain interface.			The swap chain interface implements one or more surfaces (image-data objects) for storing rendered data before presenting it to an output. It is the series of buffer resources (front buffer, back buffers) which take turns being rendered on.
+ID3D11Device* dev = nullptr;								// Pointer to the device interface.				A device is the virtual representation of the computer's display adapter. It is used to access video memory and create other Direct3D COM objects, such as graphics and special effects.
+ID3D11DeviceContext* devcon = nullptr;						// Pointer to the device context interface.		A device context is responsible for managing the graphics pipeline. It control the rendering sequence and the process that translates 3D models into the final 2D image that appears on the screen.
 
-ID3D11Texture2D* pDepthBuffer;								// The pointer to a 2D texture interface.			A 2D texture interface manages texel data, which is structured memory. In this case the 2D texture that serves as the depth-stencil surface.
-ID3D11DepthStencilView* depthbuffer;						// The pointer to the depth-stencil view interface.	A depth-stencil view interface accesses a texture resource (via the depth-stencil surface interface, pDepthBuffer) during depth-stencil testing. The stencil buffer typically shares the same memory space as the depth buffer (z-buffer). The depth-stencil view interface created by this program will only interpret the depth-stencil surface as a depth buffer (z-buffer) rather than a depth-stencil buffer.
+ID3D11Texture2D* pDepthBuffer = nullptr;					// Pointer to a 2D texture interface.			A 2D texture interface manages texel data, which is structured memory. In this case the 2D texture that serves as the depth-stencil surface.
+ID3D11DepthStencilView* depthbuffer = nullptr;				// Pointer to the depth-stencil view interface.	A depth-stencil view interface accesses a texture resource (via the depth-stencil surface interface, pDepthBuffer) during depth-stencil testing. The stencil buffer typically shares the same memory space as the depth buffer (z-buffer). The depth-stencil view interface created by this program will only interpret the depth-stencil surface as a depth buffer (z-buffer) rather than a depth-stencil buffer.
 
-ID3D11Texture2D* pBackBuffer;								// The pointer to a 2D texture interface.			A 2D texture interface manages texel data, which is structured memory. In this case for the back buffer interface.
-ID3D11RenderTargetView* backbuffer;							// The pointer to the render target view interface. A render target view interface identifies the render target subresources (pBackBuffer) that can be accessed during rendering, in this case the back buffer.
+ID3D11Texture2D* pBackBuffer = nullptr;						// Pointer to a 2D texture interface.			A 2D texture interface manages texel data, which is structured memory. In this case for the back buffer interface.
+ID3D11RenderTargetView* backbuffer = nullptr;				// Pointer to the render target view interface. A render target view interface identifies the render target subresources (pBackBuffer) that can be accessed during rendering, in this case the back buffer.
 
-ID3D11InputLayout* pLayout;									// The pointer to the input-layout interface.		An input-layout interface holds a definition of how to feed vertex data that is laid out in memory into the input-assembler stage of the graphics pipeline.
-ID3D11VertexShader* pVS;									// The pointer to the vertex shader interface.		A vertex shader interface manages an executable program (a vertex shader) that controls the vertex shader stage of the graphics pipeline.
-ID3D11PixelShader* pPS;										// The pointer to the pixel shader interface.		A pixel  shader interface manages an executable program (a pixel shader)  that controls the pixel shader stage of the graphics pipeline.
-ID3D11Buffer* pVBuffer;										// The pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the vertex buffer.
-ID3D11Buffer* pIBuffer;										// The pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the index buffer.
-ID3D11Buffer* pCBuffer;										// The pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the constant buffer.
+ID3D11InputLayout* pLayout = nullptr;						// Pointer to the input-layout interface.		An input-layout interface holds a definition of how to feed vertex data that is laid out in memory into the input-assembler stage of the graphics pipeline.
+ID3D11VertexShader* pVS = nullptr;							// Pointer to the vertex shader interface.		A vertex shader interface manages an executable program (a vertex shader) that controls the vertex shader stage of the graphics pipeline.
+ID3D11PixelShader* pPS = nullptr;							// Pointer to the pixel shader interface.		A pixel  shader interface manages an executable program (a pixel shader)  that controls the pixel shader stage of the graphics pipeline.
+ID3D11Buffer* pVBuffer = nullptr;							// Pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the vertex buffer.
+ID3D11Buffer* pIBuffer = nullptr;							// Pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the index buffer.
+ID3D11Buffer* pCBuffer = nullptr;							// Pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the constant buffer.
 
-ID3D11ShaderResourceView* pTextureView;						// The pointer to a shader resource view interface.	A shader resource view interface specifies the subresource a shader can access during rendering. In this case the texture image.
+ID3D11ShaderResourceView* pTextureView = nullptr;			// Pointer to a shader resource view interface.	A shader resource view interface specifies the subresource a shader can access during rendering. In this case the texture image.
+
+// DirectX Global Interface Declarations: Direct2D
+ID2D1Factory* pD2DFactory = nullptr;						// Pointer to a factory interface.				The ID2D1Factory interface is the starting point for using Direct2D; it's what you use to create other Direct2D resources that you can use to draw or describe shapes.
+IDXGISurface* pDxgiSurface = nullptr;						// Pointer to a surface interface.				The IDXGISurface interface implements methods for image-data objects. An image-data object is a 2D section of memory, commonly called a surface.
+ID2D1RenderTarget* pD2DRenderTarget = nullptr;				// Pointer to a render target interface.		The ID2D1RenderTarget interface represents a target that can receive drawing commands. It is used to draw 2D graphics.
+ID2D1SolidColorBrush* pBrush = nullptr;						// Pointer to a solid color brush interface.	The ID2D1SolidColorBrush interface is used to paint areas with a solid color.
+
+// DirectX Global Interface Declarations: DirectWrite
+IDWriteFactory* pDWriteFactory = nullptr;					// Pointer to a factory interface.				The IDWriteFactory interface is the starting point for using DirectWrite. It is used to create other DirectWrite resources that you can use to draw text.
+IDWriteTextFormat* pTextFormat = nullptr;					// Pointer to a text format interface.			The IDWriteTextFormat interface specifies the font, size, and other text formatting information for text layout.
 
 // Declare the C++ constant buffer structure used to assign values to the HLSL constant buffer structure.
 // This structure represents a constant buffer used in the graphics rendering pipeline.
@@ -186,8 +218,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 	MSG msg;												// The MSG structure holds window message and thread message information.
 
 	// Create the window class structure that contains window class information.
-	WNDCLASSEX wc;											// Contains the window class information.
-	ZeroMemory(&wc, sizeof(WNDCLASSEX));					// ZeroMemory macro: Fills a block of memory with zeros.
+	WNDCLASSEX wc = {};										// Contains the window class information.
 
 	// Assign values to the window class WNDCLASSEX structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
 	wc.cbSize = sizeof(WNDCLASSEX);							// Assigned a value specifying the size, in bytes, of this structure. This must be set before calling the GetClassInfoEx function.
@@ -245,11 +276,90 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			   nCmdShow);									// Indicates if the main program window will be minimized, maximized, or shown normally.
 
 	// Initialize and prepare Direct3D for use.
-	if (int InitD3DRC = InitD3D(hWnd); InitD3DRC != 0)		// Call the InitD3D function and check its return code.
-	{
-		// The InitD3D function terminated abnormally. Terminate the WinMain function with the return code of the InitD3D function.
-		return InitD3DRC;
-	}
+	InitD3D(hWnd);											// Call the InitD3D function and check its return value.
+
+	//*HERE*
+	// Initialize and prepare Direct2D and DirectWrite for use.
+	
+	// D2D1CreateFactory function:
+	//	 Creates a factory object that can be used to create Direct2D resources.
+	D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED,	// D2D1_FACTORY_TYPE_SINGLE_THREADED indicates that the factory will be used from a single thread.
+		&pD2DFactory);										// &pD2DFactory is the address of a pointer, pD2DFactory, to the factory interface the newly created factory.
+
+	// IUnknown::QueryInterface member function:
+	//   Queries a COM object for a pointer to one of its interfaces; identifying the interface by a reference to its interface identifier (IID).
+	pBackBuffer->QueryInterface(__uuidof(IDXGISurface),		// Queries a COM object (in this case, pBackBuffer, the 2D texture interface for the back buffer interface) for a pointer (pDxgiSurface) to one of its interfaces (in this case, the surface interface); identifying the interface by a reference to its universally unique identifier (UUID) (in this case, __uuidof(IDXGISurface)).
+		(void**)&pDxgiSurface);								// &pDxgiSurface is the address of a pointer, pDxgiSurface, to the interface (in this case, the surface interface).
+															//   A surface is an image-data object, a 2D section of memory.
+															//   Runtimes earlier than Direct3D 12 automatically create an IDXGISurface surface interface when they create a Direct3D resource object that represents a surface.
+															//   IDXGISurface surface interfaces are not supported in Direct3D 12.
+
+	// RenderTargetProperties function:
+	//   Creates a D2D1_RENDER_TARGET_PROPERTIES structure.
+	D2D1_RENDER_TARGET_PROPERTIES D2Drtp =					// The Direct2D render target properties structure is the return value of the RenderTargetProperties function.
+		RenderTargetProperties(
+		D2D1_RENDER_TARGET_TYPE_DEFAULT,					// A value that specifies whether the render target should force hardware or software rendering. A value of D2D1_RENDER_TARGET_TYPE_DEFAULT specifies that the render target should use hardware rendering if it is available; otherwise, it uses software rendering. Note that WIC bitmap render targets do not support hardware rendering.
+		// PixelFormat function:
+		//   Creates a D2D1_PIXEL_FORMAT structure.
+		PixelFormat(
+			DXGI_FORMAT_R8G8B8A8_UNORM,						// A value that specifies the size and arrangement of channels in each pixel. This should match the program's swap chain description structure, which specifies scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			D2D1_ALPHA_MODE_PREMULTIPLIED),					// A value that specifies whether the alpha channel is using premultiplied alpha or straight alpha, or whether it should be ignored and considered opaque.
+		0,													// The horizontal DPI of the render target. To use the default DPI, set dpiX and dpiY to 0.
+		0,													// The vertical	  DPI of the render target. To use the default DPI, set dpiX and dpiY to 0.
+		D2D1_RENDER_TARGET_USAGE_NONE,						// A value that specifies how the render target is remoted and whether it should be GDI-compatible. Set to D2D1_RENDER_TARGET_USAGE_NONE to create a render target that is not compatible with GDI and uses Direct3D command-stream remoting if it is available.
+		D2D1_FEATURE_LEVEL_DEFAULT);						// A value that specifies the minimum Direct3D feature level required for hardware rendering. If the specified minimum level is not available, the render target uses software rendering if the type member is set to D2D1_RENDER_TARGET_TYPE_DEFAULT; if type is set to D2D1_RENDER_TARGET_TYPE_HARDWARE, render target creation fails. A value of D2D1_FEATURE_LEVEL_DEFAULT indicates that Direct2D should determine whether the Direct3D feature level of the device is adequate. This field is used only when creating ID2D1HwndRenderTarget and ID2D1DCRenderTarget objects.
+
+	// ID2D1Factory::CreateDxgiSurfaceRenderTarget member function:
+	//   Creates a render target that draws to a DirectX Graphics Infrastructure (DXGI) surface.
+	//   Requirement for interoperability with Direct3D resources:
+	//     The D3D11CreateDeviceAndSwapChain Direct3D function is also used in this program.
+	//     Its 4th parameter must specify the flag D3D11_CREATE_DEVICE_BGRA_SUPPORT for Direct2D interoperability with Direct3D resources.
+	//     Otherwise, the CreateDxgiSurfaceRenderTarget Direct2D member function returns the error _INVALIDARG, pD2DRenderTarget remains NULL and, although the program continues, any subsequent attempt to call pD2DRenderTarget's member functions (e.g., pD2DRenderTarget->CreateSolidColorBrush()), terminates this program because pD2DRenderTarget is NULL.
+	pD2DFactory->CreateDxgiSurfaceRenderTarget(pDxgiSurface,// A pointer to the surface interface to which the render target will draw.
+		&D2Drtp,											// &D2Drtp is the address of (and therefore a pointer to) the Direct2D render target properties structure.
+		&pD2DRenderTarget);									// &pD2DRenderTarget is the address of a pointer, pD2DRenderTarget, to the render target interface.
+	pDxgiSurface->Release();								// Decrements the reference count for an interface on a COM object. If the reference count = 0, then the interface pointer is freed. If there are no other interface pointers, then the COM object is freed.
+
+	// ID2D1RenderTarget::CreateSolidColorBrush member function
+	//   Creates a new ID2D1SolidColorBrush brush that has the specified color and a base opacity of 1.0f.
+	pD2DRenderTarget->CreateSolidColorBrush(
+		// D2D1::ColorF::ColorF class:
+		//   Instantiates a new instance of the ColorF class that contains the specified red, green, blue, and alpha values.
+		//   Its parameters are four FLOAT values:
+		//     The red, green, and blue components, and the alpha channel, of the color to be constructed.
+		//     An alpha channel value ranges from 0.0 to 1.0, where 0.0 represents a fully transparent color, and 1.0 represents a fully opaque color.
+		//       This parameter is optional, and if omitted defaults to 1.0 (fully opaque).
+		//     For example, the values 1.0f, 1.0f, 1.0f, 1.0f represent the color white (fully opaque).
+		ColorF(												// This is the ColorF class.
+			ColorF::White),									// This is the ColorF class constructor. It is being called to create a new instance of the ColorF class with the predefined color ColorF::White.
+															//     A complete list of predefined colors could not be found online as of August 26, 2024.
+															//     An alternative is to use the ColorF class constructor to specify a color using red, green, blue, and alpha FLOAT values, e.g., white (fully opaque) is ColorF(ColorF(1.0f, 1.0f, 1.0f, 1.0f)).
+		&pBrush);											// &pBrush is the address of a pointer, pBrush, to the new brush.
+
+	// DWriteCreateFactory function:
+	//   Creates a DirectWrite factory object that is used for subsequent creation of individual DirectWrite objects.
+	DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,			// DWRITE_FACTORY_TYPE_SHARED indicates that the DirectWrite factory is a shared factory and that it allows for the reuse of cached font data across multiple in-process components.
+															// Such factories also take advantage of cross process font caching components for better performance.
+		__uuidof(IDWriteFactory),							// Identifies the DirectWrite factory interface by a reference to its universally unique identifier (UUID) (in this case, __uuidof(IDWriteFactory)).
+		reinterpret_cast<IUnknown**>(&pDWriteFactory));		// &pDWriteFactory is the address of a pointer, pDWriteFactory, to the DirectWrite factory interface. The reinterpret_cast is used to convert the type of the pointer to IUnknown**, which is the base interface for all COM objects.
+
+	// IDWriteFactory::CreateTextFormat member function:
+	//   Creates a text format object used for text layout.
+	pDWriteFactory->CreateTextFormat(
+		L"Arial",											// An array of characters that contains the name of the font family.
+		NULL,												// A pointer to a font collection object. When this is NULL, it indicates the system font collection.
+		DWRITE_FONT_WEIGHT_NORMAL,							// A value that indicates the font weight for the text object created by this method.
+		DWRITE_FONT_STYLE_NORMAL,							// A value that indicates the font style for the text object created by this method.
+		DWRITE_FONT_STRETCH_NORMAL,							// A value that indicates the font stretch for the text object created by this method.
+		24,													// The logical size of the font in DIP ("device-independent pixel") units. A DIP equals 1/96 inch.
+		L"en-us",											// An array of characters that contains the locale name.
+		&pTextFormat);										// &pTextFormat is the address of a pointer, pTextFormat, to the text format interface.
+
+	// End: Initialize and prepare Direct2D and DirectWrite for use.
+
+	//*HERE* Test 4
+	// Initialize and set the menu
+	InitMenu(hWnd);
 
 	msg = { 0 };											// Set the entire structure holding window and thread messages to null.
 
@@ -367,7 +477,10 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 
 // WindowProc function: Definition
 //   This function defines the window procedure, which is the main window message handler for this program (see wc.lpfnWndProc = WindowProc).
-//   Every window has an associated window procedure, which is a function that processes all window messages sent or posted to all windows of the class. All aspects of a window's appearance and behavior depend on the window procedure's response to these window messages.
+//   Every window has an associated window procedure, which is a function that processes all window messages sent or posted to all windows of the class.
+//   (The terms 'sent' and 'posted' have different meanings. I used whichever term was indicated in Microsoft's documentation of window messages and related items)
+//   All aspects of a window's appearance and behavior depend on the window procedure's response to these window messages.
+//
 //   There is one instance of this function for each window class.
 //   Its parameters are the elements of the MSG structure that defines "msg".
 //   CALLBACK is a Microsoft Windows data type used to define a function return value, in this case indicating the calling convention for callback functions. It expands to __stdcall.
@@ -382,12 +495,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 	switch(message)
 	{
 		case WM_DESTROY:
-			// The user closed the window      (window messages =                            WM_CLOSE -> *WM_DESTROY* -> WM_QUIT), or
-			// The user pressed the Escape key (window messages = WM_KEYDOWN -> VK_ESCAPE -> WM_CLOSE -> *WM_DESTROY* -> WM_QUIT).
+			// The user closed the window             (window messages =                            WM_CLOSE -> *WM_DESTROY* -> WM_QUIT), or
+			// The user pressed the Escape key        (window messages = WM_KEYDOWN -> VK_ESCAPE -> WM_CLOSE -> *WM_DESTROY* -> WM_QUIT), or
+			// The user selected the 'Exit' menu item (window messages = WM_COMMAND -> IDM_EXIT  -> WM_CLOSE -> *WM_DESTROY* -> WM_QUIT).
 			// In either case a WM_DESTROY window message is sent to the thread message queue of the window being destroyed.
 			//
 			// WM_DESTROY window message:
-			//   It is sent to the thread message queue of the window being destroyed after the window is removed from the screen.
+			//   This window message is sent to the thread message queue of the window being destroyed after the window is removed from the screen.
 			//   This window message is sent first for the window being destroyed and then for child windows (if any) as they are destroyed. During the processing of the window message, it can be assumed that all child windows still exist.
 			//
 			// PostQuitMessage function:
@@ -397,19 +511,19 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			//     Once the WM_QUIT thread message is retrieved and identified, the program breaks out of the infinite message loop and terminates.
 			//     Its parameter is an exit code used as the wParam parameter of the WM_QUIT thread message.
 			PostQuitMessage(0);								// PostQuitMessage(x), where x is an exit code used as the wParam parameter of the WM_QUIT thread message.
-			return 0;										// The WindowProc function returns 0.
+			return 0;
 		case WM_KEYDOWN:
 			// The user pressed a key (window message = *WM_KEYDOWN*).
 			// 
 			// WM_KEYDOWN window message:
-			//   This window message is sent to the thread message queue of the window with the keyboard focus when a non-system key is pressed.
+			//   This window message is posted to the thread message queue of the window with the keyboard focus when a non-system key is pressed.
 			//   A non-system key is a key that is pressed when the ALT key is not pressed.
-			switch (wParam)									// The virtual-key code of the non-system key.
+			switch (wParam)									// wParam is the identifier of the virtual-key code of the non-system key.
 			{
 				case VK_ESCAPE:
 					// The user pressed the Escape key (window messages = WM_KEYDOWN -> *VK_ESCAPE* -> WM_CLOSE -> WM_DESTROY -> WM_QUIT).
 					//
-					// VK_ESCAPE window message:
+					// VK_ESCAPE:
 					//   The virtual-key code of the non-system key is VK_ESCAPE, the Escape key.
 					//
 					// PostMessage function:
@@ -419,11 +533,56 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					//   WM_CLOSE is received by a window through its window procedure, i.e., the WindowProc function.
 					//     By default, the window procedure's (the WindowProc function's) default window procedure (the DefWindowProc function) processes the WM_CLOSE window message.
 					PostMessage(hWnd, WM_CLOSE, 0, 0);
-					return 0;								// The WindowProc function returns 0.
+					return 0;
 				default:
 					// The user pressed a key other than the Escape key (window messages = *WM_KEYDOWN* -> return).
 					return 0;
 			}
+		case WM_COMMAND:
+			//*HERE*
+			// Test 2 continued. The Copilot generated comments below are apparently modeled on my own. Verify them.
+			// Test 4. See resource.h and resource.rc in the Project.
+			//
+			// The user selected a command item from a menu, or a control sent a notification message to its parent window, or an accelerator keystroke was translated (window message = *WM_COMMAND*).
+			//
+			// WM_COMMAND window message:
+			//   This window message is sent to the thread message queue of the window that created the menu, control, or accelerator.
+			switch (LOWORD(wParam))							// The low-order word of wParam is the identifier of the menu command item, notification message, or accelerator keystroke.
+			{
+				// Test 4:
+				case IDM_EXIT:
+					// The user selected the 'Exit' menu item (window messages = WM_COMMAND -> *IDM_EXIT* -> WM_CLOSE -> WM_DESTROY -> WM_QUIT).
+					//
+					// PostMessage function:
+					//   Places (posts) a window message in the thread message queue associated with the thread that created the specified window and returns without waiting for the thread to process the window message.
+					//   The form of the PostMessage function used here posts a WM_CLOSE window message to the thread message queue of the window being closed.
+					//   WM_CLOSE is sent as a signal that a window or an program should terminate.
+					//   WM_CLOSE is received by a window through its window procedure, i.e., the WindowProc function.
+					//     By default, the window procedure's (the WindowProc function's) default window procedure (the DefWindowProc function) processes the WM_CLOSE window message.
+					PostMessage(hWnd, WM_CLOSE, 0, 0);
+					return 0;
+				// Test 4:
+				case IDM_ABOUT:
+					// The user selected the 'About' menu item (window messages = WM_COMMAND -> *IDM_ABOUT* -> display message box -> return).
+					MessageBox(hWnd, L"A simple DirectX 11 application", L"objRenderer V3.2", MB_OK | MB_ICONINFORMATION);
+					return 0;
+				default:
+					// The user selected an unhandled menu item (window messages = *WM_COMMAND* -> return).
+					return 0;
+			}
+		/*
+		case WM_CHAR:
+			//*HERE*
+			// Test 3 continued. Windows API for text input handling.
+			//
+			// The user pressed a key that corresponds to an ASCII character.
+			//
+			// WM_CHAR window message:
+			//   This window message is posted to the thread message queue of the window with the keyboard focus when a WM_KEYDOWN window message is translated by the TranslateMessage function into a WM_CHAR window message.
+			//   The WM_CHAR window message contains the character code of the key that was pressed.
+			inputText += static_cast<wchar_t>(wParam); // Process text input. (place holder)
+			return 0;
+		*/
 		default:
 			// DefWindowProc function:
 			//   This function is the default window procedure, called to provide default processing for any window messages that a program does not otherwise explicitly process in the window procedure, i.e., the WindowProc function.
@@ -472,8 +631,7 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	//***
 
 	// Create the swap chain description structure used to describe the swap chain.
-	DXGI_SWAP_CHAIN_DESC scd;								// Describes the swap chain.
-	ZeroMemory(&scd, sizeof(DXGI_SWAP_CHAIN_DESC));			// ZeroMemory macro: Fills a block of memory with zeros.
+	DXGI_SWAP_CHAIN_DESC scd = {};							// The swap chain description structure.
 
 	// Assign values to the swap chain description DXGI_SWAP_CHAIN_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
 	scd.BufferDesc.Width = SCREEN_WIDTH;					// .Width:	A member of DXGI_MODE_DESC structure assigned a value specifying the resolution width.	Set the back buffer width (needed when going full screen).
@@ -507,7 +665,8 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	//						D3D_DRIVER_TYPE_REFERENCE	(implements every Direct3D features in software. The rasterizer portion of the driver does make use of special CPU instructions whenever it can. A reference driver is designed for accuracy rather than speed and is useful for testing)
 	//						D3D_DRIVER_TYPE_WARP		(implements a high-performance software rasterizer in software. A WARP driver is designed for speed and is useful for testing)
 	//						D3D_DRIVER_TYPE_SOFTWARE	(implements a low-performance software rasterizer in software, in which case the 3rd parameter is a handle to a DLL that implements the software rasterizer.
-	//	 3rd Parameter: (3) When the 2nd parameter (Direct3D driver type) is specified as D3D_DRIVER_TYPE_SOFTWARE, this parameter specifies a handle to a DLL that implements a software rasterizer.
+	//	 3rd Parameter: (3) Conditionally NULL or, when the 2nd parameter (Direct3D driver type) is specified as D3D_DRIVER_TYPE_SOFTWARE, this parameter specifies a handle to a DLL that implements a software rasterizer.
+	//	 4th Parameter: (4) Conditionally NULL or,																						   this parameter specifies optional flags such as D3D11_CREATE_DEVICE_BGRA_SUPPORT, which is required for Direct2D interoperability with Direct3D resources.
 	//	 5th Parameter: (5) An array of Direct3D feature levels, which determine the order of feature levels to attempt to create. If NULL is specified then a preset array of feature levels is used.
 	//  11th Parameter: (11) Direct3D feature level supported by the computer's display adapter, unless the 2nd parameter is specified as D3D_DRIVER_TYPE_WARP or D3D_DRIVER_TYPE_SOFTWARE, in which case this parameter potentially returns a higher feature level than what is supported by the computer's display adapter.
 	//						NULL is sufficient if both of the following two conditions are true:
@@ -525,7 +684,7 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	D3D11CreateDeviceAndSwapChain(NULL,						// A pointer to the display adapter to use when creating a device. Pass NULL to use the default display adapter, which is the first display adapter enumerated by IDXGIFactory1::EnumAdapters.
 		D3D_DRIVER_TYPE_HARDWARE,							// (2) The Direct3D driver type enumeration, which represents the Direct3D driver type to create.
 		NULL,												// (3) Conditionally NULL or a handle to a DLL that implements a software rasterizer.
-		NULL,												// Optional flags describing parameters used to create the device.
+		D3D11_CREATE_DEVICE_BGRA_SUPPORT,					// (4) Conditionally NULL or optional flags describing parameters used to create the device: D3D11_CREATE_DEVICE_BGRA_SUPPORT is required for Direct2D interoperability with Direct3D resources.
 		pFeatureLevelsIn,									// (5) An array of Direct3D feature levels, which determine the order of feature levels to attempt to create.
 		ARRAYSIZE(pFeatureLevelsIn),						// This is the number of elements in the 5th parameter.
 		D3D11_SDK_VERSION,									// The SDK version; use D3D11_SDK_VERSION as D3D11CreateDeviceAndSwapChain is a D3D11 function.
@@ -550,8 +709,7 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	//***
 
 	// Create the 2D texture description structure used to describe the 2D texture array (in this case an array of one) that will serve as the depth-stencil surface.
-	D3D11_TEXTURE2D_DESC texd;								// The 2D texture description structure.
-	ZeroMemory(&texd, sizeof(D3D11_TEXTURE2D_DESC));		// ZeroMemory macro: Fills a block of memory with zeros.
+	D3D11_TEXTURE2D_DESC texd = {};							// The 2D texture description structure.
 
 	// Assign values to the 2D texture description D3D11_TEXTURE2D_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
 	texd.Width = SCREEN_WIDTH;								// Assigned a value specifying the texture width  (in texels). The range is constrained by the Direct3D feature level of the device.
@@ -569,20 +727,14 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 		&pDepthBuffer);										// &pDepthBuffer is the address of a pointer, pDepthBuffer, to the 2D texture interface for the created textures, an array of (in this case an array of one) textures that will serve as the depth-stencil surface.
 
 	// Create the depth-stencil view description structure used to describe the depth-stencil view.
-	D3D11_DEPTH_STENCIL_VIEW_DESC dsvd;						  // The depth-stencil view description structure.
-	ZeroMemory(&dsvd, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC)); // ZeroMemory macro: Fills a block of memory with zeros.
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsvd = {};				// The depth-stencil view description structure.
 
 	// Assign values to the depth-stencil view description D3D11_DEPTH_STENCIL_VIEW_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-	dsvd.Format = DXGI_FORMAT_D32_FLOAT;					  // Assigned a value specifying the resource data format.						A value of the DXGI_FORMAT enumerated type,			i.e., DXGI_FORMAT_D32_FLOAT:		   A single-component, 32-bit floating-point format that supports 32 bits for depth.
-	dsvd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;	  // Assigned a value specifying how a depth-stencil resource will be accessed. A value of the D3D11_DSV_DIMENSION enumerated type, i.e., D3D11_DSV_DIMENSION_TEXTURE2DMS: The resource will be accessed as a 2D texture with multisampling.
+	dsvd.Format = DXGI_FORMAT_D32_FLOAT;					// Assigned a value specifying the resource data format.					  A value of the DXGI_FORMAT enumerated type,		  i.e., DXGI_FORMAT_D32_FLOAT:			 A single-component, 32-bit floating-point format that supports 32 bits for depth.
+	dsvd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;	// Assigned a value specifying how a depth-stencil resource will be accessed. A value of the D3D11_DSV_DIMENSION enumerated type, i.e., D3D11_DSV_DIMENSION_TEXTURE2DMS: The resource will be accessed as a 2D texture with multisampling.
 
 	// ID3D11Device::CreateDepthStencilView member function:
 	//   Create a depth-stencil view for accessing resource data.
-	if (pDepthBuffer == NULL)								  // This check prevents the Visual Studio code analysis defect "C6387: 'pDepthBuffer' could be '0':" on statement "dev->CreateDepthStencilView".
-	{
-		// pDepthBuffer, a pointer to the 2D texture interface that will serve as the depth-stencil surface, is NULL: Exit the program.
-		exit(1);
-	}
 	dev->CreateDepthStencilView(pDepthBuffer,				  // A pointer to the 2D texture interface for the created textures, an array of (in this case an array of one) textures that will serve as the depth-stencil surface.
 		&dsvd,												  // "&dsvd" is the address of (and therefore a pointer to) the depth-stencil view description structure used to describe the depth-stencil view interface.
 		&depthbuffer);										  // "&depthbuffer" is the address of a pointer, "depthbuffer", to the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
@@ -599,7 +751,7 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	// IDXGISwapChain::GetBuffer member function:
 	//   Access one of the swap-chain's back buffers (in this program only one back buffer is created).
 	swapchain->GetBuffer(0,									// "0" indicates the first back buffer is accessed (in this program only one back buffer is created).
-		__uuidof(ID3D11Texture2D),							// The type of interface used to manipulate the back buffer. __uuidof retrieves the GUID attached to the expression.
+		__uuidof(ID3D11Texture2D),							// The type of interface used to manipulate the back buffer; identifying the interface by a reference to its universally unique identifier (UUID) (in this case, ID3D11Texture2D).
 		(LPVOID*)&pBackBuffer);								// &pBackBuffer is the address of a pointer, pBackBuffer, to the 2D texture interface that will serve as the back buffer texture interface.
 
 	// ID3D11Device::CreateRenderTargetView member function:
@@ -629,8 +781,7 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	//***
 	
 	// Create the viewport structure used to define the dimensions of the viewport.
-	D3D11_VIEWPORT viewport;								// Defines the dimensions of the viewport.
-	ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));			// ZeroMemory macro: Fills a block of memory with zeros.
+	D3D11_VIEWPORT viewport = {};							// Defines the dimensions of the viewport.
 
 	// Assign values to the dimensions of the viewport D3D11_VIEWPORT structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
 	viewport.TopLeftX = 0;									// Assigned a value specifying the X position of the left hand side of the viewport. Ranges between D3D11_VIEWPORT_BOUNDS_MIN and D3D11_VIEWPORT_BOUNDS_MAX.
@@ -664,9 +815,9 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	// 7. Load and initialize all graphics data.
 	//***
 
-	if (int InitGraphicsRC = InitGraphics(); InitGraphicsRC != 0)	// Call the InitGraphics function and check its return code.
+	if (int InitGraphicsRC = InitGraphics(); InitGraphicsRC != 0)	// Call the InitGraphics function and check its return value.
 	{
-		// The InitGraphics function terminated abnormally. Terminate the InitD3D function with the return code of the InitGraphics function.
+		// The InitGraphics function terminated abnormally. Terminate the InitD3D function with the return value of the InitGraphics function.
 		return InitGraphicsRC;
 	}
 
@@ -762,8 +913,7 @@ void InitPipeline(void)
 	//***
 
 	// Create the input element description structure used to define the input-layout object that describes the VERTEX structure used in this program.
-	D3D11_INPUT_ELEMENT_DESC ied[3];						// Defines the input-layout object containing an array of structures, each structure defines one element being read from an input slot.
-	ZeroMemory(&ied, sizeof(ied));							// ZeroMemory macro: Fills a block of memory with zeros. "sizeof(ied)" is used instead of "sizeof(D3D11_INPUT_ELEMENT_DESC)" because the former fills both elements of array "ied".
+	D3D11_INPUT_ELEMENT_DESC ied[3] = {};					// Defines the input-layout object containing an array of structures, each structure defines one element being read from an input slot.
 
 	// Assign values to the input element description D3D11_INPUT_ELEMENT_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
 	// Define the position input element of the VERTEX structure OurVertices.
@@ -843,8 +993,7 @@ void InitPipeline(void)
 	//***
 
 	// Create the buffer resource description structure used to define the constant buffer.
-	D3D11_BUFFER_DESC bd;									// Describes the buffer resource.
-	ZeroMemory(&bd, sizeof(D3D11_BUFFER_DESC));				// ZeroMemory macro: Fills a block of memory with zeros.
+	D3D11_BUFFER_DESC bd = {};								// Describes the buffer resource.
 
 	// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
 	bd.ByteWidth = sizeof(ConstantBuffer);					// Assigned a value specifying the size of the buffer in bytes. See the preceding comments for related information on the size of the constant buffer resource, including limitations.
@@ -885,9 +1034,9 @@ int InitGraphics(void)
 	// 1. Call the objReader function, which reads and parses a single 3D object's descriptive information from a Wavefront .obj file and uses it to define the variables needed to render the 3D object, i.e., OurVertices and OurIndices.
 	//***
 
-	if (int objReaderRC = objReader(); objReaderRC != 0)	// Call the objReader function and check its return code.
+	if (int objReaderRC = objReader(); objReaderRC != 0)	// Call the objReader function and check its return value.
 	{
-		// The objReader function terminated abnormally. Terminate the InitGraphics function with the return code of the objReader function.
+		// The objReader function terminated abnormally. Terminate the InitGraphics function with the return value of the objReader function.
 		return objReaderRC;
 	}
 
@@ -902,8 +1051,7 @@ int InitGraphics(void)
 	D3D11_MAPPED_SUBRESOURCE ms;							// Provides access to subresource data. ms.pData is used to copy data to both the vertex buffer and the index buffer.
 
 	// Create the buffer resource description structure used to define the vertex buffer and index buffer.
-	D3D11_BUFFER_DESC bd;									// Describes the buffer resource.
-	ZeroMemory(&bd, sizeof(D3D11_BUFFER_DESC));				// ZeroMemory macro: Fills a block of memory with zeros.
+	D3D11_BUFFER_DESC bd = {};								// Describes the buffer resource.
 
 	// End: 2. Create the structures used to define the vertex buffer and index buffer.
 
@@ -1161,6 +1309,52 @@ void RenderFrame(void)
 
 	// End: 3. Clear the render target, in this case one back buffer texture interface, and the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
 
+	//*HERE*
+	// Start: Test 1: Render the text "Hello, Direct2D!" using DirectWrite within the render loop to draw text onto the Direct2D render target, which can then be presented alongside the Direct3D content.
+	// This test works. It places "Hello, Direct2D!" in the top left of the window, as white text.
+	// The following Direct2D code must be placed after the back buffer is cleared (devcon->ClearRenderTargetView member function) but before presenting the rendered image to the user (swapchain->Present(0, 0).
+	// If it appears before the back buffer is cleared, then the Direct2D text will be erased by the back buffer clear.
+	// A back buffer clear is required, as otherwise the rendered cubes appear rounded because each frame is not cleared before the next frame is rendered.
+	pD2DRenderTarget->BeginDraw();
+	//pD2DRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::SkyBlue)); // This member function (it clears the drawing area to the specified color) supersedes the earlier devcon->ClearRenderTargetView member function (that clears the back buffer and sets the drawing area color).
+	D2D1_RECT_F layoutRect = D2D1::RectF(0, 0, 800, 600); // This rectangle defines the area in which the text is placed. The rectangle is defined by the top-left and bottom-right corners. This specification can be coded directly into the DrawTextW member function.
+	//pD2DRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity()); // This member function sets the transform that is applied to all subsequent drawing operations. Optional.
+	// DrawTextW member function:
+	pD2DRenderTarget->DrawTextW(L"Hello, Direct2D!", wcslen(L"Hello, Direct2D!"), pTextFormat, &layoutRect, pBrush); // There is an overloaded function of DrawTextW() that takes in a point, instead of a rectangle, as a starting location to display the text.
+	//pD2DRenderTarget->DrawText(L"Hello, Direct2D!", wcslen(L"Hello, Direct2D!"), pTextFormat, D2D1::RectF(0, 0, 200, 200), pBrush); // Why DrawTextW vs DrawText? DrawText() creates a rect from the size of the render target and calls DrawTextW() with the text and textFormat. https://www.codeproject.com/Articles/5351958/Direct2D-Tutorial-Part-5-Text-Display-and-Font-Enu
+	pD2DRenderTarget->EndDraw();
+	//swapchain->Present(0, 0); // This line causes a flicker, as there's already a call to the Present member function below.
+	// End: Test 1
+	/*
+	//*HERE* REMOVE THIS CODE AND FILE myfile.spritefont
+	// Start: Test 3: Render the text "Hello, DirectXTK! Enter Text." using DirectXTK within the render loop.
+	// unique_ptr and make_unique are specified in the Copilot generated code.
+	// Are they required?
+	//   std::unique_ptr is a smart pointer that owns and manages another object through a pointer and disposes of that object when the unique_ptr goes out of scope.
+	//   std::make_unique is a utility function in C++ that was introduced in C++14. It is used to create a unique_ptr object, which is a smart pointer that manages the lifetime of dynamically allocated objects. It is defined inside <memory> header file.
+	//   std::make_unique is a factory function that constructs an object of type T and wraps it in a std::unique_ptr. It is the recommended way to create a std::unique_ptr.
+	//   See https://github.com/microsoft/DirectXTK/wiki/SpriteFont.
+	// Initialize
+	std::unique_ptr<DirectX::SpriteBatch> spriteBatch = std::make_unique<DirectX::SpriteBatch>(devcon);
+	// File myfile.spritefont must be created in the project directory.
+	// The file myfile.spritefontis a binary file used by DirectX to describe a font.
+	// It contains font data such as glyphs, spacing, and other typographic information necessary for rendering text in a DirectX application.
+	// This file is typically generated by a tool like the DirectX Content Pipeline, which converts a TrueType font (TTF) or other font formats into a format that DirectX can use efficiently.
+	// See MakeSpriteFont · microsoft/DirectXTK Wiki · GitHub. This worked. It may also be possible to instead create this executable using DirectXTK.
+	std::unique_ptr<DirectX::SpriteFont> spriteFont = std::make_unique<DirectX::SpriteFont>(dev, L"myfile.spritefont");
+	// Render
+	spriteBatch->Begin();
+	spriteFont->DrawString(spriteBatch.get(), L"Hello, DirectXTK! Enter Text.", DirectX::XMFLOAT2(100, 100));
+	spriteFont->DrawString(spriteBatch.get(), inputText.c_str(), DirectX::XMFLOAT2(200, 200));
+	// >Placing spriteBatch->End() here (well  before swapchain->Present()) prevents the 3D cube but not the 2D text from being rendered.
+	// >Placing spriteBatch->End() just        before swapchain->Present()  prevents the 3D cube but not the 2D text from being rendered.
+	// >Placing all 'Test 3' code              before swapchain->Present()  prevents the 3D cube but not the 2D text from being rendered.
+	// >Placing spriteBatch->End()             after  swapchain->Present()  prevents the 2D text and the 3D cube     from being rendered.
+	// >Placing all 'Test 3' code              after  swapchain->Present()  prevents the 2D text and the 3D cube     from being rendered.
+	spriteBatch->End();
+	// End: Test 3
+	*/
+
 	//***
 	// 4. Specify the vertex buffers, the index buffer, and the primitive type used when drawing.
 	//    Specify the vertex buffers to draw.
@@ -1264,7 +1458,7 @@ void RenderFrame(void)
 	//   Present the rendered image to the user.
 	swapchain->Present(0,									// An integer that specifies how to synchronize presentation of a frame with the vertical blank. '0' indicates the presentation occurs immediately,i.e., there is no synchronization.
 		0);													// An integer value that contains swap-chain presentation options. These options are defined by the DXGI_PRESENT constants.
-	
+
 	// End: 5. Render the objects.
 
 	// End: RenderFrame function
@@ -1315,4 +1509,44 @@ void CleanD3D(void)
 	// End: 2. Free memory.
 
 	// End: CleanD3D function
+}
+
+//*HERE* Test 4
+// See resource.h and resource.rc in this program's Project.
+// Function to initialize and set the menu.
+void InitMenu(HWND hWnd)
+/* (fix this comment by using //)
+Summary
+The InitMenu function is typically called during the initialization phase of a Windows application, such as in the WinMain function, to set up the menu for the main application window.
+The InitMenu function is responsible for initializing and setting the menu for a window in a Windows application. Here's a detailed breakdown of what the function does:
+•	LoadMenu: Loads the menu resource from the executable file.
+•	SetMenu: Sets the loaded menu as the menu for the specified window.
+•	Error Handling: Displays an error message if the menu cannot be loaded.
+*/
+{
+	/* (fix this comment by using //)
+	Load the Menu Resource:
+	•	LoadMenu is a Windows API function that loads a menu resource from the executable file.
+	•	GetModuleHandle(NULL) retrieves a handle to the module (the executable file) that contains the menu resource.
+	•	MAKEINTRESOURCE(IDR_MAINMENU) converts the resource identifier IDR_MAINMENU into a format suitable for the LoadMenu function.
+	•	The function returns a handle to the loaded menu (hMenu).
+	*/
+	HMENU hMenu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_MAINMENU));
+
+	/* (fix this comment by using //)
+	Check if the Menu was Loaded Successfully:
+	•	If hMenu is not NULL, it means the menu was loaded successfully.
+	•	If hMenu is NULL, it means the menu failed to load. In this case, a message box is displayed with an error message.
+	*/
+	if (!hMenu || !IsMenu(hMenu))
+	{
+		// The IsMenu function "Determines whether a handle is a menu handle". If the handle is a menu handle, the return value is nonzero (nonzero is True).
+		// If hMenu is NULL (!hMenu is True) or not a menu handle (!IsMenu(hMenu) is True), the menu failed to load or is an invalid menu handle.
+		MessageBox(hWnd, !hMenu ? L"Failed to load menu" : L"Invalid menu handle", L"Error", MB_OK);
+		return;
+	}
+
+	// Proceed with setting the menu
+	// The SetMenu function sets the loaded menu as the menu for the specified window, i.e., hWnd.
+	SetMenu(hWnd, hMenu);
 }
