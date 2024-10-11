@@ -495,9 +495,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 	switch(message)
 	{
 		case WM_DESTROY:
-			// The user closed the window             (window messages =                            WM_CLOSE -> *WM_DESTROY* -> WM_QUIT), or
-			// The user pressed the Escape key        (window messages = WM_KEYDOWN -> VK_ESCAPE -> WM_CLOSE -> *WM_DESTROY* -> WM_QUIT), or
-			// The user selected the 'Exit' menu item (window messages = WM_COMMAND -> IDM_EXIT  -> WM_CLOSE -> *WM_DESTROY* -> WM_QUIT).
+			// The user closed the window             (window messages =								WM_CLOSE -> *WM_DESTROY* -> WM_QUIT), or
+			// The user pressed the Escape key        (window messages = WM_KEYDOWN -> VK_ESCAPE	 -> WM_CLOSE -> *WM_DESTROY* -> WM_QUIT), or
+			// The user selected the 'Exit' menu item (window messages = WM_COMMAND -> ID_FILE_EXIT  -> WM_CLOSE -> *WM_DESTROY* -> WM_QUIT).
 			// In either case a WM_DESTROY window message is sent to the thread message queue of the window being destroyed.
 			//
 			// WM_DESTROY window message:
@@ -550,8 +550,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			switch (LOWORD(wParam))							// The low-order word of wParam is the identifier of the menu command item, notification message, or accelerator keystroke.
 			{
 				// Test 4:
-				case IDM_EXIT:
-					// The user selected the 'Exit' menu item (window messages = WM_COMMAND -> *IDM_EXIT* -> WM_CLOSE -> WM_DESTROY -> WM_QUIT).
+				case ID_FILE_EXIT:
+					// The user selected the 'Exit' menu item (window messages = WM_COMMAND -> *ID_FILE_EXIT* -> WM_CLOSE -> WM_DESTROY -> WM_QUIT).
 					//
 					// PostMessage function:
 					//   Places (posts) a window message in the thread message queue associated with the thread that created the specified window and returns without waiting for the thread to process the window message.
@@ -562,8 +562,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					PostMessage(hWnd, WM_CLOSE, 0, 0);
 					return 0;
 				// Test 4:
-				case IDM_ABOUT:
-					// The user selected the 'About' menu item (window messages = WM_COMMAND -> *IDM_ABOUT* -> display message box -> return).
+				case ID_HELP_ABOUT:
+					// The user selected the 'About' menu item (window messages = WM_COMMAND -> *ID_HELP_ABOUT* -> display message box -> return).
 					MessageBox(hWnd, L"A simple DirectX 11 application", L"objRenderer V3.2", MB_OK | MB_ICONINFORMATION);
 					return 0;
 				default:
@@ -1528,10 +1528,10 @@ The InitMenu function is responsible for initializing and setting the menu for a
 	Load the Menu Resource:
 	•	LoadMenu is a Windows API function that loads a menu resource from the executable file.
 	•	GetModuleHandle(NULL) retrieves a handle to the module (the executable file) that contains the menu resource.
-	•	MAKEINTRESOURCE(IDR_MAINMENU) converts the resource identifier IDR_MAINMENU into a format suitable for the LoadMenu function.
+	•	MAKEINTRESOURCE(IDR_MENU1) converts the resource identifier IDR_MENU1 into a format suitable for the LoadMenu function.
 	•	The function returns a handle to the loaded menu (hMenu).
 	*/
-	HMENU hMenu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_MAINMENU));
+	HMENU hMenu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_MENU1));
 
 	/* (fix this comment by using //)
 	Check if the Menu was Loaded Successfully:
