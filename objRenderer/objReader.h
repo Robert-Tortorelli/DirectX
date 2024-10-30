@@ -28,7 +28,7 @@
 #include <vector>											// Vector class member functions push_back, pop_back, etc.
 
 // DWORD Header File.
-#include <intsafe.h>										// Required for the DWORD data type. Note the main objRenderer program (with the WinMain function) includes the larger windows.h, containing IntSafe.h, instead.
+#include <intsafe.h>										// Required for the DWORD data type. Note that objRenderer.cpp includes windows.h, which contains intSafe.h.
 
 //***
 // Global Function Declarations.

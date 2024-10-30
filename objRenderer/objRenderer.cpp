@@ -69,6 +69,8 @@ void RenderFrame(void);
 void CleanD3D(void);
 //*HERE* Test 4
 void InitMenu(HWND hWnd);
+//*HERE* Test 5
+INT_PTR CALLBACK InputTextDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
 // Note:
 // DirectX member functions associated with a stage of the graphics pipeline usually have names prefixed with two capital letters identifying the related stage, e.g., the OMSetRenderTargets member function is related to the output-merger stage of the graphics pipeline.
@@ -491,8 +493,10 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 {
 	// Attempt to identify the current window message on the thread message queue.
 	// This switch statement uses return statements to exit the WindowProc function when a window message is identified, not the break statements normally used in a switch statement.
-	// In the context of a WindowProc function, it's common to see return statements instead of break statements in the switch clause. This is because the WindowProc function itself is expected to return a value: the result of its window message processing.
-	switch(message)
+	// In the context of a WindowProc function, it's common to see return statements instead of break statements in the switch statement.
+	// This is because, in the WindowProc function, the switch statement is expected to return a value: the result of window message processing, i.e., the switch statement does not "break" to the next statement after the switch statement.
+	LRESULT WindowProcRC;										// The return code of the WindowProc function.
+	switch (message)
 	{
 		case WM_DESTROY:
 			// The user closed the window             (window messages =								WM_CLOSE -> *WM_DESTROY* -> WM_QUIT), or
@@ -511,7 +515,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			//     Once the WM_QUIT thread message is retrieved and identified, the program breaks out of the infinite message loop and terminates.
 			//     Its parameter is an exit code used as the wParam parameter of the WM_QUIT thread message.
 			PostQuitMessage(0);								// PostQuitMessage(x), where x is an exit code used as the wParam parameter of the WM_QUIT thread message.
-			return 0;
+			WindowProcRC = 0;								// Set the return code of the WindowProc function to 0.
+			break;
 		case WM_KEYDOWN:
 			// The user pressed a key (window message = *WM_KEYDOWN*).
 			// 
@@ -533,11 +538,14 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					//   WM_CLOSE is received by a window through its window procedure, i.e., the WindowProc function.
 					//     By default, the window procedure's (the WindowProc function's) default window procedure (the DefWindowProc function) processes the WM_CLOSE window message.
 					PostMessage(hWnd, WM_CLOSE, 0, 0);
-					return 0;
+					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
+					break;
 				default:
 					// The user pressed a key other than the Escape key (window messages = *WM_KEYDOWN* -> return).
-					return 0;
+					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
+					break;
 			}
+			break;
 		case WM_COMMAND:
 			//*HERE*
 			// Test 2 continued. The Copilot generated comments below are apparently modeled on my own. Verify them.
@@ -560,16 +568,35 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					//   WM_CLOSE is received by a window through its window procedure, i.e., the WindowProc function.
 					//     By default, the window procedure's (the WindowProc function's) default window procedure (the DefWindowProc function) processes the WM_CLOSE window message.
 					PostMessage(hWnd, WM_CLOSE, 0, 0);
-					return 0;
+					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
+					break;
 				// Test 4:
 				case ID_HELP_ABOUT:
 					// The user selected the 'About' menu item (window messages = WM_COMMAND -> *ID_HELP_ABOUT* -> display message box -> return).
 					MessageBox(hWnd, L"A simple DirectX 11 application", L"objRenderer V3.2", MB_OK | MB_ICONINFORMATION);
-					return 0;
+					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
+					break;
+				// Test 5: Note the menu of the dialog box in resource.rc is labeled 'Input Text', not the preferred 'Enter Text'.
+				case ID_FILE_ENTERTEXT: // IDM_INPUT_TEXT: had been specified, then was changed to IDD_INPUT_TEXT. Neither worked. ID_FILE_ENTERTEXT works.
+					// The user selected the 'Enter Text' menu item (window messages = WM_COMMAND -> *ID_FILE_ENTERTEXT* -> display dialog box -> return).
+					/*
+					The DialogBox macro uses the CreateWindowEx function to create the dialog box. DialogBox then sends a WM_INITDIALOG message (and a WM_SETFONT message if the template specifies the DS_SETFONT or DS_SHELLFONT style) to the dialog box procedure.
+					The function displays the dialog box (regardless of whether the template specifies the WS_VISIBLE style), disables the owner window, and starts its own message loop to retrieve and dispatch messages for the dialog box.
+					When the dialog box procedure calls the EndDialog function, DialogBox destroys the dialog box, ends the message loop, enables the owner window (if previously enabled), and returns the nResult parameter specified by the dialog box procedure when it called EndDialog.
+					https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-dialogboxw
+					https://learn.microsoft.com/en-us/windows/desktop/dlgbox/using-dialog-boxes
+					*/
+					// DialogBox is defined in WinUser.h as a macro that expands to the DialogBoxParam function.
+					DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), hWnd, InputTextDlgProc);
+					//DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_INPUT_TEXT), hWnd, reinterpret_cast<DLGPROC>(InputTextDlgProc)); //This form was found in older code samples. It does not work in this program.
+					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
+					break;
 				default:
 					// The user selected an unhandled menu item (window messages = *WM_COMMAND* -> return).
-					return 0;
+					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
+					break;
 			}
+			break;
 		/*
 		case WM_CHAR:
 			//*HERE*
@@ -581,7 +608,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			//   This window message is posted to the thread message queue of the window with the keyboard focus when a WM_KEYDOWN window message is translated by the TranslateMessage function into a WM_CHAR window message.
 			//   The WM_CHAR window message contains the character code of the key that was pressed.
 			inputText += static_cast<wchar_t>(wParam); // Process text input. (place holder)
-			return 0;
+			WindowProcRC = 0;								// Set the return code of the WindowProc function to 0.
+			break;
 		*/
 		default:
 			// DefWindowProc function:
@@ -596,11 +624,15 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			//     3. If the specified window is a parent or owner window, DestroyWindow automatically destroys the associated child or owned windows when it destroys the parent or owner window.
 			//        The function first destroys child or owned windows, and then it destroys the parent or owner window.
 			//     4. Destroys modeless dialog boxes created by the CreateDialog function.
-			return DefWindowProc(hWnd,						// The HWND handle for the window.
+			WindowProcRC =									// Set the return code of the WindowProc function to the return code of the DefWindowProc function.
+			DefWindowProc(hWnd,								// The HWND handle for the window.
 				message,									// The window message.
 				wParam,										// Additional data that pertains to the window message. The exact meaning depends on the window message.
 				lParam);									// Additional data that pertains to the window message. The exact meaning depends on the window message.
+			break;
 	}
+
+	return WindowProcRC;									// Return the return code of the WindowProc function.
 
 	// End: WindowProc function
 }
@@ -1549,4 +1581,42 @@ The InitMenu function is responsible for initializing and setting the menu for a
 	// Proceed with setting the menu
 	// The SetMenu function sets the loaded menu as the menu for the specified window, i.e., hWnd.
 	SetMenu(hWnd, hMenu);
+}
+
+//*HERE* Test 5
+// The dialog box procedure called by DialogBox.
+// See https://learn.microsoft.com/en-us/windows/win32/api/winuser/nc-winuser-dlgproc
+INT_PTR CALLBACK InputTextDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	int InputTextDlgProcRC = FALSE;
+	switch (message)
+	{
+		case WM_INITDIALOG:
+			// DialogBox sends a WM_INITDIALOG message (and a WM_SETFONT message if the template specifies the DS_SETFONT or DS_SHELLFONT style) to the dialog box procedure.
+			// https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-dialogboxw
+			InputTextDlgProcRC = TRUE;
+			break;
+		case WM_COMMAND:
+			if (LOWORD(wParam) == IDOK) {
+				// Define a buffer to store the text entered by the user. The size of the buffer (256 characters) can be adjusted as needed.
+				wchar_t textBuffer[256];
+				// Retrieve the text from the edit control
+				// The GetDlgItemText function retrieves the text from the edit control (IDC_EDIT_TEXT) and stores it in textBuffer.
+				GetDlgItemText(hDlg, IDC_EDIT_TEXT, textBuffer, sizeof(textBuffer) / sizeof(textBuffer[0]));
+				// Process the retrieved text (e.g., display it, store it, etc.)
+				// The MessageBox function displays the retrieved text in a message box. You can replace this with any other processing logic as needed.
+				MessageBox(hDlg, textBuffer, L"Entered Text", MB_OK);
+				EndDialog(hDlg, LOWORD(wParam));
+				InputTextDlgProcRC = TRUE;
+			}
+			else if (LOWORD(wParam) == IDCANCEL) {
+				EndDialog(hDlg, LOWORD(wParam));
+				InputTextDlgProcRC = TRUE;
+			}
+			break;
+		default:
+			InputTextDlgProcRC = FALSE;
+			break;
+	}
+	return (INT_PTR)InputTextDlgProcRC;
 }
