@@ -14,7 +14,7 @@
 // - Texture
 // - User Interface
 //	 Pressing the 'A' ('a') key terminates the program regardless of whether the program has the focus.
-//	 Pressing the Escape	key terminates the program only if				 the program has the focus.
+//	 Pressing the Escape	  key terminates the program only if			   the program has the focus.
 //	 The mouse cursor position is used to rotate the second (top) instance of the object regardless of whether the program has the focus.
 // - Return values
 //	 RC 0: All functions:	   Normal
@@ -66,8 +66,10 @@ int InitD3D(HWND hWnd);
 void InitPipeline(void);
 int InitGraphics(void);
 void RenderFrame(void);
-void ShutdownDirectX(void);
+void CleanD3D(void);
+//Test 4
 void InitMenu(HWND hWnd);
+//Test 5
 INT_PTR CALLBACK InputTextDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
 // Note:
@@ -109,8 +111,13 @@ INT_PTR CALLBACK InputTextDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 // DirectWrite Header File.
 #include <dwrite.h>
 
-// Resource file (also referenced by resource script file resource.rc).
-#include "resource.h"
+//#include <memory>											//Test 3// Defines a class, an operator, and several templates that help allocate and free objects. Add this include for std::unique_ptr
+//#include <SpriteBatch.h>									//Test 3// Used to render 2D sprites. Add this include for DirectXTK's (DirectX Tool Kit's) SpriteBatch class.
+//#include <SpriteFont.h>									//Test 3// Used to render text. Add this include for DirectXTK's (DirectX Tool Kit's) SpriteFont class.
+
+#include "resource.h"										// Test 4 Microsoft Visual C++ generated include file used by resource.rc.
+
+//#include <string>											// Test 3
 
 // Using Declarations and Directives.
 // Using declarations such as using std::string;   bring one identifier	 in the named namespace into scope.
@@ -119,6 +126,9 @@ INT_PTR CALLBACK InputTextDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 // Using declarations and directives must appear after their respective header file includes.
 using namespace DirectX;									// The DirectX namespace is used to access the DirectX Direct3D and DirectXMath APIs.
 using namespace D2D1;										// The D2D1	   namespace is used to access the DirectX Direct2D API.
+//using namespace std;										//Test 3// The std	   namespace is used to access the C++ Standard Library.
+
+//wstring inputText;											// Test 3
 
 // Defines.
 // Define the screen resolution of the client area.
@@ -348,10 +358,38 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 
 	// End: Initialize and prepare Direct2D and DirectWrite for use.
 
-	// Initialize and set the menu.
+	//Test 4
+	// Initialize and set the menu
 	InitMenu(hWnd);
 
 	msg = { 0 };											// Set the entire structure holding window and thread messages to null.
+
+	// Keyboard Input Processing (This section of comments is also in OneNote with additional information)
+	// Key input processing types:
+	//   Non-message-driven key state checks: Checking the current state of a specific key in real-time with the GetAsyncKeyState function.
+	//     For interactive programs that need to continuously monitor key states, such as games or programs that implement custom key shortcuts, non-message-driven checks are often more appropriate.
+	//     + Continuous State Monitoring: Allows the program to continuously check the state of a key, making it suitable for scenarios where the state (pressed or not pressed) matters more than the event (key press/release).
+	//     + Immediate State Access:	  Provides immediate access to the key state without waiting for a message to be processed in the infinite message loop.
+	//     - Polling:					  Requires the program to continuously check the state of a key, which can be inefficient.
+	//     - Lack of Context:			  Does not inherently provide context about other key states or events happening concurrently.
+	//   These checks can be implemented using the GetAsyncKeyState function, especially within the context of a Windows desktop application using DirectX.
+	//   The GetAsyncKeyState function determines whether a key is up or down at the time the function is called.
+	//   *It determines this regardless of whether the program has the focus.
+	//    This can cause undesirable behavior. It is also a potential security issue as keyboard input intended for other programs can be intercepted.
+	//   *To programmatically determine whether the program has the focus, use the GetForegroundWindow function.
+	//
+	//   Message-driven		key state checks: Checking the Thread Message Queue in the infinite message loop and, for window messages, the window procedure, WindowProc.
+	//     For interactive programs that respond to discrete key events, message-driven checks are often more appropriate.
+	//     + Contextual:				  Actions can be context-sensitive, as the program can check the state of other keys (e.g., modifier keys) when processing an event.
+	//     + Efficient:					  It is event-driven, so it only processes key events when they occur, which can be more efficient than continuous state monitoring.
+	//     - Potentially Missed States:   If the program is busy or not processing messages quickly enough, it might miss rapid key state changes.
+	//   Thread messages and window messages are on the thread message queue.
+	//   In the Win32 API, both thread messages and window messages are used for communication between the operating system and the program, or within the program itself.
+	//     Thread messages are retrieved from a specific thread message queue by the PeekMessage (or GetMessage) function in the infinite message loop.
+	//       Since they are not associated with a specific window, they are processed directly in the infinite message loop or dispatched to a handler function designed for thread messages.
+	//     Window messages are retrieved from a specific thread message queue by the PeekMessage (or GetMessage) function in the infinite message loop.
+	//       Since they are		associated with a specific window, they are dispatched by the DispatchMessage function in the infinite message loop to the window procedure, WindowProc, associated with the specific window for processing.
+	//   *Message-driven	key state checks are performed when the program has focus.
 
 	// The Infinite Message Loop
 	//   All messages, both thread messages and window messages, are retrieved in the infinite message loop.
@@ -391,13 +429,13 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			TranslateMessage(&msg);							// A pointer to the MSG structure that holds window message and thread message information.
 
 			// DispatchMessage function:
-			//   Dispatches a window message to the window procedure which is the main window message handler function for this program.
+			//   Dispatches a window message to the window procedure, i.e., the WindowProc function, which is the main window message handler function for this program.
 			//   It is typically used to dispatch a window message retrieved by the PeekMessage (or GetMessage) function.
 			//   The window procedure processes the window message and returns control back to DispatchMessage, which then returns control to the point where DispatchMessage was called, i.e., here in this program:
 			DispatchMessage(&msg);
 
-			// Check whether to break out of the infinite message loop and end this program, i.e., Has the user signaled to end this program by closing the program's window or by some other means?
-			// (Has a WM_QUIT thread message has been posted to the thread message queue by the WindowProc function?)
+			// Check whether it's time to quit this program by breaking out of the infinite message loop, e.g., Has the user closed the window or pressed the Escape key?
+			// If a WM_DESTROY window message has been processed by the window procedure, i.e., the WindowProc function, then a WM_QUIT thread message has been posted to the thread message queue.
 			if (msg.message == WM_QUIT)
 				break;										// Break out of the infinite message loop.
 			// Stay in the infinite message loop.			// <-- Or not.
@@ -409,7 +447,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			// Execute the graphics generating code.
 			RenderFrame();									// This function renders a single frame.
 
-			// Check whether the user pressed the 'A' ('a') key ('A' ('a') key pressed -> window messages = WM_CLOSE -> DefWindowProc function -> WM_DESTROY -> WM_QUIT)
+			// Check whether the user pressed the 'A' ('a') key ('A' ('a') key pressed -> window messages = WM_CLOSE -> WM_DESTROY -> WM_QUIT)
 			// GetAsyncKeyState function:
 			//   Determines whether a key is up or down at the time the function is called.
 			//   *It determines this regardless of whether the program has the focus.
@@ -431,8 +469,8 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 
 	// The infinite message loop has ended. This program's window has been closed manually: Terminate the program.
 
-	// Terminate DirectX.
-	ShutdownDirectX();
+	// Terminate Direct3D.
+	CleanD3D();
 
 	// End: WinMain function
 	return msg.wParam;										// The exit value returned to the operating system must be the wParam parameter value of the WM_QUIT thread message (see PostQuitMessage).
@@ -457,12 +495,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 	// In the context of a WindowProc function, it's common to see return statements instead of break statements in the switch statement.
 	// This is because, in the WindowProc function, the switch statement is expected to return a value: the result of window message processing, i.e., the switch statement does not "break" to the next statement after the switch statement.
 	LRESULT WindowProcRC;									// The return code of the WindowProc function.
+	POINT pt = { 300, 300 };								// Test 5 // A POINT structure, to be passed to a DialogBoxParam function, that contains the x- and y-coordinates of the new position of the left side (x) and top (y) of a window, in client coordinates.
 	switch (message)
 	{
 		case WM_DESTROY:
-			// The user closed the window             (window messages =								WM_CLOSE -> DefWindowProc function -> *WM_DESTROY* -> WM_QUIT), or
-			// The user pressed the Escape key        (window messages = WM_KEYDOWN -> VK_ESCAPE	 -> WM_CLOSE -> DefWindowProc function -> *WM_DESTROY* -> WM_QUIT), or
-			// The user selected the 'Exit' menu item (window messages = WM_COMMAND -> ID_FILE_EXIT  -> WM_CLOSE -> DefWindowProc function -> *WM_DESTROY* -> WM_QUIT).
+			// The user closed the window             (window messages =								WM_CLOSE -> *WM_DESTROY* -> WM_QUIT), or
+			// The user pressed the Escape key        (window messages = WM_KEYDOWN -> VK_ESCAPE	 -> WM_CLOSE -> *WM_DESTROY* -> WM_QUIT), or
+			// The user selected the 'Exit' menu item (window messages = WM_COMMAND -> ID_FILE_EXIT  -> WM_CLOSE -> *WM_DESTROY* -> WM_QUIT).
 			// In either case a WM_DESTROY window message is sent to the thread message queue of the window being destroyed.
 			//
 			// WM_DESTROY window message:
@@ -487,7 +526,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			switch (wParam)									// wParam is the identifier of the virtual-key code of the non-system key.
 			{
 				case VK_ESCAPE:
-					// The user pressed the Escape key (window messages = WM_KEYDOWN -> *VK_ESCAPE* -> WM_CLOSE -> DefWindowProc function -> WM_DESTROY -> WM_QUIT).
+					// The user pressed the Escape key (window messages = WM_KEYDOWN -> *VK_ESCAPE* -> WM_CLOSE -> WM_DESTROY -> WM_QUIT).
 					//
 					// VK_ESCAPE:
 					//   The virtual-key code of the non-system key is VK_ESCAPE, the Escape key.
@@ -497,7 +536,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					//   The form of the PostMessage function used here posts a WM_CLOSE window message to the thread message queue of the window being closed.
 					//   WM_CLOSE is sent as a signal that a window or an program should terminate.
 					//   WM_CLOSE is received by a window through its window procedure, i.e., the WindowProc function.
-					//     The window procedure's default action, calling the DefWindowProc function, processes the WM_CLOSE window message.
+					//     By default, the window procedure's (the WindowProc function's) default window procedure (the DefWindowProc function) processes the WM_CLOSE window message.
 					PostMessage(hWnd, WM_CLOSE, 0, 0);
 					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
 					break;
@@ -508,31 +547,36 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			}
 			break;
 		case WM_COMMAND:
+			// Test 2 continued. The Copilot generated comments below are apparently modeled on my own. Verify them.
+			// Test 4. See resource.h and resource.rc in the Project.
+			//
 			// The user selected a command item from a menu, or a control sent a notification message to its parent window, or an accelerator keystroke was translated (window message = *WM_COMMAND*).
 			//
 			// WM_COMMAND window message:
 			//   This window message is sent to the thread message queue of the window that created the menu, control, or accelerator.
 			switch (LOWORD(wParam))							// The low-order word of wParam is the identifier of the menu command item, notification message, or accelerator keystroke.
 			{
+				// Test 4:
 				case ID_FILE_EXIT:
-					// The user selected the 'File/ Exit' menu item (window messages = WM_COMMAND -> *ID_FILE_EXIT* -> WM_CLOSE -> DefWindowProc function -> WM_DESTROY -> WM_QUIT).
+					// The user selected the 'File/ Exit' menu item (window messages = WM_COMMAND -> *ID_FILE_EXIT* -> WM_CLOSE -> WM_DESTROY -> WM_QUIT).
 					//
 					// PostMessage function:
 					//   Places (posts) a window message in the thread message queue associated with the thread that created the specified window and returns without waiting for the thread to process the window message.
 					//   The form of the PostMessage function used here posts a WM_CLOSE window message to the thread message queue of the window being closed.
 					//   WM_CLOSE is sent as a signal that a window or an program should terminate.
 					//   WM_CLOSE is received by a window through its window procedure, i.e., the WindowProc function.
-					//     The window procedure's default action, calling the DefWindowProc function, processes the WM_CLOSE window message.
+					//     By default, the window procedure's (the WindowProc function's) default window procedure (the DefWindowProc function) processes the WM_CLOSE window message.
 					PostMessage(hWnd, WM_CLOSE, 0, 0);
 					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
 					break;
+				// Test 4:
 				case ID_HELP_ABOUT:
 					// The user selected the 'Help/ About' menu item (window messages = WM_COMMAND -> *ID_HELP_ABOUT* -> display message box -> return).
 					MessageBox(hWnd, L"A simple DirectX 11 application", L"objRenderer V3.2", MB_OK | MB_ICONINFORMATION);
 					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
 					break;
+				// Test 5: Note the menu of the dialog box in resource.rc is labeled 'Input Text', not the preferred 'Enter Text'.
 				case ID_FILE_ENTERTEXT:
-				{	// Establish a block to limit the scope of the local variable pt.
 					// The user selected the 'File/ Enter Text' menu item (window messages = WM_COMMAND -> *ID_FILE_ENTERTEXT* -> display dialog box -> return).
 					//
 					// DialogBox macro:
@@ -543,33 +587,45 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					//   DialogBox displays the dialog box (regardless of whether the template specifies the WS_VISIBLE style), disables the owner window, and starts its own message loop to retrieve and dispatch messages for the dialog box.
 					//   When the dialog box procedure calls the EndDialog function, DialogBox destroys the dialog box, ends the message loop, enables the owner window (if previously enabled), and returns the nResult parameter specified by the dialog box procedure when it called EndDialog.
 					//   GetModuleHandle(NULL) retrieves the handle of the executable file that created the calling process, i.e., the first parameter of the WinMain function.
-					//   DialogBox does not pass parameters directly to the dialog box procedure. Instead, it sends standard Windows messages (like WM_INITDIALOG, WM_COMMAND, etc.) to the dialog box procedure.
+					//   The DialogBox macro does not pass parameters directly to the dialog box procedure. Instead, it sends standard Windows messages (like WM_INITDIALOG, WM_COMMAND, etc.) to the dialog box procedure.
 					//   If you need to pass custom data to the dialog box procedure, you typically do this by instead using the DialogBoxParam function and setting a value in the lParam parameter of the WM_INITDIALOG message or by using dialog box controls to store and retrieve data.
 					/*
 					https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-dialogboxw
 					https://learn.microsoft.com/en-us/windows/desktop/dlgbox/using-dialog-boxes
 					*/
 					DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), hWnd, InputTextDlgProc);
-					// Optionally set the position of the dialog box:
-					//   Uncomment the following definition of variable pt and the call to the DialogBoxParam function.
-					//   (Comment the replaced call to DialogBox)
-					//   See the comment "set the position of the dialog box" in the InputTextDlgProc function for associated changes to make.
-					// POINT pt = { 300, 300 };				// A POINT structure that can be passed to the DialogBoxParam function. It contains the x and y coordinates of the new position of the left side (x) and top (y) of the dialog box window, in client coordinates.
 					// DialogBoxParam function:
 					//   Creates a modal dialog box from a dialog box template resource. Before displaying the dialog box, the function passes an application-defined value to the dialog box procedure as the lParam parameter of the WM_INITDIALOG message. An application can use this value to initialize dialog box controls.
-					// DialogBoxParam(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), hWnd, InputTextDlgProc, (LPARAM)&pt); // (LPARAM)&pt is the address of the POINT structure pt, cast to a LPARAM.
+					//   It is an alternative to the DialogBox macro.
+					// Uncomment and substitute the following statement to set the position (variable pt) of the dialog box:
+					// DialogBoxParam(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), hWnd, InputTextDlgProc, (LPARAM)&pt); // (LPARAM)&pt is the address of the POINT structure pt cast to a LPARAM.
 					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
 					break;
-				}
 				default:
 					// The user selected an unhandled menu item (window messages = *WM_COMMAND* -> return).
 					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
 					break;
 			}
 			break;
-		default:
-			// The DefWindowProc function processes the WM_CLOSE window message (window messages = WM_CLOSE -> *DefWindowProc function* -> WM_DESTROY -> WM_QUIT).
+		/*
+		case WM_CHAR:
+			// Test 3 continued. Windows API for text input handling.
 			//
+			// The user pressed a key that corresponds to an ASCII character.
+			//
+			// WM_CHAR window message:
+			//   This window message is posted to the thread message queue of the window with the keyboard focus when a WM_KEYDOWN window message is translated by the TranslateMessage function into a WM_CHAR window message.
+			//   The WM_CHAR window message contains the character code of the key that was pressed.
+			inputText += static_cast<wchar_t>(wParam);		// Process text input. (place holder)
+			WindowProcRC = 0;								// Set the return code of the WindowProc function to 0.
+			break;
+		*/
+		default:
+			// DefWindowProc function:
+			//   This function is the default window procedure, called to provide default processing for any window messages that a program does not otherwise explicitly process in the window procedure, i.e., the WindowProc function.
+			//   It is called with the same parameters received by the WindowProc function.
+			//   The return value is the result of the window message processing and depends on the window message.
+			// If the DefWindowProc function should be called but is not, then no window is displayed by this program (return 0 is not a sufficient alternative to the DefWindowProc function).
 			// The DefWindowProc function processes the WM_CLOSE window message by calling the DestroyWindow function to destroy the window. This is the default behavior: The DestroyWindow function is not coded in this program.
 			//   The DestroyWindow function,
 			//     1. Sends WM_DESTROY and WM_NCDESTROY window messages to the window to deactivate it and remove the keyboard focus from it.
@@ -577,11 +633,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			//     3. If the specified window is a parent or owner window, DestroyWindow automatically destroys the associated child or owned windows when it destroys the parent or owner window.
 			//        The function first destroys child or owned windows, and then it destroys the parent or owner window.
 			//     4. Destroys modeless dialog boxes created by the CreateDialog function.
-			// DefWindowProc function:
-			//   This function calls the default window procedure to provide default processing for any window messages that a program does not otherwise explicitly process in its window procedure.
-			//   It is called with the same parameters received by the WindowProc function.
-			//   The return value is the result of the window message processing and depends on the window message.
-			// If the DefWindowProc function should be called but is not, then no window is displayed by this program (return 0 is not a sufficient alternative to the DefWindowProc function).
 			WindowProcRC =									// Set the return code of the WindowProc function to the return code of the DefWindowProc function.
 			DefWindowProc(hWnd,								// The HWND handle for the window.
 				message,									// The window message.
@@ -1298,22 +1349,55 @@ void RenderFrame(void)
 
 	// End: 3. Clear the render target, in this case one back buffer texture interface, and the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
 
-	// Render text.
-	// Render text within this program's render function by drawing text onto the ID2D1RenderTarget Direct2D render target.
-	// After the following code is executed, the render function calls the IDXGISwapChain::Present member function, making this Direct2D text appear in white at the top left of the window, overlaid by the Direct3D objects.
-	//
-	// This code must execute after the back buffer is cleared using the ID3D11DeviceContext::ClearRenderTargetView member function, but before presenting the rendered image to the user using the IDXGISwapChain::Present member function.
-	// If this code executes before the back buffer is cleared, then the Direct2D text will be cleared when the back buffer is cleared.
-	// Clearing the back buffer between frames is necessary, as otherwise Direct3D objects in each frame overlay those in the last frame causing, for example, rendered cubes to appear rounded.
-	//
-	// Optional. Sets a transform that is applied to all subsequent drawing operations.
-	//pD2DRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+	// Start: Test 1: Render the text "Hello, Direct2D!" using DirectWrite within the render loop to draw text onto the Direct2D render target, which can then be presented alongside the Direct3D content.
+	// This test works. It places "Hello, Direct2D!" in the top left of the window, as white text.
+	// The following Direct2D code must be placed after the back buffer is cleared (devcon->ClearRenderTargetView member function) but before presenting the rendered image to the user (swapchain->Present(0, 0).
+	// If it appears before the back buffer is cleared, then the Direct2D text will be erased by the back buffer clear.
+	// A back buffer clear is required, as otherwise the rendered cubes appear rounded because each frame is not cleared before the next frame is rendered.
 	pD2DRenderTarget->BeginDraw();
-	D2D1_RECT_F layoutRect = D2D1::RectF(0, 0, 800, 600);	// This rectangle defines the area in which the text is placed. The rectangle is defined by the top-left and bottom-right corners.
-	pD2DRenderTarget  ->DrawText (L"Hello, Direct2D!", wcslen(L"Hello, Direct2D!"), pTextFormat, &layoutRect, pBrush);
-	//pD2DRenderTarget->DrawText (L"Hello, Direct2D!", wcslen(L"Hello, Direct2D!"), pTextFormat, D2D1::RectF(0, 0, 800, 600), pBrush); // Alternative form of the above statement.
+	//pD2DRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::SkyBlue)); // This member function (it clears the drawing area to the specified color) supersedes the earlier devcon->ClearRenderTargetView member function (that clears the back buffer and sets the drawing area color).
+	D2D1_RECT_F layoutRect = D2D1::RectF(0, 0, 800, 600); // This rectangle defines the area in which the text is placed. The rectangle is defined by the top-left and bottom-right corners. This specification can be coded directly into the DrawTextW member function.
+	//pD2DRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity()); // This member function sets the transform that is applied to all subsequent drawing operations. Optional.
+	// DrawText member function:
+	//   Why DrawText vs DrawTextW?
+	//   DrawText() creates a rect from the size of the render target and calls DrawTextW() with the text and textFormat. https://www.codeproject.com/Articles/5351958/Direct2D-Tutorial-Part-5-Text-Display-and-Font-Enu
+	//   There is an overloaded function of DrawTextW() that takes in a point, instead of a rectangle, as a starting location to display the text.
+	//pD2DRenderTarget->DrawText (L"Hello, Direct2D!", wcslen(L"Hello, Direct2D!"), pTextFormat, &layoutRect, pBrush);
+	pD2DRenderTarget->DrawTextW(L"Hello, Direct2D!", wcslen(L"Hello, Direct2D!"), pTextFormat, &layoutRect, pBrush);
+	//pD2DRenderTarget->DrawText (L"Hello, Direct2D!", wcslen(L"Hello, Direct2D!"), pTextFormat, D2D1::RectF(0, 0, 200, 200), pBrush);
+	//pD2DRenderTarget->DrawTextW(L"Hello, Direct2D!", wcslen(L"Hello, Direct2D!"), pTextFormat, D2D1::RectF(0, 0, 200, 200), pBrush);
 	pD2DRenderTarget->EndDraw();
-	// End: Render text.
+	//swapchain->Present(0, 0); // This line causes a flicker, as there's already a call to the Present member function below.
+	// End: Test 1
+	/*
+	// Test 3 REMOVE THIS CODE AND FILE myfile.spritefont
+	// Start: Test 3: Render the text "Hello, DirectXTK! Enter Text." using DirectXTK within the render loop.
+	// unique_ptr and make_unique are specified in the Copilot generated code.
+	// Are they required?
+	//   std::unique_ptr is a smart pointer that owns and manages another object through a pointer and disposes of that object when the unique_ptr goes out of scope.
+	//   std::make_unique is a utility function in C++ that was introduced in C++14. It is used to create a unique_ptr object, which is a smart pointer that manages the lifetime of dynamically allocated objects. It is defined inside <memory> header file.
+	//   std::make_unique is a factory function that constructs an object of type T and wraps it in a std::unique_ptr. It is the recommended way to create a std::unique_ptr.
+	//   See https://github.com/microsoft/DirectXTK/wiki/SpriteFont.
+	// Initialize
+	std::unique_ptr<DirectX::SpriteBatch> spriteBatch = std::make_unique<DirectX::SpriteBatch>(devcon);
+	// File myfile.spritefont must be created in the project directory.
+	// The file myfile.spritefontis a binary file used by DirectX to describe a font.
+	// It contains font data such as glyphs, spacing, and other typographic information necessary for rendering text in a DirectX application.
+	// This file is typically generated by a tool like the DirectX Content Pipeline, which converts a TrueType font (TTF) or other font formats into a format that DirectX can use efficiently.
+	// See MakeSpriteFont · microsoft/DirectXTK Wiki · GitHub. This worked. It may also be possible to instead create this executable using DirectXTK.
+	std::unique_ptr<DirectX::SpriteFont> spriteFont = std::make_unique<DirectX::SpriteFont>(dev, L"myfile.spritefont");
+	// Render
+	spriteBatch->Begin();
+	spriteFont->DrawString(spriteBatch.get(), L"Hello, DirectXTK! Enter Text.", DirectX::XMFLOAT2(100, 100));
+	spriteFont->DrawString(spriteBatch.get(), inputText.c_str(), DirectX::XMFLOAT2(200, 200));
+	// >Placing spriteBatch->End() here (well  before swapchain->Present()) prevents the 3D cube but not the 2D text from being rendered.
+	// >Placing spriteBatch->End() just        before swapchain->Present()  prevents the 3D cube but not the 2D text from being rendered.
+	// >Placing all 'Test 3' code              before swapchain->Present()  prevents the 3D cube but not the 2D text from being rendered.
+	// >Placing spriteBatch->End()             after  swapchain->Present()  prevents the 2D text and the 3D cube     from being rendered.
+	// >Placing all 'Test 3' code              after  swapchain->Present()  prevents the 2D text and the 3D cube     from being rendered.
+	spriteBatch->End();
+	// End: Test 3
+	*/
 
 	//***
 	// 4. Specify the vertex buffers, the index buffer, and the primitive type used when drawing.
@@ -1424,12 +1508,12 @@ void RenderFrame(void)
 	// End: RenderFrame function
 }
 
-// ShutdownDirectX function: Definition
-//   This function performs an orderly termination of DirectX.
+// CleanD3D function: Definition
+//   This function performs an orderly termination of Direct3D.
 //   1. Switch to windowed mode.
 //
-//   2. Release DirectX resources.
-void ShutdownDirectX(void)
+//   2. Free memory.
+void CleanD3D(void)
 {
 	//***
 	// 1. Switch to windowed mode.
@@ -1446,116 +1530,33 @@ void ShutdownDirectX(void)
 	// End: 1. Switch to windowed mode.
 
 	//***
-	// 2. Release DirectX resources.
-	//    Check that all pointers are valid and have been initialized before releasing them. If any of these pointers are nullptr, calling Release on them will result in undefined behavior.
-	//    Set all pointers to nullptr after releasing them.
-	//      This is a good practice for several reasons:
-	//      1. Avoiding Dangling Pointers:		 After releasing a COM object, the pointer still holds the address of the released memory.
-	//											 If you try to use this pointer, it can lead to undefined behavior or crashes.
-	//											 Setting it to nullptr ensures that any subsequent use of the pointer will be safe, as dereferencing a nullptr will result in a predictable crash or error.
-	//		2. Double Release Prevention:		 If a pointer is not set to nullptr after releasing, there is a risk of releasing the same pointer again, which can lead to serious errors.
-	//											 By setting it to nullptr, you can easily check if the pointer has already been released.
-	//		3. Code Readability and Maintenance: It makes the code more readable and easier to maintain. Programmers can quickly understand that the pointer has been released and should not be used anymore.
+	// 2. Free memory.
+	//    Close Direct3D and release its memory.
+	//    Deallocate any dynamically allocated objects, i.e., objects created with the new operator.
 	//***
 
+	// Close Direct3D and release its memory.
 	// IUnknown::Release member function:
 	//   Decrement the reference count for an interface on a COM object. If the reference count = 0, then the interface pointer is freed. If there are no other interface pointers, then the COM object is freed.
-	//
-	// DirectX Global Interface Declarations: Direct3D
-	if (swapchain) {
-		swapchain->Release();
-		swapchain = nullptr;
-	}
-	if (dev) {
-		dev->Release();
-		dev = nullptr;
-	}
-	if (devcon) {
-		devcon->Release();
-		devcon = nullptr;
-	}
+	pLayout->Release();
+	pVS->Release();
+	pPS->Release();
+	depthbuffer->Release();
+	pVBuffer->Release();
+	pCBuffer->Release();
+	pIBuffer->Release();
+	swapchain->Release();
+	backbuffer->Release();
+	dev->Release();
+	devcon->Release();
 
-	if (pDepthBuffer) {
-		pDepthBuffer->Release();
-		pDepthBuffer = nullptr;
-	}
-	if (depthbuffer) {
-		depthbuffer->Release();
-		depthbuffer = nullptr;
-	}
+	// End: 2. Free memory.
 
-	if (pBackBuffer) {
-		pBackBuffer->Release();
-		pBackBuffer = nullptr;
-	}
-	if (backbuffer) {
-		backbuffer->Release();
-		backbuffer = nullptr;
-	}
-
-	if (pLayout) {
-		pLayout->Release();
-		pLayout = nullptr;
-	}
-	if (pVS) {
-		pVS->Release();
-		pVS = nullptr;
-	}
-	if (pPS) {
-		pPS->Release();
-		pPS = nullptr;
-	}
-	if (pVBuffer) {
-		pVBuffer->Release();
-		pVBuffer = nullptr;
-	}
-	if (pIBuffer) {
-		pIBuffer->Release();
-		pIBuffer = nullptr;
-	}
-	if (pCBuffer) {
-		pCBuffer->Release();
-		pCBuffer = nullptr;
-	}
-
-	if (pTextureView) {
-		pTextureView->Release();
-		pTextureView = nullptr;
-	}
-
-	// DirectX Global Interface Declarations: Direct2D
-	if (pD2DFactory) {
-		pD2DFactory->Release();
-		pD2DFactory = nullptr;
-	}
-	if (pDxgiSurface) {
-		pDxgiSurface->Release();
-		pDxgiSurface = nullptr;
-	}
-	if (pD2DRenderTarget) {
-		pD2DRenderTarget->Release();
-		pD2DRenderTarget = nullptr;
-	}
-	if (pBrush) {
-		pBrush->Release();
-		pBrush = nullptr;
-	}
-
-	// DirectX Global Interface Declarations: DirectWrite
-	if (pDWriteFactory) {
-		pDWriteFactory->Release();
-		pDWriteFactory = nullptr;
-	}
-	if (pTextFormat) {
-		pTextFormat->Release();
-		pTextFormat = nullptr;
-	}
-
-	// End: 2. Release DirectX resources.
-
-	// End: ShutdownDirectX function
+	// End: CleanD3D function
 }
 
+//Test 4
+// See resource.h and resource.rc in this program's Project.
 // Function to initialize and set the menu.
 void InitMenu(HWND hWnd)
 /* (fix this comment by using //)
@@ -1594,32 +1595,28 @@ The InitMenu function is responsible for initializing and setting the menu for a
 	SetMenu(hWnd, hMenu);
 }
 
-// InputTextDlgProc function: Definition
-//   The dialog box procedure (the dialog message handler) for the program. It returns TRUE if it processes a message or FALSE if it does not.
-//   Called by the DialogBox macro or the DialogBoxParam function.
+//Test 5
+// The dialog box procedure called by DialogBox.
+// See https://learn.microsoft.com/en-us/windows/win32/api/winuser/nc-winuser-dlgproc
 INT_PTR CALLBACK InputTextDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int InputTextDlgProcRC = FALSE;
 	// Variable lParam:
 	//   An application-defined value passed to the dialog box procedure as the lParam parameter of the WM_INITDIALOG message.
 	//   In this case the application-defined value, to be passed to a SetWindowPos function, contains the x- and y-coordinates of the new position of the left side (x) and top (y) of a window, in client coordinates.
+	POINT* ptlParam = (POINT*)lParam;						// Test 5 // Cast lParam to a pointer to a POINT structure.
 	switch (message)
 	{
 		case WM_INITDIALOG:
-		{	// Establish a block to limit the scope of the local variable ptlParam.
 			// WM_INITDIALOG window message:
 			//   This window message is sent to the dialog box procedure immediately before a dialog box is displayed.
 			//   Dialog box procedures typically use this message to initialize controls and carry out any other initialization tasks that affect the appearance of the dialog box.
-			// Optionally set the position of the dialog box:
-			//   Uncomment the following definition of variable ptlParam and the call to the SetWindowPos function.
-			//   See the comment "set the position of the dialog box" in the WindowProc function for associated changes to make.
-			// POINT* ptlParam = (POINT*)lParam;				// A POINT structure that can be passed to the SetWindowPos function. It contains lParam, cast to a pointer to a POINT structure, containing the x and y coordinates of the new position of the left side (x) and top (y) of the dialog box window, in client coordinates.
-			// SetWindowPos function:
+			// Test 5 // SetWindowPos function:
 			//   Changes the size, position, and Z order of a child, pop-up, or top-level window. These windows are ordered according to their appearance on the screen. The topmost window receives the highest rank and is the first window in the Z order.
+			// Uncomment the following statement to set the position (variable ptlParam) of the dialog box:
 			// SetWindowPos(hDlg, HWND_TOP, ptlParam->x, ptlParam->y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 			InputTextDlgProcRC = TRUE;
 			break;
-		}
 		case WM_COMMAND:
 			// WM_COMMAND window message:
 			//   This window message is sent when the user selects a command item from a menu, when a control sends a notification message to its parent window, or when an accelerator keystroke is translated.
