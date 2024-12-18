@@ -13,21 +13,16 @@
 // - Light
 // - Texture
 // - User Interface
-//	 Pressing the 'A' ('a') key terminates the program regardless of whether the program has the focus.
-//	 Pressing the Escape	key terminates the program only if				 the program has the focus.
-//	 The mouse cursor position is used to rotate the second (top) instance of the object regardless of whether the program has the focus.
+//	 Pressing the Escape key terminates the program (only if this program's window is the foreground window).
+//   Menu: File/ Exit 
+//   Menu: File/ Enter Text
+//   Menu: Help/ About
 // - Return values
 //	 RC 0: All functions:	   Normal
 //	 RC 1: objReader function: Abnormal: Error opening the Wavefront .obj file.
 //	 RC 2: objReader function: Abnormal: Error in		 the Wavefront .obj file: Required vertex attributes are missing.
 //	 In addition, while debugging this program some function return values may be checked and returned unchanged if the function fails. Such checks usually use if statements with an initializer.
 //	 These checks are not included in the return value list above because they are not intended to be part of the final program.
-//
-// Change Log:
-// - Version 3.2 XXXXX XX, 202X
-//	 1. Example User Interface:
-//		Keyboard input and mouse cursor movement
-//	 2. Direct2D and DirectWrite Initialization
 //
 // Authorship
 // This program is based on "DirectX 11 Win32 Desktop: Direct3D: Moving to 3D: Lesson 3: Simple Modeling" and earlier lessons by Chris Hanson (http://DirectXTutorial.com).
@@ -409,23 +404,38 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			// Execute the graphics generating code.
 			RenderFrame();									// This function renders a single frame.
 
-			// Check whether the user pressed the 'A' ('a') key ('A' ('a') key pressed -> window messages = WM_CLOSE -> DefWindowProc function -> WM_DESTROY -> WM_QUIT)
+			// Check whether the user pressed the 'A' ('a') key ('A' ('a') key -> window messages = WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT)
 			// GetAsyncKeyState function:
 			//   Determines whether a key is up or down at the time the function is called.
-			//   *It determines this regardless of whether the program has the focus.
-			//    This can cause undesirable behavior. It is also a potential security issue as keyboard input intended for other programs can be intercepted.
-			//   *To programmatically determine whether the program has the focus, use the GetForegroundWindow function.
-			if (GetAsyncKeyState(0x41) & 0x8000)			// Is the 'A' ('a') key is pressed?
+			//   *It determines this regardless of whether this program's window (handle hWnd) is the foreground window (the window receiving input from the user).
+			//    This can cause undesirable behavior.
+			//    It is also a potential security issue as keyboard input intended for other programs can be intercepted by this program.
+			//    It is also a potential security issue as keyboard input from		   other programs can affect			this program.
+			//   *To programmatically determine whether this program's window is the foreground window, use the GetForegroundWindow function.
+			// GetForegroundWindow function:
+			//   Retrieves a handle to the foreground window (the window with which the user is currently working).
+			//   The system assigns a slightly higher priority to the thread that creates the foreground window than it does to other threads.
+			// Is the 'A' ('a') key (0x41) down while this program's window is the foreground window?
+			if (GetAsyncKeyState(0x41) & 0x8000 && hWnd == GetForegroundWindow())
 				PostMessage(hWnd, WM_CLOSE, 0, 0);			// Post a WM_CLOSE window message to the thread message queue of the window to be closed. The default window procedure, the DefWindowProc function, processes the WM_CLOSE window message.
 
 			// Retrieve the position of the mouse cursor.
 			// GetCursorPos function:
 			//   Retrieves the position of the mouse cursor, in screen coordinates.
-			//   *It determines this regardless of whether the program has the focus.
-			GetCursorPos(&CursorPos);
-			// Calculate the value of variable CursorMov, a representation of mouse cursor movement used in the subsequent calculation of Angel2, an angle of rotation around the y-axis that affects object rendering.
-			// Variable CursorMov represents mouse cursor movement based on the x-position of the mouse cursor, the native screen resolution / 2, and a constant that reduces its affect.
-			CursorMov = (CursorPos.x - 2560) * 0.00001f;
+			//   *It determines this regardless of whether this program's window (handle hWnd) is the foreground window (the window receiving input from the user).
+			//    This can cause undesirable behavior.
+			//   *To programmatically determine whether this program's window is the foreground window, use the GetForegroundWindow function.
+			// GetForegroundWindow function:
+			//   Retrieves a handle to the foreground window (the window with which the user is currently working).
+			//   The system assigns a slightly higher priority to the thread that creates the foreground window than it does to other threads.
+			// Has the mouse cursor moved while this program's window is the foreground window?
+			if (hWnd == GetForegroundWindow())
+			{
+				GetCursorPos(&CursorPos);
+				// Calculate the value of variable CursorMov, a representation of mouse cursor movement used in the subsequent calculation of Angel2, an angle of rotation around the y-axis that affects object rendering.
+				// Variable CursorMov represents mouse cursor movement based on the x-position of the mouse cursor, the native screen resolution / 2, and a constant that reduces its affect.
+				CursorMov = (CursorPos.x - 2560) * 0.00001f;
+			}
 		}
 	}
 
@@ -460,9 +470,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 	switch (message)
 	{
 		case WM_DESTROY:
-			// The user closed the window             (window messages =								WM_CLOSE -> DefWindowProc function -> *WM_DESTROY* -> WM_QUIT), or
-			// The user pressed the Escape key        (window messages = WM_KEYDOWN -> VK_ESCAPE	 -> WM_CLOSE -> DefWindowProc function -> *WM_DESTROY* -> WM_QUIT), or
-			// The user selected the 'Exit' menu item (window messages = WM_COMMAND -> ID_FILE_EXIT  -> WM_CLOSE -> DefWindowProc function -> *WM_DESTROY* -> WM_QUIT).
+			// The user closed the window             (window messages =								WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT), or
+			// The user pressed the Escape key        (window messages = WM_KEYDOWN -> VK_ESCAPE	 -> WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT), or
+			// The user selected the 'Exit' menu item (window messages = WM_COMMAND -> ID_FILE_EXIT  -> WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT).
 			// In either case a WM_DESTROY window message is sent to the thread message queue of the window being destroyed.
 			//
 			// WM_DESTROY window message:
@@ -479,7 +489,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			WindowProcRC = 0;								// Set the return code of the WindowProc function to 0.
 			break;
 		case WM_KEYDOWN:
-			// The user pressed a key (window message = *WM_KEYDOWN*).
+			// The user pressed a key (window message = WM_KEYDOWN).
+			// This program's window (handle hWnd) is the foreground window (the window receiving input from the user).
 			// 
 			// WM_KEYDOWN window message:
 			//   This window message is posted to the thread message queue of the window with the keyboard focus when a non-system key is pressed.
@@ -487,7 +498,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			switch (wParam)									// wParam is the identifier of the virtual-key code of the non-system key.
 			{
 				case VK_ESCAPE:
-					// The user pressed the Escape key (window messages = WM_KEYDOWN -> *VK_ESCAPE* -> WM_CLOSE -> DefWindowProc function -> WM_DESTROY -> WM_QUIT).
+					// The user pressed the Escape key (window messages = WM_KEYDOWN -> VK_ESCAPE -> WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT).
 					//
 					// VK_ESCAPE:
 					//   The virtual-key code of the non-system key is VK_ESCAPE, the Escape key.
@@ -502,20 +513,20 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
 					break;
 				default:
-					// The user pressed a key other than the Escape key (window messages = *WM_KEYDOWN* -> return).
+					// The user pressed a key other than the Escape key (window messages = WM_KEYDOWN -> return).
 					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
 					break;
 			}
 			break;
 		case WM_COMMAND:
-			// The user selected a command item from a menu, or a control sent a notification message to its parent window, or an accelerator keystroke was translated (window message = *WM_COMMAND*).
+			// The user selected a command item from a menu, or a control sent a notification message to its parent window, or an accelerator keystroke was translated (window message = WM_COMMAND).
 			//
 			// WM_COMMAND window message:
 			//   This window message is sent to the thread message queue of the window that created the menu, control, or accelerator.
 			switch (LOWORD(wParam))							// The low-order word of wParam is the identifier of the menu command item, notification message, or accelerator keystroke.
 			{
 				case ID_FILE_EXIT:
-					// The user selected the 'File/ Exit' menu item (window messages = WM_COMMAND -> *ID_FILE_EXIT* -> WM_CLOSE -> DefWindowProc function -> WM_DESTROY -> WM_QUIT).
+					// The user selected the 'File/ Exit' menu item (window messages = WM_COMMAND -> ID_FILE_EXIT -> WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT).
 					//
 					// PostMessage function:
 					//   Places (posts) a window message in the thread message queue associated with the thread that created the specified window and returns without waiting for the thread to process the window message.
@@ -527,13 +538,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
 					break;
 				case ID_HELP_ABOUT:
-					// The user selected the 'Help/ About' menu item (window messages = WM_COMMAND -> *ID_HELP_ABOUT* -> display message box -> return).
+					// The user selected the 'Help/ About' menu item (window messages = WM_COMMAND -> ID_HELP_ABOUT -> display message box -> return).
 					MessageBox(hWnd, L"A simple DirectX 11 application", L"objRenderer V3.2", MB_OK | MB_ICONINFORMATION);
 					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
 					break;
 				case ID_FILE_ENTERTEXT:
 				{	// Establish a block to limit the scope of the local variable pt.
-					// The user selected the 'File/ Enter Text' menu item (window messages = WM_COMMAND -> *ID_FILE_ENTERTEXT* -> display dialog box -> return).
+					// The user selected the 'File/ Enter Text' menu item (window messages = WM_COMMAND -> ID_FILE_ENTERTEXT -> display dialog box -> return).
 					//
 					// DialogBox macro:
 					//   Creates a modal dialog box from a dialog box template resource. DialogBox does not return control until the specified callback function, the dialog box procedure, terminates the modal dialog box by calling the EndDialog function.
@@ -562,13 +573,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					break;
 				}
 				default:
-					// The user selected an unhandled menu item (window messages = *WM_COMMAND* -> return).
+					// The user selected an unhandled menu item (window messages = WM_COMMAND -> return).
 					WindowProcRC = 0;						// Set the return code of the WindowProc function to 0.
 					break;
 			}
 			break;
 		default:
-			// The DefWindowProc function processes the WM_CLOSE window message (window messages = WM_CLOSE -> *DefWindowProc function* -> WM_DESTROY -> WM_QUIT).
+			// The DefWindowProc function processes the WM_CLOSE window message (window messages = WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT).
 			//
 			// The DefWindowProc function processes the WM_CLOSE window message by calling the DestroyWindow function to destroy the window. This is the default behavior: The DestroyWindow function is not coded in this program.
 			//   The DestroyWindow function,
@@ -1624,6 +1635,7 @@ INT_PTR CALLBACK InputTextDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 			// WM_COMMAND window message:
 			//   This window message is sent when the user selects a command item from a menu, when a control sends a notification message to its parent window, or when an accelerator keystroke is translated.
 			if (LOWORD(wParam) == IDOK) {
+				// IDOK: The identifier of the OK button in a dialog box.
 				// Define a buffer to store the text entered by the user. The size of the buffer (256 characters) can be adjusted as needed.
 				wchar_t textBuffer[256];
 				// GetDlgItemText function:
@@ -1632,10 +1644,13 @@ INT_PTR CALLBACK InputTextDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 				// Process the retrieved text (e.g., display it, store it, etc.).
 				// The MessageBox function displays the retrieved text in a message box. You can replace this with any other processing logic as needed.
 				MessageBox(hDlg, textBuffer, L"Entered Text", MB_OK);
+				// The EndDialog function destroys a modal dialog box, causing the system to end any processing for the dialog box.
 				EndDialog(hDlg, LOWORD(wParam));
 				InputTextDlgProcRC = TRUE;
 			}
 			else if (LOWORD(wParam) == IDCANCEL) {
+				// IDCANCEL: The identifier of the Cancel button in a dialog box.
+				// The EndDialog function destroys a modal dialog box, causing the system to end any processing for the dialog box.
 				EndDialog(hDlg, LOWORD(wParam));
 				InputTextDlgProcRC = TRUE;
 			}
