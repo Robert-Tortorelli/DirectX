@@ -15,9 +15,7 @@
 // Robert John Tortorelli
 
 //***
-// Global Declarations.
-// Declaring a pointer variable at the global scope (outside any function) automatically initializes it to nullptr if you don't provide an initial value.
-// This ensures it does not point to any memory location until it is explicitly initialized.
+// Declarations.
 //***
 
 // Pragma Directives.
@@ -30,33 +28,29 @@
 // DWORD Header File.
 #include <intsafe.h>										// Required for the DWORD data type. Note that objRenderer.cpp includes windows.h, which contains intSafe.h.
 
+// DirectXMath Header File.
+#include <directxmath.h>                                    // The DirectXMath API provides SIMD-friendly C++ types and functions for common linear algebra and graphics math operations common to DirectX programs.
+
 //***
-// Global Function Declarations.
+// Function Declarations.
 // Function prototypes for functions (e.g., objReader) called by programs (e.g., objRenderer) that include this header file. They are optional in the functions named here (e.g., objReader).
 //***
-int objReader(void);										// The objReader function parses a single 3D object's Wavefront .obj file and uses it to populate the external global variables OurVertices and OurIndices.
+int objReader(void);										// The objReader function parses a single 3D object's Wavefront .obj file and uses it to populate the external variables OurVertices and OurIndices.
 
-// End: Global Function Declarations.
+// End: Function Declarations.
 
 //***
-// DirectX Global Declarations.
+// External Variable Declarations.
 //***
-
-// DirectXMath Header File.									// The DirectXMath API provides SIMD-friendly C++ types and functions for common linear algebra and graphics math operations common to DirectX programs.
-#include <directxmath.h>                                    // It is associated with the namespace DirectX.
-
-// End: DirectX Global Declarations.
 
 //***
 // Structure Declarations.
-// Structures used to define new data types that can contain multiple members of different types.
-// They must be declared before the variables they are used to define, i.e., OurVertices.
+// Structures must be declared before the variables they are used to define, i.e., OurVertices.
 //***
 
-// Declare the VERTEX 'named structure' data type, a dynamic array of structures.
+// Declare the VERTEX 'named structure' data type.
 // The input element description structure is used to define the input-layout object that describes the VERTEX structure.
 // If the VERTEX structure is changed then the input element description structure (defined in objRenderer.cpp) must be changed accordingly.
-// In this source code file fully qualified identifiers (e.g., DirectX::XMFLOAT3 instead of using namespace DirectX;) are used to define the VERTEX structure.
 struct VERTEX {												// Vertex attributes.
 	DirectX::XMFLOAT3 GeometricVertex;						// Geometric vertex attribute:			.x, .y, .z	("v " element in the Wavefront .obj file)
 	DirectX::XMFLOAT2 VertexTextureCoordinate;				// Vertex texture coordinate attribute:	.x, .y		("vt" element in the Wavefront .obj file)
@@ -64,10 +58,6 @@ struct VERTEX {												// Vertex attributes.
 };
 
 // End: Structure Declarations.
-
-//***
-// External Variable Global Declarations.
-//***
 
 // Declare variables as external by specifying 'extern' here. Otherwise building the project results in Visual Studio Linker Tools Error LNK2005 (symbol already defined in object).
 // Define external variables in one and only one source file (not this one) and initialize them as needed.
@@ -88,6 +78,6 @@ extern int OurIndicesi;										// The index variable OurIndicesi of array vari
 // A cube's 6 sides are comprised of 2 triangle primitives per side, for a total of 6 x 2 = 12 triangle primitives, each triangle primitive comprised of 3 vertices, for a total of 12 x 3 = 36 non-unique geometric vertex indices.
 extern int PrimitivesTotal;									// The total number of triangle primitives comprising a single 3D object, e.g., 12 triangle primitives specify a cube and the total number of array elements in OurIndices is PrimitivesTotal * 3 = 36.
 
-// End: External Variable Global Declarations.
+// End: External Variable Declarations.
 
-// End: Global Declarations.
+// End: Declarations.
