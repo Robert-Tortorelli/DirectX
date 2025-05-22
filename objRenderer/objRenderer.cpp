@@ -179,10 +179,12 @@ struct {
 int ClientRectangleWidth = 800;
 int ClientRectangleHeight = 600;
 
-// Current Z-coordinate of the camera's position in view space.
-// Positive values move the camera away   from the scene.
-// Negative values move the camera closer to   the scene.
-static float zCamera = 5.0f;								// A modifier to the z-coordinate of the camera's position in 3D space.
+// User Defined Variables.
+// The following variables are used to set position in 3D space.
+static float zCamera = 5.0f;								// A modifier to the z-coordinate of the camera's position in 3D space. Incrementing the value of z makes the camera's new position appear deeper into the physical screen, such that world objects appear further away from the end-user.
+static float xWorld = 0.0f;									// A modifier to the x-coordinate of the object's position in 3D space.
+static float yWorld = 3.0f;									// A modifier to the y-coordinate of the object's position in 3D space.
+static float zWorld = 0.0f;									// A modifier to the z-coordinate of the object's position in 3D space.
 
 // End: Other Global Declarations.
 
@@ -463,14 +465,14 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 			// This program's window (handle hWnd) is the foreground window (the window receiving input from the user).
 			//
 			// Define the virtual keys used in this function.
-			// constexpr int VK_W = 0x57;					// Virtual key code for 'W' and 'w'.
-			// constexpr int VK_A = 0x41;					// Virtual key code for 'A' and 'a'.
-			// constexpr int VK_S = 0x53;					// Virtual key code for 'S' and 's'.
-			// constexpr int VK_D = 0x44;					// Virtual key code for 'D' and 'd'.
+			constexpr int VK_W = 0x57;						// Virtual key code for 'W' and 'w'.
+			constexpr int VK_A = 0x41;						// Virtual key code for 'A' and 'a'.
+			constexpr int VK_S = 0x53;						// Virtual key code for 'S' and 's'.
+			constexpr int VK_D = 0x44;						// Virtual key code for 'D' and 'd'.
 			constexpr int VK_I = 0x49;						// Virtual key code for 'I' and 'i'.
-			// constexpr int VK_J = 0x4A;					// Virtual key code for 'J' and 'j'.
+			// constexpr int VK_J = 0x4A;						// Virtual key code for 'J' and 'j'.
 			constexpr int VK_K = 0x4B;						// Virtual key code for 'K' and 'k'.
-			// constexpr int VK_L = 0x4C;					// Virtual key code for 'L' and 'l'.
+			// constexpr int VK_L = 0x4C;						// Virtual key code for 'L' and 'l'.
 			//
 			// WM_KEYDOWN window message:
 			//   This window message is posted to the thread message queue of the window with the keyboard focus when a non-system key is pressed.
@@ -480,15 +482,37 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 				case VK_I:
 					// The user pressed the I key (window messages = WM_KEYDOWN -> VK_I -> Move the camera +z).
 					//
-					//zCamera -= 1.0f;						// Decrement the variable zCamera.
-					zCamera = -10.0f;						// *HERE*Transform
+					zCamera += 0.5f;						// Gradually increment the variable zCamera.
 					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
 					break;
 				case VK_K:
 					// The user pressed the K key (window messages = WM_KEYDOWN -> VK_K -> Move the camera -z).
 					//
-					//zCamera += 1.0f;						// Increment the variable zCamera.
-					zCamera = 10.0f;						// *HERE*Transform
+					zCamera -= 0.5f;						// Gradually decrement the variable zCamera.
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+				case VK_W:
+					// The user pressed the W key (window messages = WM_KEYDOWN -> VK_W -> Move the object +x).
+					//
+					xWorld += 0.5f;							// Gradually increment the variable xWorld.
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+				case VK_S:
+					// The user pressed the S key (window messages = WM_KEYDOWN -> VK_S -> Move the object -x).
+					//
+					xWorld -= 0.5f;							// Gradually decrement the variable xWorld.
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+				case VK_A:
+					// The user pressed the A key (window messages = WM_KEYDOWN -> VK_A -> Move the object +y).
+					//
+					yWorld += 0.5f;							// Gradually increment the variable yWorld.
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+				case VK_D:
+					// The user pressed the D key (window messages = WM_KEYDOWN -> VK_D -> Move the object -y).
+					//
+					yWorld -= 0.5f;							// Gradually decrement the variable yWorld.
 					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
 					break;
 				default:
@@ -553,7 +577,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					//   Uncomment the following definition of the variable pt and the call to the DialogBoxParam function.
 					//   (Comment the replaced call to DialogBox)
 					//   See the comment "set the position of the dialog box" in the InputTextDlgProc function dialog box procedure for associated changes to make.
-					// POINT pt = { 300, 300 };				// A POINT structure that can be passed to the DialogBoxParam function. It contains the x and y coordinates of the new position of the left side (x) and top (y) of the dialog box window, in client coordinates.
+					// POINT pt = { 300, 300 };				// A POINT structure that can be passed to the DialogBoxParam function. It contains the x- and y-coordinates of the new position of the left side (x) and top (y) of the dialog box window, in client coordinates.
 					// DialogBoxParam function:
 					//   Creates a modal dialog box from a dialog box template resource. Before displaying the dialog box, the function passes an application-defined value to the dialog box procedure as the lParam parameter of the WM_INITDIALOG message. An application can use this value to initialize dialog box controls.
 					// DialogBoxParam(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), hWnd, InputTextDlgProc, (LPARAM)&pt);	// (LPARAM)&pt is the address of the POINT structure pt, cast to a LPARAM.
@@ -770,8 +794,8 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	D3D11_VIEWPORT viewport = {};							// Defines the dimensions of the viewport.
 
 	// Assign values to the dimensions of the viewport D3D11_VIEWPORT structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-	viewport.TopLeftX = 0;									// Assigned a value specifying the X position of the left hand side of the viewport. Ranges between D3D11_VIEWPORT_BOUNDS_MIN and D3D11_VIEWPORT_BOUNDS_MAX.
-	viewport.TopLeftY = 0;									// Assigned a value specifying the Y position of the top of the viewport.			 Ranges between D3D11_VIEWPORT_BOUNDS_MIN and D3D11_VIEWPORT_BOUNDS_MAX.
+	viewport.TopLeftX = 0;									// Assigned a value specifying the x position of the left hand side of the viewport. Ranges between D3D11_VIEWPORT_BOUNDS_MIN and D3D11_VIEWPORT_BOUNDS_MAX.
+	viewport.TopLeftY = 0;									// Assigned a value specifying the y position of the top of the viewport.			 Ranges between D3D11_VIEWPORT_BOUNDS_MIN and D3D11_VIEWPORT_BOUNDS_MAX.
 	viewport.Width = static_cast<FLOAT>(ClientRectangleWidth);	// Assigned a value specifying the width of the viewport.							 Width	must be >= 0. TopLeftX + Width	must be <= D3D11_VIEWPORT_BOUNDS_MAX.
 	viewport.Height = static_cast<FLOAT>(ClientRectangleHeight);// Assigned a value specifying the height of the viewport.							 Height	must be >= 0. TopLeftY + Height	must be <= D3D11_VIEWPORT_BOUNDS_MAX.
 	viewport.MinDepth = 0;									// Assigned a value specifying the minimum depth of the viewport.					 Ranges between 0 and 1. (The closest an object can be on the depth buffer (z-buffer))
@@ -1246,80 +1270,38 @@ int InitGraphics(void)
 int RenderFrame(void)
 {
 	//***
-	// 1. Define the final transformation matrix, matFinal, which contains all the information necessary to transform each geometric vertex of the object being rendered.
-	//    The final matrix, matFinal = matWorld x matView x matProjection
+	// 1. Define the final transformation matrix, matFinal.
 	//
 	//   i.	Define the world matrix, matWorld.
-	//		What is the purpose of the world transformation?
-	//		A model-to-world transformation, colloquially called a world transformation (or model transformation), converts model geometric vertices to world coordinates.
-	//		In other words, it places a model in a world at an exact point defined by coordinates, and involves:
-	//		1. Translation (movement)
-	//		   It's defined by a single matrix (matTranslate), using a single DirectX function (XMMatrixTranslation).
-	//		2. Rotation
-	//		   It's defined by a single matrix (matRotate) that is itself defined by one to three matrices (matRotateX, matRotateY and / or matRotateZ), using one to three DirectX functions for x, y, and / or z axis rotation (XMMatrixRotationX, XMMatrixRotationY, and / or XMMatrixRotationZ).
-	//		   If there are multiple rotation matrices, these are multiplied together to define matRotate.
-	//		3. Scaling
-	//		   It's defined by a single matrix (matScale), using a single DirectX function (XMMatrixScaling).
-	//		World Matrix (matWorld) Examples:
-	//		  matWorld = matScale x matRotateX
-	//		  matWorld = matRotate x matScale x matTranslate (translate last, which is most commonly used)
-	//		  matWorld = matTranslate x matRotate x matScale (translate first, providing a different result because when it is used first it offsets the object from the origin (0, 0, 0) before rotation takes place relative to the origin)
 	//
 	//  ii.	Define the view matrix, matView.
-	//		What is the purpose of the view transformation?
-	//		It converts model geometric vertices to view coordinates.
-	//      It effectively transforms the world coordinates to be viewed from the perspective of the camera, placing the camera at the origin in "camera space", thereby simulating the camera's viewpoint.
-	//      The view matrix relocates the objects in the world around a camera's position (the origin of camera space) and a camera's orientation.
-	//		View transformation can be considered similar to setting up a virtual camera, and involves:
-	//		1. The position of the camera.
-	//		2. The location the camera is looking at.
-	//		3. The orientation of the camera.
-	//		   This is the direction of "up" for the camera; i.e., the direction pointing to the top of the screen. Usually, game programmers use the y axis as the "up" direction.
-	//		   To orient the camera this way, specify (0, 1, 0), or 1 on the y axis and 0 on the x and z axes; i.e., (0.0f, 1.0f, 0.0f).
-	//		4. It's defined by a single matrix (matView), using a single DirectX function (XMMatrixLookAtLH).
 	//
 	// iii. Define the projection matrix, matProjection.
-	//		What is the purpose of the projection transformation?
-	//		The projection transformation converts model geometric vertices from 3D coordinates to normalized 3D coordinates.
-	//		Normalization defines what objects are visible in the final rendering and which are excluded.
-	//		Following normalization, the final rendered scene encompasses:
-	//		1. X coordinates ranging from –1 at the left and 1 at the right.
-	//		2. Y coordinates ranging from –1 on the bottom to 1 at the top.
-	//		3. Z coordinates ranging from 0 (closest to the camera) to 1 (furthest from the camera).
-	//		4. Normalized X and Y coordinates are mapped to the width and height of the display surface.
-	//		   Normalized Z coordinates are not mapped, but are used to determine what objects obscure other objects relative to the viewer.
-	//		   Everything not in this space is discarded.
-	//		A second conversion, from normalized 3D coordinates to 2D screen coordinates, is usually performed automatically in Direct3D by the rendering system.
-	//		(A program that uses Direct2D to display 3D graphics must perform this second conversion itself)
-	//		The projection transformation can be considered similar to setting up a camera lens, and involves:
-	//		1. Field of View
-	//		   In 3D graphics, the field of view is defined by setting the amount of radians allowed (vertically). The standard amount for this is 0.78539 (which is pi/4 radians, or 45 degrees).
-	//		2. View-Plane Clipping
-	//		   View-plane clipping omits the parts of an image that are unnecessary to draw; e.g., parts too far to see because of fog or the horizon.
-	//		   Direct3D asks for a near view-plane and a far view-plane, and only draws the graphics that are between them; i.e., in the viewing frustum.
-	//		3. It's defined by a single matrix (matProjection), using a single DirectX function (XMMatrixPerspectiveFovLH).
-	//		   However, it's probably the most complex type of transformation, and the underlying math performed by the DirectX function is complicated.
 	//
 	//  iv.	Define the final transformation matrix, matFinal.
-	//		matFinal = matWorld x matView x matProjection
 	//		Each geometric vertex is multiplied by the final transformation matrix.
-	//		The final transformation matrix is one member of the C++ constant buffer structure that matches the HLSL constant buffer structure. The C++ constant buffer structure will be copied to the HLSL constant buffer structure (they are, but do not have to be, named the same).
+	//		The final transformation matrix is one member of the C++ constant buffer structure that matches the HLSL constant buffer structure.
+	//		The C++ constant buffer structure will be copied to the HLSL constant buffer structure (they are, but do not have to be, named the same).
 	//		Using the HLSL constant buffer is efficient, as multiplication and other common operations can be performed on its members by the GPU's vertex shader.
 	//***
 
 	// Declare transformation matrices that are not members of the C++ constant buffer structure.
-	XMMATRIX matRotateY, matWorld, matView, matProjection, matTranslateY;
+	XMMATRIX matRotateY, matWorld, matView, matProjection, matTranslate;
 
+	// Static Variables
 	// Declare and initialize variables with values that must be preserved though multiple calls to the function that declares them. This supports incremental changes to the associated rendered objects.
-	static float Angle = 0.0f;
-	static float Angle2 = 0.0f;
+	//
+	// XMConvertToRadians function:
+	//   Converts the size of an angle measured in degrees into one measured in radians.
+	static float Angle =  XMConvertToRadians(1.0f);
+	static float Angle2 = XMConvertToRadians(1.0f);
 
 	// Define the world matrix, matWorld.
 	//   This matrix is updated each frame, causing the object to rotate.
+	Angle += XMConvertToRadians(0.05f);						// Angle of rotation in degrees, converted to radians, continuously increasing.
 	// XMMatrixRotationY function:
 	//   Builds a matrix that rotates around the y axis.
-	Angle += 0.001f;										// Rotate the first instance of the object clockwise.
-	matRotateY = XMMatrixRotationY(Angle);					// "Angle" is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
+	matRotateY = XMMatrixRotationY(Angle);					// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
 	ConstantBuffer.matRotate = matRotateY;					// The final rotation matrix is the product of all defined rotation matrices.				Here, only matRotateY is defined.
 	matWorld = ConstantBuffer.matRotate;					// The world transformation is a function of translation (movement), rotation, and scaling. Here, only rotation   is defined.
 
@@ -1327,20 +1309,13 @@ int RenderFrame(void)
 	// XMMatrixLookAtLH function:
 	//   Builds a view matrix for a left-handed coordinate system using a camera position, a focal point position (a position the camera is pointed at), and the up direction of the camera.
 	//   Returns a view matrix that transforms a point from world space into view space.
-	//   After the view transformation is applied to the 3D scene, the camera can be assumed to be positioned at the origin (with the top of the camera pointed in the direction of positive Y) and pointed in the positive Z direction (for a left-hand system).
+	//   After the view transformation is applied to the 3D scene, the camera can be assumed to be positioned at the origin (with the top of the camera pointed in the direction of positive y) and pointed in the positive z direction (for a left-hand system).
 	//   This orientation allows the projection transformation to be much simpler than it would be otherwise.
 	//
 	// XMVectorSet function:
 	//   Creates a vector using four floating-point values.
-	//   Returns an instance XMVECTOR each of whose four components (x, y, z, and w) is a floating-point number with the same value as the corresponding input argument to XMVectorSet.
+	//   Returns an instance of XMVECTOR each of whose four components (x, y, z, and w) is a floating-point number with the same value as the corresponding input argument to XMVectorSet.
 	//     XMVECTOR is a portable type used to represent a vector of four 32-bit floating-point or integer components, each aligned optimally and mapped to a hardware vector register.
-	/* *HERE*Transform The original specification I used, which works:
-	XMVECTOR EyePosition = XMVectorSet(0.0f,				// The x component of the vector to return.
-		9.0f,												// The y component of the vector to return.
-		24.0f												// The z component of the vector to return.
-		0.0f);												// The w component of the vector to return.
-	*/
-	// *HERE*Transform EyePosition Test:
 	XMVECTOR EyePosition = XMVectorSet(0.0f,				// The x component of the vector to return.
 		9.0f,												// The y component of the vector to return.
 		zCamera,											// The z component of the vector to return.
@@ -1363,17 +1338,17 @@ int RenderFrame(void)
 	// Define the projection matrix, matProjection.
 	// XMMatrixPerspectiveFovLH function:
 	//   Builds a left-handed perspective projection matrix based on a field of view.
-	//   Using left-hand coordinates means the camera is pointed in the direction of the positive Z axis.
-	//   The projection matrix is based on a camera located at the origin and pointing along the Z axis.
+	//   Using left-hand coordinates means the camera is pointed in the direction of the positive z axis.
+	//   The projection matrix is based on a camera located at the origin and pointing along the z axis.
 	//     This is possible because the view matrix accounts for any possible translation and rotation of the camera.
-	float FovAngleY = XMConvertToRadians(45);				// The XMConvertToRadians function converts the size of an angle measured in degrees into one measured in radians.
+	float FovAngleY = XMConvertToRadians(45);
 	float AspectRatio = static_cast<FLOAT>(ClientRectangleWidth) / static_cast<FLOAT>(ClientRectangleHeight);
 	float NearZ = 1.0f;
 	float FarZ = 100.0f;
 	matProjection = XMMatrixPerspectiveFovLH(FovAngleY,		// Top-down field-of-view angle in radians.
-		AspectRatio,										// Aspect ratio of view-space X:Y.
-		NearZ,												// Distance to the near clipping plane. Must be greater than zero. It is converted to a normalized Z coordinate of 0.
-		FarZ);												// Distance to the far  clipping plane. Must be greater than zero. It is converted to a normalized Z coordinate of 1.
+		AspectRatio,										// Aspect ratio of view-space x:y.
+		NearZ,												// Distance to the near clipping plane. Must be greater than zero. It is converted to a normalized z-coordinate of 0.
+		FarZ);												// Distance to the far  clipping plane. Must be greater than zero. It is converted to a normalized z-coordinate of 1.
 
 	// Define the final transformation matrix, matFinal.
 	ConstantBuffer.matFinal = matWorld * matView * matProjection;
@@ -1474,12 +1449,10 @@ int RenderFrame(void)
 
 	//***
 	// 6. Render the objects.
-	//   i.	Copy the C++ constant buffer structure to the HLSL constant buffer structure used by the GPU's vertex shader.
-	//  ii. Draw the object's primitives to the back buffer.
+	//   i. Draw the first instance of the object to the scene.
+	//		Each UpdateSubresource() and DrawIndexed() pair draws one instance of the object to the back buffer.
+	//  ii. Draw a second instance of the same object to the scene, offset from the first object, using different transformations than those used by the first instance of the object.
 	// iii. Switch the back buffer and the front buffer to present the rendered image to the user.
-	//
-	//    Each UpdateSubresource() and DrawIndexed() pair draws one instance of the object.
-	//    A second instance of the same object is also drawn to the scene, offset from the first object.
 	//***
 
 	// Draw the first instance of the object to the scene.
@@ -1503,20 +1476,27 @@ int RenderFrame(void)
 		0,													// The location of the first index read by the GPU from the index buffer.
 		0);													// A value added to each index before reading a vertex from the vertex buffer.
 
-	// Draw the second instance of the object to the scene.
-	// Draw the second instance of the same object, using different world coordinates that offset it from the first instance of the object.
+	// Draw a second instance of the same object to the scene, offset from the first object, using different transformations than those used by the first instance of the object.
 	//
-	// Update the final transformation matrix (matFinal) using a different world matrix (matWorld) that offsets the second instance of the object from the first instance of the object.
+	// Define a rotation matrix to transform the second instance of the object.
+	Angle2 -= XMConvertToRadians(0.05f);					// Angle of rotation in degrees, converted to radians, continuously decreasing.
+	matRotateY = XMMatrixRotationY(Angle2);					// Angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
+	ConstantBuffer.matRotate = matRotateY;					// The final rotation matrix is the product of all defined rotation matrices. Here, only matRotateY is defined.
+	//
+	// Define a translation matrix to transform the second instance of the object.
 	// XMMatrixTranslation function:
 	//   Builds a translation matrix from the specified offsets.
-	// Translate the second instance of the object in a positive direction along the y axis.
-	matTranslateY = XMMatrixTranslation(0.0f,				// Translation along the x-axis.
-		3.0f,												// Translation along the y-axis.
-		0.0f);												// Translation along the z-axis.
-	Angle2 -= 0.001f;										// Rotate the second instance of the object counterclockwise.
-	matRotateY = XMMatrixRotationY(Angle2);					// Angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
-	ConstantBuffer.matRotate = matRotateY;					// The final rotation matrix is the product of all defined rotation matrices.				Here, only matRotateY is defined.
-	matWorld = matTranslateY * ConstantBuffer.matRotate;	// The world transformation is a function of translation (movement), rotation, and scaling. Here, only translation and rotation are used.
+	matTranslate = XMMatrixTranslation(xWorld,				// Translation along the x-axis.
+		yWorld,												// Translation along the y-axis.
+		zWorld);											// Translation along the z-axis.
+	//
+	// Define a world matrix to transform the second instance of the object.
+	// The world transformation is a function of scaling, rotation, and translation (movement).
+	// Here, only rotation and translation are used. Apply the rotation matrix first, then the translation matrix.
+	// This results in the object rotating in place as it moves, i.e., the object does not orbit as it moves.
+	matWorld = ConstantBuffer.matRotate * matTranslate;
+	//
+	// Define a final matrix to transform the second instance of the object.
 	// Update the final transformation matrix (matFinal) by multiplying the updated world matrix (matWorld) by the original view (matView) and projection (matProjection) matrices.
 	ConstantBuffer.matFinal = matWorld * matView * matProjection;
 	//
@@ -1653,16 +1633,16 @@ INT_PTR CALLBACK InputTextDlgProc(HWND hDlg,				// The HWND handle for the dialo
 			// Variable lParam:
 			//   An application-defined value passed to the dialog box procedure as the lParam parameter of the WM_INITDIALOG message.
 			//   In this case the application-defined value, to be passed to a SetWindowPos function, contains the x- and y-coordinates of the new position of the left side (x) and top (y) of a window, in client coordinates.
-			// POINT* ptlParam = (POINT*)lParam;				// A POINT structure that can be passed to the SetWindowPos function. It contains lParam, cast to a pointer to a POINT structure, containing the x and y coordinates of the new position of the left side (x) and top (y) of the dialog box window, in client coordinates.
+			// POINT* ptlParam = (POINT*)lParam;				// A POINT structure that can be passed to the SetWindowPos function. It contains lParam, cast to a pointer to a POINT structure, containing the x- and y-coordinates of the new position of the left side (x) and top (y) of the dialog box window, in client coordinates.
 			// SetWindowPos function:
-			//   Changes the size, position, and Z order of a child, pop-up, or top-level window. These windows are ordered according to their appearance on the screen. The topmost window receives the highest rank and is the first window in the Z order.
+			//   Changes the size, position, and z order of a child, pop-up, or top-level window. These windows are ordered according to their appearance on the screen. The topmost window receives the highest rank and is the first window in the z order.
 			// SetWindowPos(hDlg,								// A handle to the window.
-			//	HWND_TOP,									// A handle to the window to precede the positioned window in the Z order, or a value (e.g., HWND_TOP) indicating the position of the dialog box window.
-			//	ptlParam->x,								// The new position of the left side of the window, in client coordinates.
-			//	ptlParam->y,								// The new position of the top of the window, in client coordinates.
-			//	0,											// The new width of the window, in pixels.
-			//	0,											// The new height of the window, in pixels.
-			//	SWP_NOSIZE | SWP_NOZORDER);					// The window sizing and positioning flags. This parameter can be a combination of the values.
+			//	HWND_TOP,										// A handle to the window to precede the positioned window in the z order, or a value (e.g., HWND_TOP) indicating the position of the dialog box window.
+			//	ptlParam->x,									// The new position of the left side of the window, in client coordinates.
+			//	ptlParam->y,									// The new position of the top of the window, in client coordinates.
+			//	0,												// The new width of the window, in pixels.
+			//	0,												// The new height of the window, in pixels.
+			//	SWP_NOSIZE | SWP_NOZORDER);						// The window sizing and positioning flags. This parameter can be a combination of the values.
 			InputTextDlgProcRC = TRUE;
 			break;
 		}
