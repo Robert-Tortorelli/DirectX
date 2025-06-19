@@ -355,19 +355,6 @@ healthchecksdb
 
 # Backup folder for Package Reference Convert tool in Visual Studio 2017
 MigrationBackup/
-
-# Ionide (cross platform F# VS Code tools) working folder
-.ionide/
-
-# 
-/objRenderer/Text.Blender-Suzanne.mtl
-/objRenderer/objRenderer - Copy (2025-05-21).cpp
-/objRenderer/objRenderer - Copy.cpp
-/objRenderer/objRenderer- test.cpp
-/objRenderer/objRenderer- test2.cpp
-/objRenderer/shaders - Copy.hlsl
-/objRenderer/shaders- test.hlsl
-/objRenderer/shaders- test2.hlsl
 /objRenderer/objRenderer (2025-06-08 test).cpp
 /objRenderer/objRenderer (2025-06-10 test).cpp
 /objRenderer/objRenderer - Copy (2025-05-21).cpp
@@ -376,8 +363,6 @@ MigrationBackup/
 /objRenderer/objRenderer - Copy.cpp
 /objRenderer/objRenderer- test.cpp
 /objRenderer/objRenderer- test2.cpp
-/objRenderer/Text.Blender-Cube.obj
-/objRenderer/Text.Blender-Suzanne.mtl
-/objRenderer/Text.Blender-Suzanne.obj
-/objRenderer/Text.obj
-/objRenderer/resource.aps
+/objRenderer/shaders - Copy.hlsl
+/objRenderer/shaders- test.hlsl
+/objRenderer/shaders- test2.hlsl
