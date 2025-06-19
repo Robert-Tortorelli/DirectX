@@ -359,8 +359,7 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
-# Fody - auto-generated XML schema
-FodyWeavers.xsd
+# 
 /objRenderer/Text.Blender-Suzanne.mtl
 /objRenderer/objRenderer - Copy (2025-05-21).cpp
 /objRenderer/objRenderer - Copy.cpp

@@ -22,7 +22,6 @@
 //	 RC 0:					(all functions)			Normal termination.
 //	 RC 1:					objReader function:		Error opening the Wavefront .obj file.
 //	 RC 2:					objReader function:		Error in	  the Wavefront .obj file: Required vertex attributes are missing.
-//   RC 3:					RenderFrame function:	Error: EyePosition is equal to FocusPosition.
 //   RC DefWindowProc():	WindowProc function:	Default window message processing.
 //   RC msg.wParam:			WinMain function:		Exit value returned to the operating system.
 //
@@ -35,6 +34,9 @@
 
 // Windows API Header File.
 #include <windows.h>										// The Windows API (Win32 API) header file enables you to create 32-bit and 64-bit programs. It includes declarations for both Unicode and ANSI versions of the API. For more information, see Unicode in the Windows API.
+
+// String Stream classes Header File.
+#include <sstream>											// The string stream classes are used to read and write strings as if they were streams, allowing for formatted input and output operations on strings. See variables declared std::wstringstream.
 
 //***
 // Global Declarations.
@@ -180,8 +182,8 @@ int ClientRectangleWidth = 800;
 int ClientRectangleHeight = 600;
 
 // User Defined Variables.
-// The following variables are used to set position in 3D space.
-static float zCamera = 5.0f;								// A modifier to the z-coordinate of the camera's position in 3D space. Incrementing the value of z makes the camera's new position appear deeper into the physical screen, such that world objects appear further away from the end-user.
+// Variables to set the position in 3D space for the second instance of the object.
+static float zCamera = 0.0f;								// A modifier to the z-coordinate of the camera's position in 3D space. Incrementing the value of z makes the camera's new position appear deeper into the physical screen, such that world objects appear further away from the end-user.
 static float xWorld = 0.0f;									// A modifier to the x-coordinate of the object's position in 3D space.
 static float yWorld = 3.0f;									// A modifier to the y-coordinate of the object's position in 3D space.
 static float zWorld = 0.0f;									// A modifier to the z-coordinate of the object's position in 3D space.
@@ -1288,13 +1290,18 @@ int RenderFrame(void)
 	// Declare transformation matrices that are not members of the C++ constant buffer structure.
 	XMMATRIX matRotateY, matWorld, matView, matProjection, matTranslate;
 
-	// Static Variables
+	// Static Variable Declarations.
 	// Declare and initialize variables with values that must be preserved though multiple calls to the function that declares them. This supports incremental changes to the associated rendered objects.
 	//
 	// XMConvertToRadians function:
 	//   Converts the size of an angle measured in degrees into one measured in radians.
 	static float Angle =  XMConvertToRadians(1.0f);
 	static float Angle2 = XMConvertToRadians(1.0f);
+
+	// End: Static Variable Declarations.
+
+	// Declare variables used when calling the RenderText function to render text.
+	std::wstringstream ss;									// Create a wide string stream object to build the text to render.
 
 	// Define the world matrix, matWorld.
 	//   This matrix is updated each frame, causing the object to rotate.
@@ -1316,24 +1323,39 @@ int RenderFrame(void)
 	//   Creates a vector using four floating-point values.
 	//   Returns an instance of XMVECTOR each of whose four components (x, y, z, and w) is a floating-point number with the same value as the corresponding input argument to XMVectorSet.
 	//     XMVECTOR is a portable type used to represent a vector of four 32-bit floating-point or integer components, each aligned optimally and mapped to a hardware vector register.
-	XMVECTOR EyePosition = XMVectorSet(0.0f,				// The x component of the vector to return.
-		9.0f,												// The y component of the vector to return.
-		zCamera,											// The z component of the vector to return.
-		0.0f);												// The w component of the vector to return.
-	XMVECTOR FocusPosition = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);	// x, y, z, w
-	XMVECTOR UpDirection = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);		// x, y, z, w
-	if (XMVector3Equal(EyePosition, FocusPosition))			// Test whether EyePosition and FocusPosition are equal, indicating an error.
+	//
+	// Variable EyePosition: The camera position vector
+	// The camera position's x- and y-coordinates match        those of the second instance of the object, even as it moves.
+	// The camera position's z-coordinate         differs from those of the second instance of the object, and can be manually adjusted by keyboard keys.
+	XMVECTOR EyePosition = XMVectorSet(xWorld,				// The x component of the vector to return.
+		yWorld,												// The y component of the vector to return.
+		zCamera + 5.0f,										// The z component of the vector to return.
+		0.0f);
+	//
+	// Variable FocusPosition: The focal point position vector
+	// The camera points at the second instance of the object even as it moves. Thus the second instance of the object appears static, while the first instance of the object (which is static) appears to move in the direction opposite to how the first instance of the object moves.
+	XMVECTOR FocusPosition = XMVectorSet(xWorld, yWorld, zWorld, 0.0f); // x, y, z, w
+	//
+	// Variable UpDirection: The up direction vector
+	// The up direction vector is a unit vector that points in the positive y direction, which is the top of the camera.
+	XMVECTOR UpDirection = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);			// x, y, z, w
+	//
+	// Test whether EyePosition and FocusPosition are equal, and adjust if necessary.
+	// If EyePosition and FocusPosition become equal this is an error condition. Therefore if this occurs EyePosition is slightly adjusted to keep them unequal as required.
+	if (XMVector3Equal(EyePosition, FocusPosition))
 	{
-		// EyePosition and FocusPosition are equal. Return and indicate the error.
-		return 3;
+		// EyePosition and FocusPosition are equal.
+		// Make them unequal: Increment the camera position's z-coordinate a trivial amount.
+		EyePosition = XMVectorSet(xWorld,					// The x component of the vector to return.
+			yWorld,											// The y component of the vector to return.
+			zCamera + 5.001f,								// The z component of the vector to return.
+			0.0f);
 	}
-	else
-	{
-		// EyePosition and FocusPosition are not equal. Proceed.
-		matView = XMMatrixLookAtLH(EyePosition,				// Position of the camera.
-			FocusPosition,									// Position of the focal point (a position the camera is pointed at).
-			UpDirection);									// Up direction of the camera, typically < 0.0f, 1.0f, 0.0f, 0.0f >.
-	}
+	//
+	// Compute the view matrix, matView, using the camera position, focal point position, and up direction.
+	matView = XMMatrixLookAtLH(EyePosition,					// Position of the camera.
+		FocusPosition,										// Position of the focal point (a position the camera is pointed at).
+		UpDirection);
 
 	// Define the projection matrix, matProjection.
 	// XMMatrixPerspectiveFovLH function:
@@ -1359,6 +1381,7 @@ int RenderFrame(void)
 	// 2. Assign values that determine the attributes of light.
 	//***
 
+	// When the camera is positioned at EyePosition = (x<0, y<0, z<0), the current lighting effects place the rendered objects in shadow.
 	ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);
 	ConstantBuffer.LightColor = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
@@ -1408,7 +1431,8 @@ int RenderFrame(void)
 	// 4. Render text to the scene.
 	//***
 
-	RenderText(L"Rendering objects:");						// Call the RenderText function.
+	ss << L"Diagnostics: xWorld=" << xWorld << L", yWorld=" << yWorld << L", zWorld=" << zWorld << L", zCamera=" << zCamera << L", EyePosition z=" << XMVectorGetZ(EyePosition);
+	RenderText(ss.str().c_str());
 
 	// End: 4. Render text to the scene.
 
@@ -1477,6 +1501,7 @@ int RenderFrame(void)
 		0);													// A value added to each index before reading a vertex from the vertex buffer.
 
 	// Draw a second instance of the same object to the scene, offset from the first object, using different transformations than those used by the first instance of the object.
+	// The first instance of the object is drawn at the origin of world space, i.e., at (0, 0, 0). The second instance of the object is drawn at a different position, i.e., at (xWorld, yWorld, zWorld).
 	//
 	// Define a rotation matrix to transform the second instance of the object.
 	Angle2 -= XMConvertToRadians(0.05f);					// Angle of rotation in degrees, converted to radians, continuously decreasing.
