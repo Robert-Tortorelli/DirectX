@@ -181,12 +181,13 @@ struct {
 int ClientRectangleWidth = 800;
 int ClientRectangleHeight = 600;
 
-// User Defined Variables.
-// Variables to set the position in 3D space for the second instance of the object.
+// Define coordinates to set the position in 3D space for the second instance of the object.
 static float zCamera = 0.0f;								// A modifier to the z-coordinate of the camera's position in 3D space. Incrementing the value of z makes the camera's new position appear deeper into the physical screen, such that world objects appear further away from the end-user.
 static float xWorld = 0.0f;									// A modifier to the x-coordinate of the object's position in 3D space.
 static float yWorld = 3.0f;									// A modifier to the y-coordinate of the object's position in 3D space.
 static float zWorld = 0.0f;									// A modifier to the z-coordinate of the object's position in 3D space.
+
+XMVECTOR CameraEyePosition;									// A global variable to save the camera position so it can be included in program diagnostics.
 
 // End: Other Global Declarations.
 
@@ -436,7 +437,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 {
 	// The return value of the WindowProc function.
 	LRESULT WindowProcRC;
-	
+
 	// Attempt to identify the current window message on the thread message queue.
 	// This switch statement uses return statements to exit the WindowProc function when a window message is identified, not the break statements normally used in a switch statement.
 	// In the context of a WindowProc function, it's common to see return statements instead of break statements in the switch statement.
@@ -547,15 +548,21 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
 					break;
 				case ID_HELP_ABOUT:
+				{	// Establish a block to create a local scope for the variable ss.
 					// The user selected the 'Help/ About' menu item (window messages = WM_COMMAND -> ID_HELP_ABOUT -> display message box -> return).
+					//
+					// Define a wide string stream object to build text to render.
+					std::wstringstream ss;					// Program Diagnostics.
+					ss << L"Diagnostics: xWorld=" << xWorld << L", yWorld=" << yWorld << L", zWorld=" << zWorld << L", zCamera=" << zCamera << L", EyePosition z=" << XMVectorGetZ(CameraEyePosition);
 					// MessageBox function:
 					//   Displays a modal dialog box that contains a system icon, a set of buttons, and a brief application-specific message, such as status or error information. The message box returns an integer value that indicates which button the user clicked.
 					MessageBox(hWnd,						// A handle to the owner window of the message box to be created. If this parameter is NULL, the message box has no owner window.
-						L"A simple DirectX 11 application",	// The message to be displayed. If the string consists of more than one line, you can separate the lines using a carriage return and/or linefeed character between each line.
+						ss.str().c_str(),					// The message to be displayed. If the string consists of more than one line, you can separate the lines using a carriage return and/or linefeed character between each line.
 						L"objRenderer V3.2",				// The dialog box title. If this parameter is NULL, the default title is "Error".
 						MB_OK | MB_ICONINFORMATION);		// The contents and behavior of the dialog box. This parameter can be a combination of flags. MB_OK (the default) specifies one push button: "OK". MB_ICONINFORMATION specifies a lowercase letter "i" in a circle.
 					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
 					break;
+				}
 				case ID_FILE_ENTERTEXT:
 				{	// Establish a block to create a local scope for the variable pt.
 					// The user selected the 'File/ Enter Text' menu item (window messages = WM_COMMAND -> ID_FILE_ENTERTEXT -> display dialog box -> return).
@@ -1300,9 +1307,6 @@ int RenderFrame(void)
 
 	// End: Static Variable Declarations.
 
-	// Declare variables used when calling the RenderText function to render text.
-	std::wstringstream ss;									// Create a wide string stream object to build the text to render.
-
 	// Define the world matrix, matWorld.
 	//   This matrix is updated each frame, causing the object to rotate.
 	Angle += XMConvertToRadians(0.05f);						// Angle of rotation in degrees, converted to radians, continuously increasing.
@@ -1331,6 +1335,7 @@ int RenderFrame(void)
 		yWorld,												// The y component of the vector to return.
 		zCamera + 5.0f,										// The z component of the vector to return.
 		0.0f);
+	CameraEyePosition = EyePosition;						// Save the camera position to a global variable so it can be included in program diagnostics.
 	//
 	// Variable FocusPosition: The focal point position vector
 	// The camera points at the second instance of the object even as it moves. Thus the second instance of the object appears static, while the first instance of the object (which is static) appears to move in the direction opposite to how the first instance of the object moves.
@@ -1431,8 +1436,7 @@ int RenderFrame(void)
 	// 4. Render text to the scene.
 	//***
 
-	ss << L"Diagnostics: xWorld=" << xWorld << L", yWorld=" << yWorld << L", zWorld=" << zWorld << L", zCamera=" << zCamera << L", EyePosition z=" << XMVectorGetZ(EyePosition);
-	RenderText(ss.str().c_str());
+	RenderText(L"Rendering objects:");						// Call the RenderText function.
 
 	// End: 4. Render text to the scene.
 

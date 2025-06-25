@@ -75,7 +75,7 @@ StyleCopReport.xml
 *_h.h
 *.ilk
 *.meta
-# *.obj Wavefront .obj files are included in source control. Compiler object .obj files should be manually excluded as necessary.
+# *.obj Include Wavefront .obj files in source control. Compiler object .obj files should be manually excluded as necessary. RJT.
 *.iobj
 *.pch
 *.pdb
