@@ -1,5 +1,5 @@
 ﻿// objRenderer
-// Version 3.2
+// Version 3.3
 //
 // Description
 // The project objRenderer parses a single 3D object's description from a Wavefront .obj file, and renders that object one or more times.
@@ -237,7 +237,6 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 
 	// Calculate the appropriate window rectangle size based on the client rectangle size.
 	// The window rectangle contains the client rectangle, as well as the window border and, if present, the window menu.
-	//
 	// AdjustWindowRectEx function:
 	//   Calculates the required size of the window rectangle, based on the desired size of the client rectangle. The window rectangle can then be passed to the CreateWindowEx function to create a window whose client area is the desired size.
 	wr = { 0, 0, ClientRectangleWidth, ClientRectangleHeight };	// Set "wr" to the client rectangle's coordinates (size).
@@ -275,8 +274,8 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 	if (int InitD3DRC = InitD3D(hWnd); InitD3DRC != 0)		// Call the InitD3D function and test whether its return value is nonzero, indicating an error.
 	{
 		// The InitD3D function terminated abnormally (window messages = WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT).
-		//   Using the SendMessage function, send a WM_CLOSE window message to close the window.
-		//   Terminate the WinMain function with the return value of the InitD3D function.
+
+		// Using the SendMessage function, send a WM_CLOSE window message to close the window.
 		//   Using the SendMessage function to send the WM_CLOSE window message guarantees that the WM_CLOSE window message is processed before the WinMain function terminates.
 		//   However, be aware of the potential for blocking the calling thread if the window procedure takes a long time to process the message.
 		//
@@ -289,7 +288,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			WM_CLOSE,										// The message to be posted.
 			0,												// Additional message-specific information.
 			0);												// Additional message-specific information.
-		//
+
 		// Terminate the WinMain function with the return value of the InitD3D function.
 		return InitD3DRC;
 	}
@@ -330,7 +329,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			if (msg.hwnd == NULL && msg.message != WM_QUIT)	// A thread message (indicated by msg.hwnd == NULL) other than WM_QUIT is waiting in the thread message queue: Perform thread message processing.
 			{
 				// Perform thread message processing, except for the WM_QUIT thread message which is processed with window messages.
-				//
+
 				// This program does not currently process any thread messages other than WM_QUIT, i.e., they are ignored.
 
 				// Stay in the infinite message loop.
@@ -338,7 +337,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			else											// A window message (indicated by msg.hwnd != NULL), or the WM_QUIT thread message, is waiting in the thread message queue: Perform window message, or WM_QUIT thread message, processing.
 			{
 				// Perform window message processing.
-				// 
+
 				// TranslateMessage function:
 				//   If your program must obtain character input from the user, include this function in the infinite message loop.
 				//     See https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues.
@@ -346,7 +345,6 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 				//   A virtual-key message is a window message that the system posts to the thread message queue when a key is pressed or released.
 				//   The virtual-key message contains a virtual-key code to identify which key was pressed or released, along with additional information such as whether the key is being held down.
 				//   The WM_KEYDOWN and WM_KEYUP messages are examples of virtual-key messages. These window messages are sent to the window procedure, which can handle them to perform actions in response to key presses.
-				//
 				//   TranslateMessage does not modify the window message pointed to by its first and only parameter. Instead, if translation occurs, it creates a new character message.
 				//   The new character message is posted as a new window message to the thread message queue, to be retrieved by the next call to the PeekMessage (or GetMessage) function.
 				//   Therefore both the original virtual-key message (if any) and the new character message (if any) are retrieved by the PeekMessage (or GetMessage) function and dispatched by the DispatchMessage function.
@@ -375,8 +373,8 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			if (int RenderFrameRC = RenderFrame(); RenderFrameRC != 0) // Call the RenderFrame function and test whether its return value is nonzero, indicating an error.
 			{
 				// The RenderFrame function terminated abnormally (window messages = WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT).
-				//   Using the SendMessage function, send a WM_CLOSE window message to close the window.
-				//   Terminate the WinMain function with the return value of the RenderFrame function.
+
+				// Using the SendMessage function, send a WM_CLOSE window message to close the window.
 				//   Using the SendMessage function to send the WM_CLOSE window message guarantees that the WM_CLOSE window message is processed before the WinMain function terminates.
 				//   However, be aware of the potential for blocking the calling thread if the window procedure takes a long time to process the message.
 				//
@@ -389,7 +387,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 					WM_CLOSE,								// The message to be posted.
 					0,										// Additional message-specific information.
 					0);										// Additional message-specific information.
-				//
+
 				// Terminate the WinMain function with the return value of the RenderFrame function.
 				return RenderFrameRC;
 			}

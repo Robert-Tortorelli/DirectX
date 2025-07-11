@@ -1,7 +1,7 @@
 // objReaderEnum
 // Version 3.3
 //
-// Description
+// Description:
 // Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
 //
 // Implemented:
@@ -10,7 +10,7 @@
 //	 RC 1:					objReader function:		Error opening the Wavefront .obj file.
 //	 RC 2:					objReader function:		Error in	  the Wavefront .obj file: Required vertex attributes are missing.
 //
-// Authorship
+// Authorship:
 // Robert John Tortorelli
 
 // objReader Header File for Wavefront .obj file I/O.
@@ -19,7 +19,8 @@
 #include <print>											// Include the print      header file for input and output operations, such as std::println. This requires C++23 or later.
 #include <filesystem>										// Include the filesystem header file for file system	   operations, such as std::filesystem.
 
-int main()
+// objReaderEnum function: Definition
+int objReaderEnum(void)
 {
 	// Get the path to the current executable and store it in variable exePath.
 	std::filesystem::path exePath = std::filesystem::current_path();
@@ -41,17 +42,24 @@ int main()
 			// println function:
 			//   std::println is a function from the print header file that prints formatted output to the console.
 			//   It takes a format string ("{}") and argument to print (entry).
-			std::println("{}", entry.path().filename().string());
+			//*TEST* For a console program: std::println("{}", entry.path().filename().string());
 
-			if (int objReaderRC = objReader(entry.path().filename().string()); objReaderRC != 0)	// Call the objReader function and test whether its return value is nonzero, indicating an error.
+			// Read and parse one 3D object's descriptive information from one Wavefront .obj file and use it to define the variables needed to render the 3D object.
+
+			// Call the objReader function and test whether its return value is nonzero, indicating an error.
+			if (int objReaderRC = objReader(entry.path().filename().string()); objReaderRC != 0)
 			{
 				// The objReader function terminated abnormally. Terminate the InitGraphics function with the return value of the objReader function.
 				return objReaderRC;
 			}
 			// The objReader function terminated normally.
 
+			//*TEST* Next pass the return code of the objReader function through this calling program, and update associated comments (such as the various programs Description sections) as needed.
+			//*TEST* Next assign the variables needed to render the one 3D object to the new array of all such information, then modify objRenderer to use this new array to render all the 3D objects.
+
 		}
 	}
 
+	// Return to the calling program with a return code indicating success.
 	return 0;
 }

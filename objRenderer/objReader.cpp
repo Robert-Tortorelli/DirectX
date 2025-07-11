@@ -1,5 +1,5 @@
 // objReader
-// Version 3.2
+// Version 3.3
 //
 // Description
 // This function parses a Wavefront .obj file for a single 3D object's descriptive information and assigns it to the external global variables used by the calling program when rendering the object.
