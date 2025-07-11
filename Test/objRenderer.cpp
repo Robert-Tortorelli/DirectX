@@ -1,0 +1,1862 @@
+﻿// objRenderer
+// Version 3.3
+//
+// Description
+// The project objRenderer parses a single 3D object's description from a Wavefront .obj file, and renders that object one or more times.
+// This program, objRenderer, renders the object.
+// This program is a C++ Windows Desktop program using the Windows (Win32) API and the DirectX 11 API.
+// All variables and functions coded in HLSL (.hlsl files) are stored in GPU memory.
+// All variables and functions coded in C++ (.cpp files) are stored in CPU memory.
+//
+// Implemented:
+// - Object geometry
+// - Light
+// - Texture
+// - User Interface
+//   Display static text within the window.
+//   Menu: File/ Exit 
+//   Menu: File/ Enter Text
+//   Menu: Help/ About
+// - Return values:
+//   The following return values are passed from the indicated function to the caller:
+//	 RC 0:					(all functions)			Normal termination.
+//	 RC 1:					objReader function:		Error opening the Wavefront .obj file.
+//	 RC 2:					objReader function:		Error in	  the Wavefront .obj file: Required vertex attributes are missing.
+//   RC DefWindowProc():	WindowProc function:	Default window message processing.
+//   RC msg.wParam:			WinMain function:		Exit value returned to the operating system.
+//
+// Authorship
+// This program is based on "DirectX 11 Win32 Desktop: Direct3D: Moving to 3D: Lesson 3: Simple Modeling" and earlier lessons by Chris Hanson (http://DirectXTutorial.com).
+// All defects in this program are solely the responsibility of Robert John Tortorelli.
+
+// objReader Header File for Wavefront .obj file I/O.
+#include "objReader.h"
+
+// Windows API Header File.
+#include <windows.h>										// The Windows API (Win32 API) header file enables you to create 32-bit and 64-bit programs. It includes declarations for both Unicode and ANSI versions of the API. For more information, see Unicode in the Windows API.
+
+// String Stream classes Header File.
+#include <sstream>											// The string stream classes are used to read and write strings as if they were streams, allowing for formatted input and output operations on strings. See variables declared std::wstringstream.
+
+//***
+// Global Declarations.
+//***
+
+//***
+// Global Function Declarations.
+// Function prototypes for functions defined in this program.
+//***
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
+// The following functions are called asynchronously.
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK InputTextDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+// The following functions are called synchronously in the order listed.
+int InitD3D(HWND hWnd);
+void InitPipeline(void);
+int InitGraphics(void);
+void InitD2D_DW(void);
+void InitMenu(HWND hWnd);
+int RenderFrame(void);
+void RenderText(const wchar_t* pBannerText);
+void ShutdownDirectX(void);
+
+// Note:
+// DirectX member functions associated with a stage of the graphics pipeline usually have names prefixed with two capital letters identifying the related stage, e.g., the OMSetRenderTargets member function is related to the output-merger stage of the graphics pipeline.
+// In addition to these DirectX member functions, other code may also be associated with a stage of the graphics pipeline (the code's comments will indicate this).
+// In this program:
+//   Member Function:								Graphics Pipeline Stage:		Member Function appears in this Internal Function:
+//   ID3D11DeviceContext::OMSetRenderTargets		Output-Merger					InitD3D()
+//   ID3D11DeviceContext::RSSetViewports			Rasterizer						InitD3D()
+//   ID3D11DeviceContext::VSSetShader				Vertex Shader					InitPipeline()
+//   ID3D11DeviceContext::PSSetShader				Pixel Shader					InitPipeline()
+//   ID3D11Device::CreateInputLayout				Input-Assembler					InitPipeline()
+//   ID3D11DeviceContext::IASetInputLayout			Input-Assembler					InitPipeline()
+//   ID3D11DeviceContext::VSSetConstantBuffers		Vertex Shader					InitPipeline()
+//   ID3D11DeviceContext::IASetVertexBuffers		Input-Assembler					RenderFrame()
+//   ID3D11DeviceContext::IASetIndexBuffer			Input-Assembler					RenderFrame()
+//   ID3D11DeviceContext::IASetPrimitiveTopology	Input-Assembler					RenderFrame()
+
+// End: Global Function Declarations.
+
+//***
+// DirectX Global Declarations.
+//***
+
+// Pragma Directives.
+// The #pragma directives offer machine-specific and operating system-specific features while retaining overall compatibility with the C and C++ languages.
+// Direct3D Library files.
+#pragma comment (lib, "d3d11.lib")							// Direct3D DirectX 11 Library.
+#pragma comment(lib, "d3dcompiler.lib")						// Direct3D Compiler Library. Needed for D3DCompileFromFile, which compiles shaders.
+
+// Direct3D Header Files.
+#include <d3d11.h>											// This header is used by Direct3D 11 Graphics.
+#include <d3dcompiler.h>									// Needed by D3DCompileFromFile, which compiles shaders.
+#include <wictextureloader.h>								// DirectXTK library module WICTextureLoader is a Direct3D 2D texture loader using Windows Imaging Component to load, resize, and format convert a supported bitmap and then create a 2D texture from it.
+
+// Direct2D Header File.
+#include <d2d1.h>
+
+// DirectWrite Header File.
+#include <dwrite.h>
+
+// Resource file (also referenced by resource script file resource.rc).
+#include "resource.h"
+
+// Using Declarations and Directives.
+// Using declarations such as using std::string;   bring one identifier	 in the named namespace into scope.
+// Using directives	  such as using namespace std; bring all identifiers in the named namespace into scope.
+// Using declarations are preferred to using directives.
+// Using declarations and directives must appear after their respective header file includes.
+// Consider grouping using statements into a namespace if they're used across multiple files.
+using namespace DirectX;									// The DirectX namespace is used to access the DirectX Direct3D and DirectXMath APIs.
+using namespace D2D1;										// The D2D1	   namespace is used to access the DirectX Direct2D API.
+
+// DirectX Global Interface Declarations: Direct3D
+IDXGISwapChain* swapchain = nullptr;						// Pointer to the swap chain interface.			The swap chain interface implements one or more surfaces (image-data objects) for storing rendered data before presenting it to an output. It is the series of buffer resources (front buffer, back buffers) which take turns being rendered on.
+ID3D11Device* dev = nullptr;								// Pointer to the device interface.				A device is the virtual representation of the computer's display adapter. It is used to access video memory and create other Direct3D COM objects, such as graphics and special effects.
+ID3D11DeviceContext* devcon = nullptr;						// Pointer to the device context interface.		A device context is responsible for managing the graphics pipeline. It control the rendering sequence and the process that translates 3D models into the final 2D image that appears on the screen.
+
+ID3D11Texture2D* pDepthBuffer = nullptr;					// Pointer to a 2D texture interface.			A 2D texture interface manages texel data, which is structured memory. In this case the 2D texture that serves as the depth-stencil surface.
+ID3D11DepthStencilView* depthbuffer = nullptr;				// Pointer to the depth-stencil view interface.	A depth-stencil view interface accesses a texture resource (via the depth-stencil surface interface, pDepthBuffer) during depth-stencil testing. The stencil buffer typically shares the same memory space as the depth buffer (z-buffer). The depth-stencil view interface created by this program will only interpret the depth-stencil surface as a depth buffer (z-buffer) rather than a depth-stencil buffer.
+
+ID3D11Texture2D* pBackBuffer = nullptr;						// Pointer to a 2D texture interface.			A 2D texture interface manages texel data, which is structured memory. In this case for the back buffer texture interface.
+ID3D11RenderTargetView* backbuffer = nullptr;				// Pointer to the render target view interface. A render target view interface identifies the render target subresources (pBackBuffer) that can be accessed during rendering, in this case the back buffer.
+
+ID3D11InputLayout* pLayout = nullptr;						// Pointer to the input-layout interface.		An input-layout interface holds a definition of how to feed vertex data that is laid out in memory into the input-assembler stage of the graphics pipeline.
+ID3D11VertexShader* pVS = nullptr;							// Pointer to the vertex shader interface.		A vertex shader interface manages an executable program (a vertex shader) that controls the vertex shader stage of the graphics pipeline.
+ID3D11PixelShader* pPS = nullptr;							// Pointer to the pixel shader interface.		A pixel  shader interface manages an executable program (a pixel shader)  that controls the pixel shader stage of the graphics pipeline.
+ID3D11Buffer* pVBuffer = nullptr;							// Pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the vertex buffer.
+ID3D11Buffer* pIBuffer = nullptr;							// Pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the index buffer.
+ID3D11Buffer* pCBuffer = nullptr;							// Pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the constant buffer.
+
+ID3D11ShaderResourceView* pTextureView = nullptr;			// Pointer to a shader resource view interface.	A shader resource view interface specifies the subresource a shader can access during rendering. In this case the texture image.
+
+// DirectX Global Interface Declarations: Direct2D
+ID2D1Factory* pD2DFactory = nullptr;						// Pointer to a factory interface.				The ID2D1Factory interface is the starting point for using Direct2D; it's what you use to create other Direct2D resources that you can use to draw or describe shapes.
+IDXGISurface* pDxgiSurface = nullptr;						// Pointer to a surface interface.				The IDXGISurface interface implements methods for image-data objects. An image-data object is a 2D section of memory, commonly called a surface.
+ID2D1RenderTarget* pD2DRenderTarget = nullptr;				// Pointer to a render target interface.		The ID2D1RenderTarget interface represents a target that can receive drawing commands. It is used to draw 2D graphics.
+ID2D1SolidColorBrush* pBrush = nullptr;						// Pointer to a solid color brush interface.	The ID2D1SolidColorBrush interface is used to paint areas with a solid color.
+
+// DirectX Global Interface Declarations: DirectWrite
+IDWriteFactory* pDWriteFactory = nullptr;					// Pointer to a factory interface.				The IDWriteFactory interface is the starting point for using DirectWrite. It is used to create other DirectWrite resources that you can use to draw text.
+IDWriteTextFormat* pTextFormat = nullptr;					// Pointer to a text format interface.			The IDWriteTextFormat interface specifies the font, size, and other text formatting information for text layout.
+
+// Declare the C++ constant buffer structure used to assign values to the HLSL constant buffer structure.
+// This structure represents a constant buffer used in the graphics rendering pipeline.
+// It contains information that is passed to the vertex shader stage of the pipeline and can be used to transform geometric vertices and calculate lighting effects on them.
+//
+// The matFinal member is a 4x4 matrix that represents the combined world, view, and projection transformations that are applied to the geometric vertices of the geometry being rendered.
+//
+// The matRotate member is a 4x4 matrix that represents a rotation transformation that is applied to the geometric vertices of the geometry being rendered.
+// It is a component of the world transformation, and therefore of the matFinal matrix, but is also included separately in the constant buffer structure because the vertex normal vectors at the geometric vertices also need to be transformed by the same rotation matrix in order to correctly calculate lighting effects.
+//
+// The LightVector member is a 4D vector that represents the direction of the light source in 3D space.
+// This vector can be represented by any nonzero vector and the light will shine in that direction.
+//
+// The LightColor member is a 4D vector that represents the color and brightness of the light source.
+// Any color closer to white is brighter than any color closer to black.
+//
+// The AmbientColor member is a 4D vector that represents the color and brightness of the ambient light in the scene.
+// Ambient light is a type of light that illuminates all objects in a scene equally, regardless of their distance from the light source.
+// It is used to add a basic level of illumination to a scene and can be used to simulate global illumination effects.
+struct {
+	XMMATRIX matFinal;
+	XMMATRIX matRotate;										// Vertex normal vectors, like the geometric vertices comprising the object, also need to be transformed by the rotation matrix to correctly calculate lighting effects.
+	XMFLOAT4 LightVector;									// Directional light's direction.
+	XMFLOAT4 LightColor;									// Directional light's color (whiter color == brighter color).
+	XMFLOAT4 AmbientColor;									// Ambient     light's color (whiter color == brighter color).
+} ConstantBuffer;
+
+// End: DirectX Global Declarations.
+
+//***
+// Other Global Declarations.
+// For example, global variables, constants, and structures that are not part of the DirectX API.
+//***
+
+// Define the default client rectangle size.
+// The client rectangle size determines the window rectangle size.
+// The client rectangle is within the window rectangle.
+//   Setting the client rectangle size to the current screen resolution will set the window rectangle size to the current screen resolution.
+int ClientRectangleWidth = 800;
+int ClientRectangleHeight = 600;
+
+// Define coordinates to set the position in 3D space for the second instance of the object.
+static float zCamera = 0.0f;								// A modifier to the z-coordinate of the camera's position in 3D space. Incrementing the value of z makes the camera's new position appear deeper into the physical screen, such that world objects appear further away from the end-user.
+static float xWorld = 0.0f;									// A modifier to the x-coordinate of the object's position in 3D space.
+static float yWorld = 3.0f;									// A modifier to the y-coordinate of the object's position in 3D space.
+static float zWorld = 0.0f;									// A modifier to the z-coordinate of the object's position in 3D space.
+
+XMVECTOR CameraEyePosition;									// A global variable to save the camera position so it can be included in program diagnostics.
+
+// End: Other Global Declarations.
+
+// End: Global Declarations.
+
+//***
+// Function Definitions.
+//***
+
+// WinMain function: Definition
+//   This function is the entry point for a Windows program (vs. main for a console program) that is called by a hidden function that is the real entry point.
+//   Not using the name WinMain results in the error: LNK2019: unresolved external symbol WinMain referenced in function "int __cdecl invoke_main(void)" (?invoke_main@@YAHXZ)
+//   WINAPI is a macro and calling convention specifier (defined as __stdcall) that determines how parameters are passed and the stack is cleaned up.
+//     It's used for functions that you call into the Windows API, such as when declaring Windows API functions or entry points.
+//   Parameter nCmdShow is a flag with an initial value set by the Run field on the Shortcut tab of the Properties associated the executable file of this program. This initial value is passed to the ShowWindow function the first time that function is called.
+//   The return value of the InitD3D function (= the return value of the InitGraphics function = the return value of the objReader function) is checked for failure and returned to the caller if it failed.
+int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "handle to a module." The operating system uses this value to identify the executable when it is loaded in memory.
+	HINSTANCE hPrevInstance,								// This parameter has no meaning. It was used in 16-bit Windows, but is now always zero.
+	LPSTR lpCmdLine,										// Contains the command line arguments, excluding the program name, as an ANSI string. To retrieve the entire command line, as a UNICODE string, use the GetCommandLine function.
+	int nCmdShow)											// Indicates if the main program window will be minimized, maximized, or shown normally.
+{
+	RECT wr;												// The RECT structure contains the coordinates of the top-left and bottom-right corners of the client rectangle (initially) or the window rectangle (after the AdjustWindowRectEx function returns).
+	HWND hWnd;												// The HWND handle for the window, assigned its value by function CreateWindowEx.
+	MSG msg;												// The MSG structure holds window message and thread message information.
+
+	// Create the window class structure that contains window class information.
+	WNDCLASSEX wc = {};										// Contains the window class information.
+
+	// Assign values to the window class WNDCLASSEX structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
+	wc.cbSize = sizeof(WNDCLASSEX);							// Assigned a value specifying the size, in bytes, of this structure. This must be set before calling the GetClassInfoEx function.
+	wc.style = CS_HREDRAW | CS_VREDRAW;						// Assigned a value specifying Class Style(s), in any combination:
+															// CS_HREDRAW Redraws the entire window if a movement or size adjustment changes the width of the client area.
+															// CS_VREDRAW Redraws the entire window if a movement or size adjustment changes the height of the client area.
+	wc.lpfnWndProc = WindowProc;							// Assigned a value specifying a pointer to the window procedure, i.e., the WindowProc function, which is the main window message handler function for this program (The WindowProc function is not called here because WindowProc, not WindowProc(), is assigned to wc.lpfnWndProc).
+	wc.hInstance = hInstance;								// Assigned a value specifying the "handle to an instance" or "handle to a module" (WinMain) that contains the window procedure for the class.
+	wc.hCursor =											// Assigned a value specifying a handle to the class cursor, a cursor resource.
+		LoadCursor(NULL, IDC_CROSS);						// The LoadCursor function loads the specified cursor:
+															// 1st Parameter: NULL indicates a predefined cursor is specified in the 2nd parameter,	otherwise a handle to an instance of the module whose executable file contains the cursor resource specified in the 2nd parameter.
+															// 2nd Parameter: A predefined cursor if NULL is specified in the 1st parameter,		otherwise the name of the cursor resource to be loaded from the module specified in the 1st parameter.
+															//				  For example, IDC_ARROW is a standard arrow and IDC_CROSS is a crosshair.
+	wc.hbrBackground =										// Assigned a value specifying a handle to the class background brush.
+		(HBRUSH)(COLOR_WINDOW + 1);							// This can be a handle to a brush used to paint the background or, as used here, to indicate the color (white) of the background (the value 1 must be added to the chosen color).
+	wc.lpszClassName = L"WindowClass1";						// Assigned a value specifying a pointer to a null-terminated string, or it is an atom. If it is a string, as here, it specifies the window class name. This can be any name registered with RegisterClassEx, or any of the predefined control-class names. This same name is passed to CreateWindowEx.
+
+	// Register the WNDCLASSEX window class.
+	RegisterClassEx(&wc);
+
+	// Calculate the appropriate window rectangle size based on the client rectangle size.
+	// The window rectangle contains the client rectangle, as well as the window border and, if present, the window menu.
+	// AdjustWindowRectEx function:
+	//   Calculates the required size of the window rectangle, based on the desired size of the client rectangle. The window rectangle can then be passed to the CreateWindowEx function to create a window whose client area is the desired size.
+	wr = { 0, 0, ClientRectangleWidth, ClientRectangleHeight };	// Set "wr" to the client rectangle's coordinates (size).
+	AdjustWindowRectEx(&wr,										// "wr" will contain the window rectangle's coordinates (size) when AdjustWindowRectEx returns. Call by reference ("&") is required to update the actual "wr" (and not a copy) in the function.
+					   WS_OVERLAPPEDWINDOW,						// Window style. The same style is passed to CreateWindowEx.
+					   FALSE,									// Whether we are using (TRUE) or not using (FALSE) menus.
+					   WS_EX_LEFT);								// The extended window style of the window whose required size is to be calculated. WS_EX_LEFT is the default.
+
+	// Create the window.
+	// CreateWindowEx function:
+	//   Create an overlapped, pop-up, or child window with an extended window style.
+	//   Returns the HWND handle "hWnd" for the window.
+	hWnd = CreateWindowEx(NULL,								// NULL: Use all defaults for the extended window style of the window being created.
+						  L"WindowClass1",					// Name of the window class. The same name is assigned to wc.lpszClassName.
+						  L"objRenderer",					// Title of the window.
+						  WS_OVERLAPPEDWINDOW,				// Window style. The same style is passed to AdjustWindowRectEx.
+						  900,								// x-position of the window's true top-left corner, in screen coordinates.
+						  900,								// y-position of the window's true top-left corner, in screen coordinates.
+						  wr.right - wr.left,				// Width of the window rectangle.
+						  wr.bottom - wr.top,				// Height of the window rectangle.
+						  NULL,								// NULL: no parent window.
+						  NULL,								// NULL: no menus.
+						  hInstance,						// hInstance is a handle to the instance of the module (WINAPI) to be associated with the window.
+						  NULL);							// NULL: multiple windows.
+
+	// Display the window on the screen.
+	// ShowWindow function:
+	//   Sets the specified window's show state.
+	//     Parameter nCmdShow is a flag, declared in the WinMain function parameter list, indicating if the main program window will be minimized, maximized, or shown normally.
+	//       The first time the ShowWindow function is called, the value of parameter nCmdShow should be the value obtained by the WinMain function in its nCmdShow parameter.
+	ShowWindow(hWnd,										// The HWND handle for the window.
+			   nCmdShow);									// Indicates if the main program window will be minimized, maximized, or shown normally.
+
+	// Initialize and prepare Direct3D for use.
+	if (int InitD3DRC = InitD3D(hWnd); InitD3DRC != 0)		// Call the InitD3D function and test whether its return value is nonzero, indicating an error.
+	{
+		// The InitD3D function terminated abnormally (window messages = WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT).
+
+		// Using the SendMessage function, send a WM_CLOSE window message to close the window.
+		//   Using the SendMessage function to send the WM_CLOSE window message guarantees that the WM_CLOSE window message is processed before the WinMain function terminates.
+		//   However, be aware of the potential for blocking the calling thread if the window procedure takes a long time to process the message.
+		//
+		// SendMessage function:
+		//   Sends the specified window message by calling the window procedure for the specified window and does not return until the window procedure has processed the window message.
+		//   The form of the SendMessage function used here sends a WM_CLOSE window message to the window procedure of the window being closed.
+		//   The WM_CLOSE window message is sent as a signal that a window or a program should terminate.
+		//   The window procedure's default action, calling the DefWindowProc function, processes the WM_CLOSE window message. The value HWND_BROADCAST has a special meaning.
+		SendMessage(hWnd,									// A handle to the window whose window procedure is to receive the window message. The value HWND_BROADCAST has a special meaning.
+			WM_CLOSE,										// The message to be posted.
+			0,												// Additional message-specific information.
+			0);												// Additional message-specific information.
+
+		// Terminate the WinMain function with the return value of the InitD3D function.
+		return InitD3DRC;
+	}
+	// The InitD3D function terminated normally.
+
+	// Initialize and prepare Direct2D and DirectWrite for use.
+	InitD2D_DW();											// Call the InitD2D_DW function.
+
+	// Initialize and set the window's menu.
+	InitMenu(hWnd);											// Call the InitMenu function.
+
+	msg = { 0 };											// Set the entire structure holding window and thread messages to null.
+
+	// The Infinite Message Loop
+	//   All messages, both thread messages and window messages, are retrieved in the infinite message loop.
+	//
+	// Create the infinite message loop and retrieve and process thread messages and window messages from the thread message queue.
+	// The infinite message loop consists of the PeekMessage (or GetMessage), TranslateMessage, and DispatchMessage functions at the minimum, as well as program specific functions that perform main processing.
+	// The infinite message loop breaks (is ended) when a WM_QUIT thread message is posted to the thread message queue and processed.
+	while(TRUE)
+	{
+		// PeekMessage function:
+		//   Dispatches incoming nonqueued messages, checks the thread message queue for a posted message, and retrieves the message (if any exist).
+		//   Unlike GetMessage, the PeekMessage function does not wait for a message to be posted before returning. This allows processing to continue between "peeking" at the thread message queue.
+		//   The PeekMessage function retrieves both thread messages and window messages from the thread message queue.
+		if (PeekMessage(&msg,								// A pointer to the MSG structure that holds window message and thread message information.
+					   NULL,								// A handle to the window whose messages are to be retrieved. The window must belong to the current thread.
+															// If hWnd is NULL, PeekMessage retrieves messages for any window that belongs to the current thread, and any messages on the current thread's thread message queue whose hwnd value is NULL (see the MSG structure).
+															// Therefore if hWnd is NULL, both thread messages and window messages are processed.
+															// If hWnd is -1, PeekMessage retrieves only messages on the current thread's thread message queue whose hwnd value is NULL, that is, thread messages as posted by PostMessage (when the hWnd parameter is NULL) or PostThreadMessage.
+					   0,									// The value of the first message in the range of messages to be examined.
+					   0,									// The value of the last message in the range of messages to be examined.
+															// If the values of the first and last messages are both 0 then PeekMessage returns all available messages.
+					   PM_REMOVE))							// PM_REMOVE indicates messages are removed from the thread message queue after processing by PeekMessage.
+		{
+			// A message is waiting in the thread message queue: Perform message processing.
+
+			if (msg.hwnd == NULL && msg.message != WM_QUIT)	// A thread message (indicated by msg.hwnd == NULL) other than WM_QUIT is waiting in the thread message queue: Perform thread message processing.
+			{
+				// Perform thread message processing, except for the WM_QUIT thread message which is processed with window messages.
+
+				// This program does not currently process any thread messages other than WM_QUIT, i.e., they are ignored.
+
+				// Stay in the infinite message loop.
+			}
+			else											// A window message (indicated by msg.hwnd != NULL), or the WM_QUIT thread message, is waiting in the thread message queue: Perform window message, or WM_QUIT thread message, processing.
+			{
+				// Perform window message processing.
+
+				// TranslateMessage function:
+				//   If your program must obtain character input from the user, include this function in the infinite message loop.
+				//     See https://docs.microsoft.com/en-us/windows/win32/winmsg/using-messages-and-message-queues.
+				//   Translates a virtual-key message, which is a window message, into a new character message (no translation, or new character message creation, occurs if there is no virtual-key message).
+				//   A virtual-key message is a window message that the system posts to the thread message queue when a key is pressed or released.
+				//   The virtual-key message contains a virtual-key code to identify which key was pressed or released, along with additional information such as whether the key is being held down.
+				//   The WM_KEYDOWN and WM_KEYUP messages are examples of virtual-key messages. These window messages are sent to the window procedure, which can handle them to perform actions in response to key presses.
+				//   TranslateMessage does not modify the window message pointed to by its first and only parameter. Instead, if translation occurs, it creates a new character message.
+				//   The new character message is posted as a new window message to the thread message queue, to be retrieved by the next call to the PeekMessage (or GetMessage) function.
+				//   Therefore both the original virtual-key message (if any) and the new character message (if any) are retrieved by the PeekMessage (or GetMessage) function and dispatched by the DispatchMessage function.
+				TranslateMessage(&msg);						// A pointer to the MSG structure that holds window message and thread message information.
+
+				// DispatchMessage function:
+				//   Dispatches a window message to the window procedure which is the main window message handler function for this program.
+				//   It is typically used to dispatch a window message retrieved by the PeekMessage (or GetMessage) function.
+				//   The window procedure processes the window message and returns control back to DispatchMessage, which then returns control to the point where DispatchMessage was called, i.e., here in this program:
+				DispatchMessage(&msg);
+
+				// Check whether to break out of the infinite message loop and end this program, i.e., Has the user signaled to end this program by closing the program's window or by some other means?
+				// WM_QUIT is a thread message. It is being processed here with window messages, and after DispatchMessage, instead of with other thread messages. This delays the processing of WM_QUIT until after one more check for an outstanding window message.
+				// This ensures that any pending window message is handled before ending this program, allowing for a clean and orderly shutdown of the program.
+				if (msg.message == WM_QUIT)
+					break;									// Break out of the infinite message loop and end this program.
+
+				// Stay in the infinite message loop.		// <-- Or not.
+			}
+		}
+		else
+		{
+			// No message is waiting in the thread message queue: Perform main processing.
+
+			// Render a single frame.
+			if (int RenderFrameRC = RenderFrame(); RenderFrameRC != 0) // Call the RenderFrame function and test whether its return value is nonzero, indicating an error.
+			{
+				// The RenderFrame function terminated abnormally (window messages = WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT).
+
+				// Using the SendMessage function, send a WM_CLOSE window message to close the window.
+				//   Using the SendMessage function to send the WM_CLOSE window message guarantees that the WM_CLOSE window message is processed before the WinMain function terminates.
+				//   However, be aware of the potential for blocking the calling thread if the window procedure takes a long time to process the message.
+				//
+				// SendMessage function:
+				//   Sends the specified window message by calling the window procedure for the specified window and does not return until the window procedure has processed the window message.
+				//   The form of the SendMessage function used here sends a WM_CLOSE window message to the window procedure of the window being closed.
+				//   The WM_CLOSE window message is sent as a signal that a window or a program should terminate.
+				//   The window procedure's default action, calling the DefWindowProc function, processes the WM_CLOSE window message. The value HWND_BROADCAST has a special meaning.
+				SendMessage(hWnd,							// A handle to the window whose window procedure is to receive the window message. The value HWND_BROADCAST has a special meaning.
+					WM_CLOSE,								// The message to be posted.
+					0,										// Additional message-specific information.
+					0);										// Additional message-specific information.
+
+				// Terminate the WinMain function with the return value of the RenderFrame function.
+				return RenderFrameRC;
+			}
+			// The RenderFrame function terminated normally.
+
+			// Stay in the infinite message loop.
+		}
+	}
+
+	// The infinite message loop has been broken (has ended) in response to a WM_QUIT thread message having been posted to the thread message queue and processed.
+	// This program will terminate. The following code performs the program's termination.
+
+	//***
+	// Program Termination Processing.
+	// All normal and abnormal program termination is handled here, and any program logic that initiates program termination must lead here.
+	//***
+
+	// Terminate DirectX.
+	ShutdownDirectX();										// Call the ShutdownDirectX function.
+
+	// Terminate the program normally and return to the operating system.
+	return msg.wParam;										// The exit value returned to the operating system must be the wParam parameter value of the WM_QUIT thread message (see PostQuitMessage).
+
+	// End: WinMain function
+}
+
+	// End: Program Termination Processing.
+
+// WindowProc function: Definition
+//   This function defines the window procedure, which is the main window message handler for this program (see wc.lpfnWndProc = WindowProc).
+//   Every window has an associated window procedure, which is a function that processes all window messages sent or posted to all windows of the class.
+//   (The terms 'sent' and 'posted' have different meanings. I used whichever term was indicated in Microsoft's documentation of window messages and related items)
+//   All aspects of a window's appearance and behavior depend on the window procedure's response to these window messages.
+//
+//   There is one instance of this function for each window class.
+//   Its parameters are a subset of the elements of the MSG structure that defines the "msg" parameter of the WinMain function.
+//   LRESULT is a Windows-specific type definition that represents a signed 32-bit value (typedef LONG_PTR LRESULT) that is the function's return value.
+//     Its return value, declared as the variable WindowProcRC and explicitly assigned a value, is automatically processed by the Windows message system.
+//   CALLBACK is a macro and calling convention specifier (defined as __stdcall) that determines how parameters are passed and the stack is cleaned up.
+//     It's used for functions that Windows will call back into your code, such as event handlers and procedure functions
+LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
+							UINT message,					// The window message, e.g., the WM_DESTROY window message indicates the window is destroyed.
+							WPARAM wParam,					// Additional data that pertains to the window message. The exact meaning depends on the window message.
+							LPARAM lParam)					// Additional data that pertains to the window message. The exact meaning depends on the window message.
+{
+	// The return value of the WindowProc function.
+	LRESULT WindowProcRC;
+
+	// Attempt to identify the current window message on the thread message queue.
+	// This switch statement uses return statements to exit the WindowProc function when a window message is identified, not the break statements normally used in a switch statement.
+	// In the context of a WindowProc function, it's common to see return statements instead of break statements in the switch statement.
+	// This is because, in the WindowProc function, the switch statement is expected to return a value: the result of window message processing, i.e., the switch statement does not "break" to the next statement after the switch statement.
+	switch (message)
+	{
+		case WM_DESTROY:
+			// The user closed the window             (window messages =								WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT), or
+			// The user selected the 'Exit' menu item (window messages = WM_COMMAND -> ID_FILE_EXIT  -> WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT).
+			// In either case a WM_DESTROY window message is sent to the thread message queue of the window being destroyed.
+			//
+			// WM_DESTROY window message:
+			//   This window message is sent to the thread message queue of the window being destroyed after the window is removed from the screen.
+			//   This window message is sent first for the window being destroyed and then for child windows (if any) as they are destroyed. During the processing of the window message, it can be assumed that all child windows still exist.
+			//
+			// PostQuitMessage function:
+			//   Indicates to the operating system that a thread has made a request to terminate (quit). It is typically called in response to a WM_DESTROY message.
+			//   Posts a new WM_QUIT thread message to the thread message queue and returns immediately, indicating to the operating system that the thread is requesting to quit at some time in the future.
+			//     The WM_QUIT thread message is not associated with a window and therefore will never be received through a window's window procedure. It is retrieved only by the PeekMessage (or GetMessage) function, which in this program is in the infinite message loop.
+			//     Once the WM_QUIT thread message is retrieved and identified, the program breaks out of the infinite message loop and terminates.
+			//     Its parameter is an exit code used as the wParam parameter of the WM_QUIT thread message.
+			PostQuitMessage(0);								// PostQuitMessage(x), where x is an exit code used as the wParam parameter of the WM_QUIT thread message.
+			WindowProcRC = 0;								// Set the return value of the WindowProc function to 0.
+			break;
+		case WM_KEYDOWN:
+		{	// Establish a block to create a local scope for the virtual key variables.
+			// The user pressed a key (window message = WM_KEYDOWN).
+			// This program's window (handle hWnd) is the foreground window (the window receiving input from the user).
+			//
+			// Define the virtual keys used in this function.
+			constexpr int VK_W = 0x57;						// Virtual key code for 'W' and 'w'.
+			constexpr int VK_A = 0x41;						// Virtual key code for 'A' and 'a'.
+			constexpr int VK_S = 0x53;						// Virtual key code for 'S' and 's'.
+			constexpr int VK_D = 0x44;						// Virtual key code for 'D' and 'd'.
+			constexpr int VK_I = 0x49;						// Virtual key code for 'I' and 'i'.
+			// constexpr int VK_J = 0x4A;						// Virtual key code for 'J' and 'j'.
+			constexpr int VK_K = 0x4B;						// Virtual key code for 'K' and 'k'.
+			// constexpr int VK_L = 0x4C;						// Virtual key code for 'L' and 'l'.
+			//
+			// WM_KEYDOWN window message:
+			//   This window message is posted to the thread message queue of the window with the keyboard focus when a non-system key is pressed.
+			//   A non-system key is a key that is pressed when the ALT key is not pressed.
+			switch (wParam)									// wParam is the identifier of the virtual-key code of the non-system key.
+			{
+				case VK_I:
+					// The user pressed the I key (window messages = WM_KEYDOWN -> VK_I -> Move the camera +z).
+					//
+					zCamera += 0.5f;						// Gradually increment the variable zCamera.
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+				case VK_K:
+					// The user pressed the K key (window messages = WM_KEYDOWN -> VK_K -> Move the camera -z).
+					//
+					zCamera -= 0.5f;						// Gradually decrement the variable zCamera.
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+				case VK_W:
+					// The user pressed the W key (window messages = WM_KEYDOWN -> VK_W -> Move the object +x).
+					//
+					xWorld += 0.5f;							// Gradually increment the variable xWorld.
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+				case VK_S:
+					// The user pressed the S key (window messages = WM_KEYDOWN -> VK_S -> Move the object -x).
+					//
+					xWorld -= 0.5f;							// Gradually decrement the variable xWorld.
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+				case VK_A:
+					// The user pressed the A key (window messages = WM_KEYDOWN -> VK_A -> Move the object +y).
+					//
+					yWorld += 0.5f;							// Gradually increment the variable yWorld.
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+				case VK_D:
+					// The user pressed the D key (window messages = WM_KEYDOWN -> VK_D -> Move the object -y).
+					//
+					yWorld -= 0.5f;							// Gradually decrement the variable yWorld.
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+				default:
+					// The user pressed a key other than the Escape key (window messages = WM_KEYDOWN -> return).
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+			}
+			break;
+		}
+		case WM_COMMAND:
+			// The user selected a command item from a menu, or a control sent a notification message to its parent window, or an accelerator keystroke was translated (window message = WM_COMMAND).
+			//
+			// WM_COMMAND window message:
+			//   This window message is sent to the thread message queue of the window that created the menu, control, or accelerator.
+			switch (LOWORD(wParam))							// The low-order word of wParam is the identifier of the menu command item, notification message, or accelerator keystroke.
+			{
+				case ID_FILE_EXIT:
+					// The user selected the 'File/ Exit' menu item (window messages = WM_COMMAND -> ID_FILE_EXIT -> WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT).
+					//
+					// PostMessage function:
+					//   Places (posts) a window message in the thread message queue associated with the thread that created the specified window and returns without waiting for the thread to process the window message.
+					//   The form of the PostMessage function used here posts a WM_CLOSE window message to the thread message queue of the window being closed.
+					//   WM_CLOSE is sent as a signal that a window or an program should terminate.
+					//   WM_CLOSE is received by a window through its window procedure, i.e., the WindowProc function.
+					//     The window procedure's default action, calling the DefWindowProc function, processes the WM_CLOSE window message.
+					PostMessage(hWnd,						// A handle to the window whose window procedure is to receive the window message. The values HWND_BROADCAST and NULL have special meanings.
+						WM_CLOSE,							// The message to be posted.
+						0,									// Additional message-specific information.
+						0);									// Additional message-specific information.
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+				case ID_HELP_ABOUT:
+				{	// Establish a block to create a local scope for the variable ss.
+					// The user selected the 'Help/ About' menu item (window messages = WM_COMMAND -> ID_HELP_ABOUT -> display message box -> return).
+					//
+					// Define a wide string stream object to build text to render.
+					std::wstringstream ss;					// Program Diagnostics.
+					ss << L"Diagnostics: xWorld=" << xWorld << L", yWorld=" << yWorld << L", zWorld=" << zWorld << L", zCamera=" << zCamera << L", EyePosition z=" << XMVectorGetZ(CameraEyePosition);
+					// MessageBox function:
+					//   Displays a modal dialog box that contains a system icon, a set of buttons, and a brief application-specific message, such as status or error information. The message box returns an integer value that indicates which button the user clicked.
+					MessageBox(hWnd,						// A handle to the owner window of the message box to be created. If this parameter is NULL, the message box has no owner window.
+						ss.str().c_str(),					// The message to be displayed. If the string consists of more than one line, you can separate the lines using a carriage return and/or linefeed character between each line.
+						L"objRenderer V3.2",				// The dialog box title. If this parameter is NULL, the default title is "Error".
+						MB_OK | MB_ICONINFORMATION);		// The contents and behavior of the dialog box. This parameter can be a combination of flags. MB_OK (the default) specifies one push button: "OK". MB_ICONINFORMATION specifies a lowercase letter "i" in a circle.
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+				}
+				case ID_FILE_ENTERTEXT:
+				{	// Establish a block to create a local scope for the variable pt.
+					// The user selected the 'File/ Enter Text' menu item (window messages = WM_COMMAND -> ID_FILE_ENTERTEXT -> display dialog box -> return).
+					//
+					// DialogBox macro:
+					//   Creates a modal dialog box from a dialog box template resource. DialogBox does not return control until the specified callback function, the dialog box procedure, terminates the modal dialog box by calling the EndDialog function.
+					//   DialogBox is implemented as a call to the DialogBoxParam function.
+					//   DialogBox uses the CreateWindowEx function to create the dialog box.
+					//   DialogBox then sends a WM_INITDIALOG message (and a WM_SETFONT message if the template specifies the DS_SETFONT or DS_SHELLFONT style) to the dialog box procedure.
+					//   DialogBox displays the dialog box (regardless of whether the template specifies the WS_VISIBLE style), disables the owner window, and starts its own message loop to retrieve and dispatch messages for the dialog box.
+					//   When the dialog box procedure calls the EndDialog function, DialogBox destroys the dialog box, ends the message loop, enables the owner window (if previously enabled), and returns the nResult parameter specified by the dialog box procedure when it called EndDialog.
+					//   GetModuleHandle(NULL) retrieves the handle of the executable file that created the calling process, i.e., the first parameter of the WinMain function.
+					//   DialogBox does not pass parameters directly to the dialog box procedure. Instead, it sends standard Windows messages (like WM_INITDIALOG, WM_COMMAND, etc.) to the dialog box procedure.
+					//   If you need to pass custom data to the dialog box procedure, you typically do this by instead using the DialogBoxParam function and setting a value in the lParam parameter of the WM_INITDIALOG message or by using dialog box controls to store and retrieve data.
+					/*
+					https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-dialogboxw
+					https://learn.microsoft.com/en-us/windows/desktop/dlgbox/using-dialog-boxes
+					*/
+					DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), hWnd, InputTextDlgProc);
+					// Optionally set the position of the dialog box:
+					//   Uncomment the following definition of the variable pt and the call to the DialogBoxParam function.
+					//   (Comment the replaced call to DialogBox)
+					//   See the comment "set the position of the dialog box" in the InputTextDlgProc function dialog box procedure for associated changes to make.
+					// POINT pt = { 300, 300 };				// A POINT structure that can be passed to the DialogBoxParam function. It contains the x- and y-coordinates of the new position of the left side (x) and top (y) of the dialog box window, in client coordinates.
+					// DialogBoxParam function:
+					//   Creates a modal dialog box from a dialog box template resource. Before displaying the dialog box, the function passes an application-defined value to the dialog box procedure as the lParam parameter of the WM_INITDIALOG message. An application can use this value to initialize dialog box controls.
+					// DialogBoxParam(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), hWnd, InputTextDlgProc, (LPARAM)&pt);	// (LPARAM)&pt is the address of the POINT structure pt, cast to a LPARAM.
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+				}
+				default:
+					// The user selected an unhandled menu item (window messages = WM_COMMAND -> return).
+					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
+					break;
+			}
+			break;
+		default:
+			// The DefWindowProc function processes the WM_CLOSE window message (window messages = WM_CLOSE -> DefWindowProc function -> DestroyWindow function -> WM_DESTROY -> PostQuitMessage function -> WM_QUIT).
+			//
+			// The DefWindowProc function processes the WM_CLOSE window message by calling the DestroyWindow function to destroy the window. This is the default behavior: The DestroyWindow function is not coded in this program.
+			//   The DestroyWindow function,
+			//     1. Sends WM_DESTROY and WM_NCDESTROY window messages to the window to deactivate it and remove the keyboard focus from it.
+			//     2. Destroys the window's menu, flushes the thread message queue, destroys timers, removes clipboard ownership, and breaks the clipboard viewer chain (if the window is at the top of the viewer chain).
+			//     3. If the specified window is a parent or owner window, DestroyWindow automatically destroys the associated child or owned windows when it destroys the parent or owner window.
+			//        The function first destroys child or owned windows, and then it destroys the parent or owner window.
+			//     4. Destroys modeless dialog boxes created by the CreateDialog function.
+			// DefWindowProc function:
+			//   This function calls the default window procedure to provide default processing for any window messages that a program does not otherwise explicitly process in its window procedure.
+			//   It is called with the same parameters received by the WindowProc function.
+			//   The return value is the result of the window message processing and depends on the window message.
+			// If the DefWindowProc function should be called but is not, then no window is displayed by this program (return 0 is not a sufficient alternative to the DefWindowProc function).
+			WindowProcRC =									// Set the return value of the WindowProc function to the return value of the DefWindowProc function.
+			DefWindowProc(hWnd,								// The HWND handle for the window.
+				message,									// The window message.
+				wParam,										// Additional data that pertains to the window message. The exact meaning depends on the window message.
+				lParam);									// Additional data that pertains to the window message. The exact meaning depends on the window message.
+			break;
+	}
+
+	return WindowProcRC;									// Return the return value of the WindowProc function.
+
+	// End: WindowProc function
+}
+
+// InitD3D function: Definition
+//   This function initializes and prepares Direct3D for use.
+//     1. Create the device, the device context, and the swap chain with one back buffer.
+//
+//     2. Create the depth-stencil buffer (depth buffer (z-buffer)).
+//
+//     3. Complete setting up the back buffer.
+//
+//     4. Set the render target (back buffer) and the depth buffer (z-buffer) to the output-merger stage of the graphics pipeline.
+//
+//     5. Set the viewport to the rasterizer stage of the graphics pipeline.
+//
+//     6. Initialize the graphics pipeline.
+//
+//     7. Load and initialize all graphics data.
+//        The return value of the InitGraphics function (= the return value of the objReader function) is checked for failure and returned to the caller if it failed.
+int InitD3D(HWND hWnd)										// The HWND handle for the window.
+{
+	//***
+	// 1. Create the device, the device context, and the swap chain with one back buffer.
+	//    The swap chain is created with one front buffer and one back buffer.
+	//    The device and the device context represent the display adapter.
+	//    The swap chain is used for rendering, and is created with one front buffer and one or more back buffers (in this program only one back buffer is created).
+	//    Both types of buffer are frame buffers. The frame buffer that is currently being displayed is called the front buffer, and the frame buffers that we are rendering to are called the back buffers.
+	//***
+
+	// Create the swap chain description structure used to describe the swap chain.
+	DXGI_SWAP_CHAIN_DESC scd = {};							// The swap chain description structure.
+
+	// Assign values to the swap chain description DXGI_SWAP_CHAIN_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
+	scd.BufferDesc.Width = ClientRectangleWidth;			// .Width:	A member of DXGI_MODE_DESC structure assigned a value specifying the resolution width.	Set the back buffer width (needed when going full screen).
+	scd.BufferDesc.Height = ClientRectangleHeight;			// .Height:	A member of DXGI_MODE_DESC structure assigned a value specifying the resolution height.	Set the back buffer height (needed when going full screen).
+	scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;		// .Format:	A member of DXGI_MODE_DESC structure assigned a value that describes the display format.						A value of the DXGI_FORMAT enumerated type,			 i.e., DXGI_FORMAT_R8G8B8A8_UNORM:			   A four-component, 32-bit unsigned-normalized-integer format that supports 8 bits per channel including alpha, i.e., 32-bit color.
+	scd.SampleDesc.Count = 4;								// .Count:	A member of DXGI_SAMPLE_DESC structure assigned a value specifying the number of multisamples per pixel. Also see texd.SampleDesc.Count.
+	scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;		// Assigned a value specifying the surface usage and CPU access options for the back buffer.								A value of the DXGI_USAGE constants,				 i.e., DXGI_USAGE_RENDER_TARGET_OUTPUT:		   Use the surface or resource as an output render target.
+	scd.BufferCount = 1;									// Assigned a value that describes the number of buffers in the swap chain. We'll create one back buffer. The back buffer can be used for shader input or render target output.
+	scd.OutputWindow = hWnd;								// Assigned a value specifying the HWND handle for the window. This member must not be NULL.
+	scd.Windowed = TRUE;									// Assigned a Boolean value that specifies whether the output is in windowed mode. TRUE if the output is in windowed mode; otherwise, FALSE. "We recommend that you create a windowed swap chain and allow the end user to change the swap chain to full screen through IDXGISwapChain::SetFullscreenState."
+	// scd.SwapEffect										// Assigned a value that describes options for handling the contents of the presentation buffer after presenting a surface. A value of the DXGI_SWAP_EFFECT enumerated type.
+	scd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;		// Assigned a value that describes options for swap-chain behavior.															A value of the DXGI_SWAP_CHAIN_FLAG enumerated type, i.e., DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH: Enable an program to switch modes by calling IDXGISwapChain::ResizeTarget. When switching from windowed to full screen mode, the display mode (or monitor resolution) will be changed to match the dimensions of the program window. This allows switching to full screen via Alt-Enter.
+
+	// Create the Direct3D feature level enumeration used to describe the set of features targeted by the Direct3D device.
+	D3D_FEATURE_LEVEL pFeatureLevelsIn[] = {				// A pointer to an array of members selected from the enumerator-list defined in the D3D_FEATURE_LEVEL enumerated type.
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_10_1,
+		D3D_FEATURE_LEVEL_10_0,
+		D3D_FEATURE_LEVEL_9_3,
+		D3D_FEATURE_LEVEL_9_2,
+		D3D_FEATURE_LEVEL_9_1
+	};
+	D3D_FEATURE_LEVEL pFeatureLevelOut;						// The first element in an array of Direct3D driver types supported by the device created by the D3D11CreateDeviceAndSwapChain function.
+
+	// D3D11CreateDeviceAndSwapChain function:
+	//   Creates a device that represents the display adapter and a swap chain used for rendering.
+	//   Notes on parameters:
+	//   2nd Parameter: (2) Direct3D driver type. This parameter affects the 3rd and 11th parameters.
+	//						D3D_DRIVER_TYPE_HARDWARE	(implements Direct3D features in hardware where possible, otherwise in software. Recommended for production)
+	//						D3D_DRIVER_TYPE_REFERENCE	(implements every Direct3D features in software. The rasterizer portion of the driver does make use of special CPU instructions whenever it can. A reference driver is designed for accuracy rather than speed and is useful for testing)
+	//						D3D_DRIVER_TYPE_WARP		(implements a high-performance software rasterizer in software. A WARP driver is designed for speed and is useful for testing)
+	//						D3D_DRIVER_TYPE_SOFTWARE	(implements a low-performance software rasterizer in software, in which case the 3rd parameter is a handle to a DLL that implements the software rasterizer.
+	//	 3rd Parameter: (3) Conditionally NULL or, when the 2nd parameter (Direct3D driver type) is specified as D3D_DRIVER_TYPE_SOFTWARE, this parameter specifies a handle to a DLL that implements a software rasterizer.
+	//	 4th Parameter: (4) Conditionally NULL or,																						   this parameter specifies optional flags such as D3D11_CREATE_DEVICE_BGRA_SUPPORT, which is required for Direct2D interoperability with Direct3D resources.
+	//	 5th Parameter: (5) An array of Direct3D feature levels, which determine the order of feature levels to attempt to create. If NULL is specified then a preset array of feature levels is used.
+	//  11th Parameter: (11) Direct3D feature level supported by the computer's display adapter, unless the 2nd parameter is specified as D3D_DRIVER_TYPE_WARP or D3D_DRIVER_TYPE_SOFTWARE, in which case this parameter potentially returns a higher feature level than what is supported by the computer's display adapter.
+	//						NULL is sufficient if both of the following two conditions are true:
+	//						1. The display adapter returns feature level D3D_FEATURE_LEVEL_9_1 or higher.
+	//							And:
+	//						2. The appropriate shader compiler target value (used in the D3DCompileFromFile function) is known and fixed.
+	//
+	//						Optionally use and inspect pFeatureLevelOut to:
+	//						*** This is not done by this program ***
+	//						1. When the feature level is		< D3D_FEATURE_LEVEL_9_1.
+	//							Inform the user they have an insufficient display adapter and end this program.
+	//						2. Or, when the feature level is	>= D3D_FEATURE_LEVEL_9_1:
+	//							Determine the shader compiler target value appropriate for the D3DCompileFromFile function based on pFeatureLevelOut.
+	//							The returned feature level must be used to determine the appropriate shader compiler target for the D3DCompileFromFile function (see the coding of that function for more information).
+	D3D11CreateDeviceAndSwapChain(NULL,						// A pointer to the display adapter to use when creating a device. Pass NULL to use the default display adapter, which is the first display adapter enumerated by IDXGIFactory1::EnumAdapters.
+		D3D_DRIVER_TYPE_HARDWARE,							// (2) The Direct3D driver type, which represents the Direct3D driver type to create.
+		NULL,												// (3) Conditionally NULL or a handle to a DLL that implements a software rasterizer.
+		D3D11_CREATE_DEVICE_BGRA_SUPPORT,					// (4) Conditionally NULL or optional flags describing parameters used to create the device: D3D11_CREATE_DEVICE_BGRA_SUPPORT is required for Direct2D interoperability with Direct3D resources.
+		pFeatureLevelsIn,									// (5) An array of Direct3D feature levels, which determine the order of feature levels to attempt to create.
+		ARRAYSIZE(pFeatureLevelsIn),						// This is the number of elements in the 5th parameter.
+		D3D11_SDK_VERSION,									// The SDK version; use D3D11_SDK_VERSION as D3D11CreateDeviceAndSwapChain is a D3D11 function.
+		&scd,												// "&scd" is the address of (and therefore a pointer to) a swap chain description structure that contains initialization parameters for the swap chain.
+		&swapchain,											// The newly created swap chain		object. "&swapchain" is the address of a pointer, "swapchain", to the swap chain	 interface that represents this object and that implements one or more surfaces for storing rendered data before presenting it to an output.
+		&dev,												// The newly created device			object. "&dev"		 is the address of a pointer, "dev",	   to the device		 interface that represents this object and that is the virtual representation of the computer's display adapter.
+		&pFeatureLevelOut,									// (11) The function returns &pFeatureLevelOut,	which is the address of (and therefore a pointer to) the first element in the array of Direct3D feature levels supported by the device.
+		&devcon);											// The newly created device context object. "&devcon",	 is the address of a pointer, "devcon",	   to the device context interface that represents this object and that is responsible for managing the graphics pipeline.
+
+	// End: 1. Create the device, the device context, and the swap chain with one back buffer.
+
+	//***
+	// 2. Create the depth-stencil buffer (depth buffer (z-buffer)).
+	//    Create the 2D texture array (in this case an array of one) that serves as the depth-stencil surface, and the depth-stencil view interface that in this program will only interpret the depth-stencil surface as a depth buffer (z-buffer) rather than a depth-stencil buffer.
+	//    A depth buffer (z-buffer) stores depth information to control which areas of polygons are rendered rather than hidden from the viewer.
+	//    A stencil buffer is used to mask pixels in an image, to produce special effects, including compositing; decaling; dissolves, fades, and swipes; outlines and silhouettes; and two-sided stencil.
+	//    The stencil buffer typically shares the same memory space as the depth buffer (z-buffer). The depth-stencil view interface created by this program is only used as a depth buffer (z-buffer).
+	//***
+
+	// Create the 2D texture description structure used to describe the 2D texture array (in this case an array of one) that will serve as the depth-stencil surface.
+	D3D11_TEXTURE2D_DESC texd = {};							// The 2D texture description structure.
+
+	// Assign values to the 2D texture description D3D11_TEXTURE2D_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
+	texd.Width = ClientRectangleWidth;						// Assigned a value specifying the texture width  (in texels). The range is constrained by the Direct3D feature level of the device.
+	texd.Height = ClientRectangleHeight;					// Assigned a value specifying the texture height (in texels). The range is constrained by the Direct3D feature level of the device.
+	texd.MipLevels = 1;										// Assigned a value specifying the maximum number of mipmap levels in the texture. Use 1 for a multisampled texture; or 0 to generate a full set of subtextures.
+	texd.ArraySize = 1;										// Assigned a value specifying the number of textures in the 2D texture array. The range is constrained by the Direct3D feature level of the device.
+	texd.Format = DXGI_FORMAT_D32_FLOAT;					// Assigned a value specifying the texture format.																			  A value of the DXGI_FORMAT enumerated type,	  i.e., DXGI_FORMAT_D32_FLOAT:	  A single-component, 32-bit floating-point format that supports 32 bits for depth.
+	texd.SampleDesc.Count = 4;								// .Count: A member of DXGI_SAMPLE_DESC structure assigned a value specifying the number of multisamples per pixel. Also see scd.SampleDesc.Count
+	texd.BindFlags = D3D11_BIND_DEPTH_STENCIL;				// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages. A value of the D3D11_BIND_FLAG enumerated type, i.e., D3D11_BIND_DEPTH_STENCIL: Bind a texture as a depth-stencil target for the output-merger stage of the graphics pipeline.
+
+	// ID3D11Device::CreateTexture2D member function:
+	//   Create the 2D texture array (in this case an array of one) that will serve as the depth-stencil surface.
+	dev->CreateTexture2D(&texd,								// "&texd" is the address of (and therefore a pointer to) the 2D texture description structure used to describe the 2D texture array (in this case an array of one) that will serve as the depth-stencil surface.
+		NULL,												// A pointer to the array of subresource initialization data structures that describe subresources for the 2D texture resource. If the resource is multisampled, this parameter must be NULL because multisampled resources cannot be initialized with data when they are created.
+		&pDepthBuffer);										// The newly created 2D texture array. &pDepthBuffer is the address of a pointer, pDepthBuffer, to the 2D texture interface for the created textures.
+
+	// Create the depth-stencil view description structure used to describe the depth-stencil view.
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsvd = {};				// The depth-stencil view description structure.
+
+	// Assign values to the depth-stencil view description D3D11_DEPTH_STENCIL_VIEW_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
+	dsvd.Format = DXGI_FORMAT_D32_FLOAT;					// Assigned a value specifying the resource data format.					  A value of the DXGI_FORMAT enumerated type,		  i.e., DXGI_FORMAT_D32_FLOAT:			 A single-component, 32-bit floating-point format that supports 32 bits for depth.
+	dsvd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;	// Assigned a value specifying how a depth-stencil resource will be accessed. A value of the D3D11_DSV_DIMENSION enumerated type, i.e., D3D11_DSV_DIMENSION_TEXTURE2DMS: The resource will be accessed as a 2D texture with multisampling.
+
+	// ID3D11Device::CreateDepthStencilView member function:
+	//   Create a depth-stencil view for accessing resource data.
+	dev->CreateDepthStencilView(pDepthBuffer,				// A pointer to the 2D texture interface for the created textures, an array of (in this case an array of one) textures that will serve as the depth-stencil surface.
+		&dsvd,												// "&dsvd" is the address of (and therefore a pointer to) the depth-stencil view description structure used to describe the depth-stencil view interface.
+		&depthbuffer);										// The newly created depth-stencil view. "&depthbuffer" is the address of a pointer, "depthbuffer", to the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
+	pDepthBuffer->Release();								// Decrements the reference count for an interface on a COM object. If the reference count = 0, then the interface pointer is freed. If there are no other interface pointers, then the COM object is freed.
+
+	// End: 2. Create the depth-stencil buffer (depth buffer (z-buffer)).
+
+	//***
+	// 3. Complete setting up the back buffer.
+	//    Create the render target view for the render target, in this case one back buffer texture interface (in this program only one back buffer is created).
+	//    The swap chain was created with one front buffer and one back buffer, and that back buffer is accessed here.
+	//***
+
+	// IDXGISwapChain::GetBuffer member function:
+	//   Access one of the swap-chain's back buffers (in this program only one back buffer is created).
+	swapchain->GetBuffer(0,									// "0" indicates the first back buffer is accessed (in this program only one back buffer is created).
+		__uuidof(ID3D11Texture2D),							// The type of interface used to manipulate the back buffer; identifying the interface by a reference to its universally unique identifier (UUID) (in this case, ID3D11Texture2D).
+		(LPVOID*)&pBackBuffer);								// The accessed back buffer object. &pBackBuffer is the address of a pointer, pBackBuffer, to the 2D texture interface that represents this object and that will serve as the back buffer texture interface.
+
+	// ID3D11Device::CreateRenderTargetView member function:
+	//   Creates a render-target view for accessing resource data.
+	dev->CreateRenderTargetView(pBackBuffer,				// A pointer to the 2D texture interface that will serve as the render target, in this case one back buffer texture interface (in this program only one back buffer is created).
+		NULL,												// A pointer to the render target view description structure that represents a render target view description. Setting this parameter to NULL creates a view that accesses all of the subresources in mipmap level 0.
+		&backbuffer);										// The newly created render-target view. "&backbuffer" is the address of a pointer, "backbuffer", to the render target view interface for the render target, in this case one back buffer texture interface (in this program only one back buffer is created).
+	pBackBuffer->Release();									// Decrements the reference count for an interface on a COM object. If the reference count = 0, then the interface pointer is freed. If there are no other interface pointers, then the COM object is freed.
+
+	// End: 3. Complete setting up the back buffer.
+
+	//***
+	// 4. Set the render target (back buffer) and the depth buffer (z-buffer) to the output-merger stage of the graphics pipeline.
+	//***
+
+	// ID3D11DeviceContext::OMSetRenderTargets member function:
+	//   Bind (set) the render target (back buffer) and the depth buffer (z-buffer) to the output-merger stage of the graphics pipeline.
+	//   Depth buffering can be disabled by changing "devcon->OMSetRenderTargets(1, &backbuffer, depthbuffer)" to "devcon->OMSetRenderTargets(1, &backbuffer, NULL)".
+	devcon->OMSetRenderTargets(1,							// Number of render targets to bind.
+		&backbuffer,										// "&backbuffer" is the address of a pointer, "backbuffer", to the render target view interface for the render target, in this case one back buffer texture interface (in this program only one back buffer is created).
+		depthbuffer);										// A pointer to the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
+
+	// End: 4. Set the render target (back buffer) and the depth buffer (z-buffer) to the output-merger stage of the graphics pipeline.
+
+	//***
+	// 5. Set the viewport to the rasterizer stage of the graphics pipeline.
+	//***
+	
+	// Create the viewport structure used to define the dimensions of the viewport.
+	D3D11_VIEWPORT viewport = {};							// Defines the dimensions of the viewport.
+
+	// Assign values to the dimensions of the viewport D3D11_VIEWPORT structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
+	viewport.TopLeftX = 0;									// Assigned a value specifying the x position of the left hand side of the viewport. Ranges between D3D11_VIEWPORT_BOUNDS_MIN and D3D11_VIEWPORT_BOUNDS_MAX.
+	viewport.TopLeftY = 0;									// Assigned a value specifying the y position of the top of the viewport.			 Ranges between D3D11_VIEWPORT_BOUNDS_MIN and D3D11_VIEWPORT_BOUNDS_MAX.
+	viewport.Width = static_cast<FLOAT>(ClientRectangleWidth);	// Assigned a value specifying the width of the viewport.							 Width	must be >= 0. TopLeftX + Width	must be <= D3D11_VIEWPORT_BOUNDS_MAX.
+	viewport.Height = static_cast<FLOAT>(ClientRectangleHeight);// Assigned a value specifying the height of the viewport.							 Height	must be >= 0. TopLeftY + Height	must be <= D3D11_VIEWPORT_BOUNDS_MAX.
+	viewport.MinDepth = 0;									// Assigned a value specifying the minimum depth of the viewport.					 Ranges between 0 and 1. (The closest an object can be on the depth buffer (z-buffer))
+	viewport.MaxDepth = 1;									// Assigned a value specifying the maximum depth of the viewport.					 Ranges between 0 and 1. (The farthest an object can be on the depth buffer (z-buffer))
+
+	// ID3D11DeviceContext::RSSetViewports member function:
+	//   Set the array of (in this case an array of one) viewports to the rasterizer stage of the graphics pipeline.
+	//   This indicates which portion of the back buffer to select pixels from.
+	//   A viewport specifies a 2D rectangle into which a 3D scene is projected.
+	//   In Direct3D, this rectangle exists as coordinates within a Direct3D surface that the system uses as a rendering target.
+	//   The projection transformation converts geometric vertices into the coordinate system used for the viewport.
+	//   A viewport is also used to specify the range of depth values on a render target surface into which a scene will be rendered (usually 0.0 to 1.0).
+	devcon->RSSetViewports(1,								// Number of viewports to bind.
+		&viewport);											// The address "&viewport" of (and therefore a pointer to) an array that, in this program, will be a one element array of D3D11_VIEWPORT structures to bind to the device.
+
+	// End: 5. Set the viewport to the rasterizer stage of the graphics pipeline.
+
+	//***
+	// 6. Initialize the graphics pipeline.
+	//***
+
+	InitPipeline();											// Call the InitPipeline function.
+
+	// End: 6. Initialize the graphics pipeline.
+
+	//***
+	// 7. Load and initialize all graphics data.
+	//***
+
+	if (int InitGraphicsRC = InitGraphics(); InitGraphicsRC != 0) // Call the InitGraphics function and test whether its return value is nonzero, indicating an error.
+	{
+		// The InitGraphics function terminated abnormally. Terminate the InitD3D function with the return value of the InitGraphics function.
+		return InitGraphicsRC;
+	}
+	// The InitGraphics function terminated normally.
+
+	// End: 7. Load and initialize all graphics data.
+
+	return 0;
+
+	// End: InitD3D function
+}
+
+// InitD2D_DW function: Definition
+//   This function initializes and prepares Direct2D and DirectWrite for use.
+//   It must be called by the WinMain function, after first calling the ShowWindow function, and after initializing and preparing Direct3D for use.
+void InitD2D_DW(void)
+{
+	// D2D1CreateFactory function:
+	//	 Creates a factory object that can be used to create Direct2D resources.
+	D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED,	// The threading model of the factory and the resources it creates: D2D1_FACTORY_TYPE_SINGLE_THREADED indicates they will be used from a single thread, unless the program provides access locking (it does not).
+		&pD2DFactory);										// The newly created factory object. &pD2DFactory is the address of a pointer, pD2DFactory, to the factory interface.
+
+	// IUnknown::QueryInterface member function:
+	//   Queries a COM object (in this case, pBackBuffer, the 2D texture interface for the back buffer texture interface) for a pointer (pDxgiSurface) to one of its interfaces (in this case, the surface interface); identifying the interface by a reference to its interface identifier (IID) (in this case, __uuidof(IDXGISurface), a universally unique identifier (UUID)).
+	//   An IID is a specific type of UUID used in the context of COM programming to identify interfaces, while a UUID is a general-purpose unique identifier used across various systems and applications.
+	//   A surface is an image-data object, a 2D section of memory.
+	//     Runtimes earlier than Direct3D 12 automatically create an IDXGISurface surface interface when they create a Direct3D resource object that represents a surface.
+	//     IDXGISurface surface interfaces are not supported in Direct3D 12.
+	pBackBuffer->QueryInterface(__uuidof(IDXGISurface),		// __uuidof(IDXGISurface) is the universally unique identifier (UUID) that identifies the IDXGISurface interface, and the interface identifier (IID) of the interface being queried for (in this case the back buffer texture interface is being queried for its surface interface).
+		(void**)&pDxgiSurface);								// The pointer to the requested interface, returned from the query. &pDxgiSurface is the address of a pointer, pDxgiSurface, to the requested interface (__uuidof(IDXGISurface) (in this case the surface interface of the back buffer texture interface). Upon successful return, *pDxgiSurface (the dereferenced address) contains a pointer to the requested interface.
+
+	// RenderTargetProperties function:
+	//   Creates a D2D1_RENDER_TARGET_PROPERTIES structure, which contains rendering options (hardware or software), pixel format (via the PixelFormat function), DPI information, remoting options, and Direct3D support requirements for a render target.
+	D2D1_RENDER_TARGET_PROPERTIES D2Drtp =					// D2Drtp is the Direct2D render target properties structure and the return value of the RenderTargetProperties function.
+	RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,	// A value that specifies whether the render target must use hardware rendering or software rendering. The default value, D2D1_RENDER_TARGET_TYPE_DEFAULT, specifies that hardware rendering be used; if hardware rendering is not available, the render target uses software rendering. Note that WIC bitmap render targets do not support hardware rendering.
+		// PixelFormat function:
+		//   Creates a D2D1_PIXEL_FORMAT structure, which contains the data format and alpha mode for a bitmap or render target.
+		PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM,				// A value that specifies the size and arrangement of channels in each pixel. This should match the program's swap chain description structure, which specifies scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			D2D1_ALPHA_MODE_PREMULTIPLIED),					// A value that specifies whether the alpha channel is using premultiplied alpha or straight alpha, or whether it should be ignored and considered opaque.
+		0,													// A value that specifies the horizontal DPI (dpiX) of the render target. The default value is 0.0. If both dpiX and dpiY are set to 0.0, the render target uses its default DPI.
+		0,													// A value that specifies the vertical	 DPI (dpiY) of the render target. The default value is 0.0. If both dpiX and dpiY are set to 0.0, the render target uses its default DPI.
+		D2D1_RENDER_TARGET_USAGE_NONE,						// A value that specifies how the render target is remotely rendered ("is remoted") and whether it should be GDI-compatible. The default value, D2D1_RENDER_TARGET_USAGE_NONE, creates a render target that is not compatible with GDI and that uses Direct3D command-stream remote rendering, if it is available.
+		D2D1_FEATURE_LEVEL_DEFAULT);						// A value that specifies the minimum Direct3D feature level required for hardware rendering. If the specified minimum level is not available, the render target uses software rendering if the type member is set to D2D1_RENDER_TARGET_TYPE_DEFAULT; if type is set to D2D1_RENDER_TARGET_TYPE_HARDWARE, render target creation fails. A value of D2D1_FEATURE_LEVEL_DEFAULT indicates that Direct2D should determine whether the Direct3D feature level of the device is adequate. This field is used only when creating ID2D1HwndRenderTarget and ID2D1DCRenderTarget objects.
+
+	// ID2D1Factory::CreateDxgiSurfaceRenderTarget member function:
+	//   Creates a render target object that draws to a DirectX Graphics Infrastructure (DXGI) surface.
+	//   Requirement for interoperability with Direct3D resources:
+	//     The D3D11CreateDeviceAndSwapChain function (Direct3D) is also used in this program.
+	//     Its 4th parameter must specify the flag D3D11_CREATE_DEVICE_BGRA_SUPPORT for Direct2D interoperability with Direct3D resources.
+	//     Otherwise, the CreateDxgiSurfaceRenderTarget member function (Direct2D) returns the error _INVALIDARG, pD2DRenderTarget remains NULL and, although the program continues, any subsequent attempt to call pD2DRenderTarget's member functions (e.g., pD2DRenderTarget->CreateSolidColorBrush()), terminates this program because pD2DRenderTarget is NULL.
+	pD2DFactory->CreateDxgiSurfaceRenderTarget(pDxgiSurface,// pDxgiSurface is a pointer to the surface interface (in this case the surface interface of the back buffer texture interface) to which the render target will draw. It is assigned value by the QueryInterface member function.
+		&D2Drtp,											// &D2Drtp is the address of (and therefore a pointer to) the Direct2D render target properties structure. It is the return value of the RenderTargetProperties function.
+		&pD2DRenderTarget);									// The newly created render target object. &pD2DRenderTarget is the address of a pointer, pD2DRenderTarget, to the render target interface that represents this object.
+	pDxgiSurface->Release();								// Decrements the reference count for an interface on a COM object. If the reference count = 0, then the interface pointer is freed. If there are no other interface pointers, then the COM object is freed.
+
+	// ID2D1RenderTarget::CreateSolidColorBrush member function
+	//   Creates a new ID2D1SolidColorBrush brush object that has the specified color and a base opacity of 1.0f.
+	pD2DRenderTarget->CreateSolidColorBrush(
+		// D2D1::ColorF::ColorF member function:
+		//   Instantiates a new instance of the ColorF class that contains the specified red, green, blue, and alpha values of the brush's color.
+		//   Its parameters are four FLOAT values:
+		//     The red, green, and blue components, and the alpha channel, of the color to be constructed.
+		//     An alpha channel value ranges from 0.0 to 1.0, where 0.0 represents a fully transparent color, and 1.0 represents a fully opaque color.
+		//       This parameter is optional, and if omitted defaults to 1.0 (fully opaque).
+		//     For example, the values 1.0f, 1.0f, 1.0f, 1.0f, as in ColorF(ColorF(1.0f, 1.0f, 1.0f, 1.0f)), represent the color white (fully opaque).
+		//     In ColorF(ColorF::White),
+		//       ColorF in ColorF():
+		//         This ColorF refers to the constructor of the ColorF class. When you see ColorF(), it means that an instance of the ColorF class is being created.
+		//         In this context, ColorF(ColorF::White) is calling the constructor of the ColorF class with ColorF::White as an argument.
+		//       ColorF in ColorF::White:
+		//         This ColorF refers to the ColorF class itself. The :: operator is used to access a member of the class.
+		//         Here, ColorF::White accesses the static member White of the ColorF class.
+		//       White:
+		//         White is a static member of the ColorF class. It represents a predefined color value, specifically the color white.
+		//         Static members are shared among all instances of the class and can be accessed using the class name followed by the scope resolution operator ::.
+		//       In summary, ColorF(ColorF::White) creates a new instance of the ColorF class, initialized with the predefined color value White. This is equivalent to creating a color object with the color white.
+		ColorF(ColorF::White),								// The red, green, blue, and alpha values of the brush's color. In this case, the color is white (fully opaque).
+		&pBrush);											// The newly created ID2D1SolidColorBrush brush object. &pBrush is the address of a pointer, pBrush, to the ID2D1SolidColorBrush brush interface that represents this object.
+
+	// DWriteCreateFactory function:
+	//   Creates a DirectWrite factory object that is used for subsequent creation of individual DirectWrite objects; identifying the type of DirectWrite factory object to be created by a reference to a DirectWrite factory interface's globally unique identifier (GUID) (in this case, __uuidof(IDWriteFactory), a universally unique identifier (UUID)).
+	//   In addition to the IDWriteFactory interface, a IDWriteFactory1 interface or a IDWriteFactory2 interface may be referenced. These interfaces provide additional functionality and improvements over the original IDWriteFactory interface.
+	//   A GUID is used here as a specific type of UUID in the context of COM programming to identify objects, while a UUID is a general-purpose unique identifier used across various systems and applications.
+	//   A GUID may be used in various other contexts, not limited to COM programming. For example, it can be used to identify database records, components, or any other entities that require a unique identifier.
+	DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,			// DWRITE_FACTORY_TYPE_SHARED indicates that the DirectWrite factory is a shared factory and that it allows for the reuse of cached font data across multiple in-process components.
+		__uuidof(IDWriteFactory),							// __uuidof(IDWriteFactory) is the universally unique identifier (UUID) that identifies the type of factory interface used to create the DirectWrite factory object.
+		reinterpret_cast<IUnknown**>(&pDWriteFactory));		// The newly created DirectWrite factory object. &pDWriteFactory is the address of a pointer, pDWriteFactory, to the DirectWrite factory interface that represents this object. reinterpret_cast is used to convert the type of the pointer to IUnknown**, which is the base interface for all COM objects.
+
+	// IDWriteFactory::CreateTextFormat member function:
+	//   Creates a text format object used for text layout.
+	pDWriteFactory->CreateTextFormat(
+		L"Arial",											// An array of characters that contains the name of the font family.
+		NULL,												// A pointer to a font collection object. When this is NULL, it indicates the system font collection.
+		DWRITE_FONT_WEIGHT_NORMAL,							// A value that indicates the font weight for the text object created by this method.
+		DWRITE_FONT_STYLE_NORMAL,							// A value that indicates the font style for the text object created by this method.
+		DWRITE_FONT_STRETCH_NORMAL,							// A value that indicates the font stretch for the text object created by this method.
+		24,													// The logical size of the font in DIP ("device-independent pixel") units. A DIP equals 1/96 inch.
+		L"en-us",											// An array of characters that contains the locale name.
+		&pTextFormat);										// The newly created text format object. &pTextFormat is the address of a pointer, pTextFormat, to the text format interface that represents this object.
+
+	// End: InitD2D_DW function
+}
+
+// InitPipeline function: Definition
+//   This function initializes the graphics pipeline.
+//     1. Create the shader objects and set them to the associated shader stage of the graphics pipeline.
+//
+//     2. Create the input-layout object and set it to the input-assembler stage of the graphics pipeline.
+//
+//     3. Create the constant buffer object and set it to the vertex shader stage of the graphics pipeline.
+void InitPipeline(void)
+{
+	//***
+	// 1. Create the shader objects and set them to the associated shader stage of the graphics pipeline.
+	//    Create the vertex shader object and set it to the vertex shader stage of the graphics pipeline.
+	//    Create the pixel  shader object and set it to the pixel  shader stage of the graphics pipeline.
+	//    Shader functions are small, low-level, programs that are compiled by the CPU and then run by the GPU at specific stages in the graphics pipeline. They automatically receive data from shader functions in previous stages, and return data to shader functions in successive stages, of the graphics pipeline.
+	//    Their specialty is very fast floating-point mathematical operations. The most common shader programs are:
+	//    Vertex shader:
+	//      This shader is executed for each vertex in the scene.
+	//      This shader operates on vertex buffer array elements provided to it by the calling program (this program) and at a minimum returns a 4-component position vector that will be rasterized into a pixel position.
+	//      Optionally, this shader can output Vertex color, vertex texture coordinates, vertex lighting, fog factors, and other characteristics of a single vertex, are optional.
+	//    Pixel shader:
+	//      This shader is also known as a fragment shader.
+	//      This shader is executed for each pixel (fragment) in the render target.
+	//      This shader receives rasterized coordinates from previous shader stages (in the simplest pipelines, this would be the vertex shader) and at a minimum returns a color (or other 4-component value) for that pixel position, which is then written into a render target.
+	//      Optionally, this shader can output the color, brightness, contrast, and other characteristics of a single pixel.
+	//***
+
+	ID3DBlob* VS;											// VS (Vertex Shader) is a pointer to the ID3DBlob interface used to return Direct3D data of arbitrary length.
+	ID3DBlob* PS;											// PS (Pixel Shader)  is a pointer to the ID3DBlob interface used to return Direct3D data of arbitrary length.
+
+	// D3DCompileFromFile function:
+	//   Compile Microsoft High Level Shader Language (HLSL) code into bytecode for a given target.
+	//   Compile the vertex shader:
+	D3DCompileFromFile(L"shaders.hlsl",						// A pointer to a constant null-terminated string that contains the name of the file that contains the shader code.
+		NULL,												// An optional array of D3D_SHADER_MACRO structures that define shader macros.
+		NULL,												// An optional pointer to an ID3DInclude interface that the compiler uses to handle include files.
+		"VShader",											// A pointer to a constant null-terminated string that contains the name of the shader entry point function where shader execution begins. When you compile an effect this parameter is ignored; Microsoft recommends setting it to NULL because it is good programming practice to set a pointer parameter to NULL if the called function will not use it.
+		"vs_4_1",											// A pointer to a constant null-terminated string that specifies the shader target or set of shader features to compile against. The shader target can be a shader model. vs_4_1 is the vertex shader model (a shader target) of the Direct3D 10.1 feature level.
+		D3DCOMPILE_DEBUG,									// A combination of shader compile options that are combined by using a bitwise OR operation. The resulting value specifies how the compiler compiles the HLSL code (set it to zero (0) to indicate no options). The D3DCOMPILE_DEBUG option directs the compiler to insert debug file/line/type/symbol information into the output code.
+		0,													// A combination of effect compile options that are combined by using a bitwise OR operation. The resulting value specifies how the compiler compiles the effect. When you compile a shader and not an effect file, D3DCompileFromFile ignores this parameter (set it to zero (0) to indicate no options).
+		&VS,												// &VS is the address of a pointer, VS, to the interface that you can use to access the compiled code.
+		0);													// An optional pointer to a variable that receives a pointer to the ID3DBlob interface that you can use to access compiler error messages
+	//   Compile the pixel shader:
+	D3DCompileFromFile(L"shaders.hlsl",						// A pointer to a constant null-terminated string that contains the name of the file that contains the shader code.
+		NULL,												// An optional array of D3D_SHADER_MACRO structures that define shader macros.
+		NULL,												// An optional pointer to an ID3DInclude interface that the compiler uses to handle include files.
+		"PShader",											// A pointer to a constant null-terminated string that contains the name of the shader entry point function where shader execution begins. When you compile an effect this parameter is ignored; Microsoft recommends setting it to NULL because it is good programming practice to set a pointer parameter to NULL if the called function will not use it.
+		"ps_4_1",											// A pointer to a constant null-terminated string that specifies the shader target or set of shader features to compile against. The shader target can be a shader model. ps_4_1 is the pixel shader model (a shader target) of the Direct3D 10.1 feature level.
+		D3DCOMPILE_DEBUG,									// A combination of shader compile options that are combined by using a bitwise OR operation. The resulting value specifies how the compiler compiles the HLSL code (set it to zero (0) to indicate no options). The D3DCOMPILE_DEBUG option directs the compiler to insert debug file/line/type/symbol information into the output code.
+		0,													// A combination of effect compile options that are combined by using a bitwise OR operation. The resulting value specifies how the compiler compiles the effect. When you compile a shader and not an effect file, D3DCompileFromFile ignores this parameter (set it to zero (0) to indicate no options).
+		&PS,												// &PS is the address of a pointer, PS, to the interface that you can use to access the compiled code.
+		0);													// An optional pointer to a variable that receives a pointer to the ID3DBlob interface that you can use to access compiler error messages.
+
+	// ID3D11Device::CreateVertexShader member function:
+	//   Create the vertex shader object from a compiled shader.
+	dev->CreateVertexShader(VS->GetBufferPointer(),			// A pointer to the compiled vertex shader.
+		VS->GetBufferSize(),								// Size of the compiled vertex shader.
+		NULL,												// An optional pointer to a class linkage ID3D11ClassLinkage interface.
+		&pVS);												// The newly created vertex shader object. &pVS is the address of a pointer, pVS, to the vertex shader interface that represents this object.
+
+	// ID3D11DeviceContext::VSSetShader member function:
+	//   Set the vertex shader object to the vertex shader stage of the graphics pipeline.
+	devcon->VSSetShader(pVS,								// Pointer to the vertex shader interface that represents the vertex shader object.
+		0,													// An optional pointer to an array of class-instance ID3D11ClassInstance interfaces.
+		0);													// The number of class-instance interfaces in the array.
+
+	// ID3D11Device::CreatePixelShader member function:
+	//   Create the pixel shader object from a compiled shader.
+	dev->CreatePixelShader(PS->GetBufferPointer(),			// A pointer to the compiled pixel shader.
+		PS->GetBufferSize(),								// Size of the compiled pixel shader.
+		NULL,												// An optional pointer to a class linkage ID3D11ClassLinkage interface. 
+		&pPS);												// The newly created pixel shader object. &pPS is the address of a pointer, pPS, to the pixel shader interface that represents this object.
+
+	// ID3D11DeviceContext::PSSetShader member function:
+	//   Set the pixel shader object to the pixel shader stage of the graphics pipeline.
+	devcon->PSSetShader(pPS,								// Pointer to the pixel shader interface that represents the pixel shader object.
+		0,													// An optional pointer to an array of class-instance ID3D11ClassInstance interfaces.
+		0);													// The number of class-instance interfaces in the array.
+
+	// End: 1. Create the shader objects and set them to the associated shader stage of the graphics pipeline.
+
+	//***
+	// 2. Create the input-layout object and set it to the input-assembler stage of the graphics pipeline.
+	//    The input-layout object describes the VERTEX structure representing the attributes of each vertex of an object, i.e., the input buffers that will be read by the input-assembler stage of the graphics pipeline.
+	//***
+
+	// Create the input element description structure used to define the input-layout object that describes the VERTEX structure used in this program.
+	D3D11_INPUT_ELEMENT_DESC ied[3] = {};					// Defines the input-layout object containing an array of structures, each structure defines one element being read from an input slot.
+
+	// Assign values to the input element description D3D11_INPUT_ELEMENT_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
+	// Define the position input element of the VERTEX structure OurVertices.
+	ied[0].SemanticName = "POSITION";						// Assigned a value specifying the HLSL semantic name associated with this element in a shader input signature.
+	ied[0].SemanticIndex = 0;								// Assigned a value specifying the semantic index for the element. A semantic index modifies a semantic with an integer index number. A semantic index is only needed in a case where there is more than one element with the same semantic name.
+	ied[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;			// Assigned a value specifying the data type of the element.					  A value of the DXGI_FORMAT enumerated type,				 i.e., DXGI_FORMAT_R32G32B32_FLOAT: A three-component, 96-bit floating-point format that supports 32 bits for the red channel, 32 bits for the green channel and 32 bits for the blue channel.
+	ied[0].InputSlot = 0;									// Assigned a value specifying the integer value that identifies the input-assembler (see input slot).
+	ied[0].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;// Assigned a value specifying the optional offset (in bytes) from the start of the vertex. Use D3D11_APPEND_ALIGNED_ELEMENT for convenience to define the current element directly after the previous one, including any packing if necessary. Position has an offset of 0 in this program.
+	ied[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;	// Assigned a value specifying the input data slot class for a single input slot. A value of the D3D11_INPUT_CLASSIFICATION enumerated type, i.e., D3D11_INPUT_PER_VERTEX_DATA: Input data is per-vertex data.
+	ied[0].InstanceDataStepRate = 0;						// Assigned a value specifying the number of instances to draw using the same per-instance data before advancing in the buffer by one element. This value must be 0 for an element that contains per-vertex data (the slot class is set to D3D11_INPUT_PER_VERTEX_DATA).
+
+	// Define the texture  input element of the VERTEX structure OurVertices.
+	ied[1].SemanticName = "TEXCOORD";						// Assigned a value specifying the HLSL semantic name associated with this element in a shader input signature.
+	ied[1].SemanticIndex = 0;								// Assigned a value specifying the semantic index for the element. A semantic index modifies a semantic with an integer index number. A semantic index is only needed in a case where there is more than one element with the same semantic name.
+	ied[1].Format = DXGI_FORMAT_R32G32_FLOAT;				// Assigned a value specifying the data type of the element.					  A value of the DXGI_FORMAT enumerated type,				 i.e., DXGI_FORMAT_R32G32_FLOAT:	A two-component, 64-bit floating-point format that supports 32 bits for the red channel and 32 bits for the green channel.
+	ied[1].InputSlot = 0;									// Assigned a value specifying the integer value that identifies the input-assembler (see input slot).
+	ied[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;// Assigned a value specifying the optional offset (in bytes) from the start of the vertex. Use D3D11_APPEND_ALIGNED_ELEMENT for convenience to define the current element directly after the previous one, including any packing if necessary. Normal has an offset of 12 in this program.
+	ied[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;	// Assigned a value specifying the input data slot class for a single input slot. A value of the D3D11_INPUT_CLASSIFICATION enumerated type, i.e., D3D11_INPUT_PER_VERTEX_DATA: Input data is per-vertex data.
+	ied[1].InstanceDataStepRate = 0;						// Assigned a value specifying the number of instances to draw using the same per-instance data before advancing in the buffer by one element. This value must be 0 for an element that contains per-vertex data (the slot class is set to D3D11_INPUT_PER_VERTEX_DATA).
+
+	// Define the normal   input element of the VERTEX structure OurVertices.
+	ied[2].SemanticName = "NORMAL";							// Assigned a value specifying the HLSL semantic name associated with this element in a shader input signature.
+	ied[2].SemanticIndex = 0;								// Assigned a value specifying the semantic index for the element. A semantic index modifies a semantic with an integer index number. A semantic index is only needed in a case where there is more than one element with the same semantic name.
+	ied[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;			// Assigned a value specifying the data type of the element.					  A value of the DXGI_FORMAT enumerated type,				 i.e., DXGI_FORMAT_R32G32B32_FLOAT: A three-component, 96-bit floating-point format that supports 32 bits for the red channel, 32 bits for the green channel and 32 bits for the blue channel.
+	ied[2].InputSlot = 0;									// Assigned a value specifying the integer value that identifies the input-assembler (see input slot).
+	ied[2].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;// Assigned a value specifying the optional offset (in bytes) from the start of the vertex. Use D3D11_APPEND_ALIGNED_ELEMENT for convenience to define the current element directly after the previous one, including any packing if necessary. Normal has an offset of 12 in this program.
+	ied[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;	// Assigned a value specifying the input data slot class for a single input slot. A value of the D3D11_INPUT_CLASSIFICATION enumerated type, i.e., D3D11_INPUT_PER_VERTEX_DATA: Input data is per-vertex data.
+	ied[2].InstanceDataStepRate = 0;						// Assigned a value specifying the number of instances to draw using the same per-instance data before advancing in the buffer by one element. This value must be 0 for an element that contains per-vertex data (the slot class is set to D3D11_INPUT_PER_VERTEX_DATA).
+
+	// ID3D11Device::CreateInputLayout member function:
+	//   Create the input-layout object to describe the input-buffer data for the input-assembler stage of the graphics pipeline.
+	dev->CreateInputLayout(ied,								// An array of the input-assembler stage input data types, in this case POSITION and NORMAL, used to define the input-layout object. Each input data type is described by an element description.
+		3,													// The number of input data types in the array, in this case 2 (POSITION and NORMAL), used to define the input-layout object.
+		VS->GetBufferPointer(),								// Pointer to the compiled shader.
+		VS->GetBufferSize(),								// Size of the compiled shader.
+		&pLayout);											// The newly created input-layout object. &pLayout is the address of a pointer, pLayout, to the input-layout interface that represents this object.
+
+	// ID3D11DeviceContext::IASetInputLayout member function:
+	//   Set the input-layout object to the input-assembler stage of the graphics pipeline.
+	devcon->IASetInputLayout(pLayout);						// Pointer to the input-layout interface.
+
+	// End: 2. Create the input-layout object and set it to the input-assembler stage of the graphics pipeline.
+
+	//***
+	// 3. Create the constant buffer object and set it to the vertex shader stage of the graphics pipeline.
+	//		Multiple constant buffers can be created (see below) and each can be set to the vertex shader and/or pixel shader stage of the graphics pipeline, depending on how it will be used.
+	//      Constant buffers are optimized for constant variable usage, which is characterized by lower-latency access and more frequent update from the CPU.
+	//      Constant buffers are used to store data that is shared by all shaders in the graphics pipeline.
+	//      The size of the constant buffer resource must be a multiple of 16 bytes, because constants are sent to the GPU in packs of 16 bytes, regardless of the size of the C++ constant buffer structure.
+	//      A constant buffer can be a structure containing multiple constants. The order and size of these structure's members must match in both C++ and HLSL.
+	//      Any one constant (structure member) cannot be split between two 16-byte areas of memory. Therefore, if the first constant in the structure is less than 16 bytes then the second constant will be aligned on the next 16-byte boundary. When it occurs, this automatic alignment must be accounted for in the C++ constant buffer structure in C++, otherwise it will not match the HLSL constant buffer structure, even if their code looks identical.
+	//
+	//      These structures and their members are optionally named the same in C++ and HLSL.
+	//      The C++ constant buffer structure is copied to the constant buffer pointed to by pCBuffer using the ID3D11DeviceContext::UpdateSubresource member function.
+	//      Copying to the constant buffer always provides		  position information for the object rendered, as it does in this program.
+	//      Copying to the constant buffer may optionally provide scene    information for the object rendered, such as lighting information, timing information, among other details.
+	//      A constant buffer's information should be sent to the GPU only as needed, matching its frequency of update. For example, if position information and scene information are updated at different frequencies (at different times), then create two constant buffers, one for position information and one for scene information.
+	//
+	//    Constant buffer and texture buffer shader constants:
+	//      In Shader Model 4 (used in this program), shader constants are stored in one or more buffer resources in memory. They can be organized into two types of buffer: constant buffers (cbuffer) and texture buffers (tbuffer).
+	//
+	//      Constant buffers are optimized for constant-variable usage, which is characterized by lower-latency access and more frequent update from the CPU.
+	//      A constant buffer is a specialized buffer resource that is accessed like a buffer. Each constant buffer can hold up to 4096 vectors; each vector contains up to four 32-bit values. You can bind up to 14 constant buffers per graphics pipeline stage (2 additional slots are reserved for internal use).
+	//      A constant buffer does not require a view to be bound to the pipeline.
+	//
+	//      Texture buffers are accessed like textures and perform better for arbitrarily indexed data.
+	//      A texture buffer is a specialized buffer resource that is accessed like a texture. Texture access (as compared with standard buffer access) can have better performance for arbitrarily indexed data. You can bind up to 128 texture buffers per graphics pipeline stage.
+	//      A texture buffer requires a view and must be bound to a texture slot (or must be bound with SetTextureBuffer when using an effect).
+	//
+	//      Regardless of which type of resource you use, there is no limit to the number of constant buffers or texture buffers a program can create.
+	//
+	//      A buffer resource is designed to minimize the overhead of setting shader constants.
+	//        Manage buffer updates using:
+	//        - The effect framework (see ID3D10Effect Interface)
+	//        - The Direct3D API (see ID3D11DeviceContext::UpdateSubresource member function)
+	//        - A program can also copy data from another buffer (such as a render target or a stream-output target) into a constant buffer.
+	//***
+
+	// Create the buffer resource description structure used to define the constant buffer.
+	D3D11_BUFFER_DESC bd = {};								// Describes the buffer resource.
+
+	// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
+	bd.ByteWidth = sizeof(ConstantBuffer);					// Assigned a value specifying the size of the buffer in bytes. See the preceding comments for related information on the size of the constant buffer resource, including limitations.
+	bd.Usage = D3D11_USAGE_DEFAULT;							// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor. A value of the D3D11_USAGE enumerated type,		i.e., D3D11_USAGE_DEFAULT:		  A resource that requires read and write access by the GPU. This is likely to be the most common usage choice.
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;				// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,	i.e., D3D11_BIND_CONSTANT_BUFFER: Bind a buffer as a constant buffer to a shader stage of the graphics pipeline; this flag may NOT be combined with any other bind flag.
+
+	// ID3D11Device::CreateBuffer member function:
+	//   Create the buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the constant buffer object.
+	dev->CreateBuffer(&bd,									// A pointer to a D3D11_BUFFER_DESC structure that describes the buffer, in this case a constant buffer as per bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER.
+		NULL,												// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bd.Usage is D3D11_USAGE_IMMUTABLE).
+		&pCBuffer);											// The newly created buffer object. &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this object.
+
+	// ID3D11DeviceContext::VSSetConstantBuffers member function:
+	//   Set the constant buffer object to the vertex shader stage of the graphics pipeline.
+	devcon->VSSetConstantBuffers(0,							// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
+		1,													// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
+		&pCBuffer);											// &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this constant buffer object.
+
+	// End: 3. Create the constant buffer object and set it to the vertex shader stage of the graphics pipeline.
+
+	// End: InitPipeline function
+}
+
+// InitGraphics function: Definition
+//   This function loads and initializes all graphics data.
+//     1. Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
+//
+//     2. Create the structures used to define the vertex buffer and index buffer.
+//
+//     3. Create the vertex buffer and assign values to it from the variable OurVertices.
+//
+//     4. Create the index buffer and assign values to it from the variable OurIndices.
+//
+//     5. Create the texture image from an image file.
+int InitGraphics(void)
+{
+	//***
+	// 1. Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
+	//***
+
+	if (int objReaderEnumRC = objReaderEnum(); objReaderEnumRC != 0)	// Call the objReader function and test whether its return value is nonzero, indicating an error.
+	{
+		// The objReaderEnum function terminated abnormally. Terminate the InitGraphics function with the return value of the objReader function.
+		return objReaderEnumRC;
+	}
+	// The objReader function terminated normally.
+
+	// End: 1. Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
+
+	//***
+	// 2. Create the structures used to define the vertex buffer and index buffer.
+	//***
+
+	// Create the buffer resource description structures used to define the vertex buffer and index buffer.
+	D3D11_BUFFER_DESC bdBufferVertex = {};
+	D3D11_BUFFER_DESC bdBufferIndex = {};
+
+	// Create the mapped subresource structures that provide access to subresource data. They are used to define the vertex buffer and index buffer.
+	D3D11_MAPPED_SUBRESOURCE msBufferVertex;				// Provides access to subresource data. msBufferVertex.pData is used to copy data to the vertex buffer.
+	D3D11_MAPPED_SUBRESOURCE msBufferIndex;					// Provides access to subresource data. msBufferIndex.pData	 is used to copy data to the index	buffer.
+
+	// End: 2. Create the structures used to define the vertex buffer and index buffer.
+
+	//***
+	// 3. Create the vertex buffer and assign values to it from the variable OurVertices.
+	//***
+
+	// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
+	bdBufferVertex.ByteWidth = sizeof(VERTEX) * VertexAttributeSetsTotal;	// Assigned a value specifying the size of the buffer in bytes. The vertex buffer resource's size is the size of the VERTEX structure * the total number of array elements in OurVertices (VertexAttributeSetsTotal).
+	bdBufferVertex.Usage = D3D11_USAGE_DYNAMIC;								// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	  A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
+	bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER;					// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_VERTEX_BUFFER: Bind a buffer as a vertex buffer to the input-assembler stage of the graphics pipeline.
+	bdBufferVertex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;					// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	  The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
+
+	// ID3D11Device::CreateBuffer member function:
+	//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the vertex buffer object.
+	dev->CreateBuffer(&bdBufferVertex,						// A pointer to a buffer resource description structure that describes the buffer, in this case the vertex buffer, as per bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER.
+		NULL,												// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferVertex.Usage is D3D11_USAGE_IMMUTABLE).
+		&pVBuffer);											// The newly created buffer object. &pVBuffer is the address of a pointer, pVBuffer, to the buffer interface that represents this object.
+
+	// Assign the vertex attributes by copying them from OurVertices to the vertex buffer.
+	// ID3D11DeviceContext::Map member function:
+	//   Mapping a buffer allows us to access it.
+	//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
+	//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
+	devcon->Map(pVBuffer,									// A pointer to the vertex buffer interface.
+		NULL,												// Index number of the subresource.
+		D3D11_MAP_WRITE_DISCARD,							// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
+		NULL,												// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
+		&msBufferVertex);									// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
+	memcpy(msBufferVertex.pData, &OurVertices[0], bdBufferVertex.ByteWidth);	// Copy the vertex attributes from OurVertices to the vertex buffer.
+	// D3D11DeviceContext::Unmap member function:
+	//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
+	devcon->Unmap(pVBuffer,									// A pointer to the vertex buffer interface.
+		NULL);												// A subresource to be unmapped.
+
+	// End: 3. Create the vertex buffer and assign values to it from the variable OurVertices.
+
+	//***
+	// 4. Create the index buffer and assign values to it from the variable OurIndices.
+	//***
+
+	// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
+	bdBufferIndex.ByteWidth = sizeof(DWORD) * (PrimitivesTotal * 3);		// Assigned a value specifying the size of the buffer in bytes. Three indices in the index buffer, each pointing to one set of vertex attributes in the vertex buffer, describe each triangle primitive, and PrimitivesTotal is the total number of triangles comprising the object. Therefore PrimitivesTotal * 3.
+	bdBufferIndex.Usage = D3D11_USAGE_DYNAMIC;								// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	 A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
+	bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER;						// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_INDEX_BUFFER: Bind a buffer as an index buffer to the input-assembler stage of the graphics pipeline.
+	bdBufferIndex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;					// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	 The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
+
+	// ID3D11Device::CreateBuffer member function:
+	//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the index buffer object.
+	dev->CreateBuffer(&bdBufferIndex,						// A pointer to a buffer resource description structure that describes the buffer, in this case an index buffer, as per bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER.
+		NULL,												// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferIndex.Usage is D3D11_USAGE_IMMUTABLE).
+		&pIBuffer);											// The newly created buffer object. &pIBuffer is the address of a pointer, pIBuffer, to the buffer interface that represents this object.
+
+	// Assign the index information by copying it from OurIndices to the index buffer.
+	// ID3D11DeviceContext::Map member function:
+	//   Mapping a buffer allows us to access it.
+	//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
+	//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
+	devcon->Map(pIBuffer,									// A pointer to the index buffer interface.
+		NULL,												// Index number of the subresource.
+		D3D11_MAP_WRITE_DISCARD,							// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
+		NULL,												// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
+		&msBufferIndex);									// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
+	memcpy(msBufferIndex.pData, &OurIndices[0], bdBufferIndex.ByteWidth);	// Copy the index information from OurIndices to the index buffer.
+	// D3D11DeviceContext::Unmap member function:
+	//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
+	devcon->Unmap(pIBuffer,									// A pointer to the index buffer interface.
+		NULL);												// A subresource to be unmapped.
+
+	// End: 4. Create the index buffer and assign values to it from the variable OurIndices.
+
+	//***
+	// 5. Create the texture image from an image file.
+	//***
+
+	// DirectX::CreateWICTextureFromFile function:
+	//   Loads a WIC-supported bitmap file from disk, creates a Direct3D 11 resource from it, and optionally a Direct3D 11 shader resource view.
+	CreateWICTextureFromFile(dev,							// A pointer to the device interface.
+		L"Wood.png",										// The filename of the texture image file.
+		NULL,												// NULL, as in most use cases for rendering you only need the shader resource view interface (the parameter below).
+															// Otherwise, you would specify &pTexture:
+															// &pTexture	 is the address of a pointer, pTexture,		to the resource				interface for the resource	  created, in this case a texture image.
+		&pTextureView);										// &pTextureView is the address of a pointer, pTextureView, to the shader resource view interface for the subresource created, in this case a texture image.
+
+	// ID3D11DeviceContext::PSSetShaderResources member function:
+	//   Bind an array of shader resources to the pixel shader stage.
+	devcon->PSSetShaderResources(0,							// Index into the device's zero-based array (in this case an array of one) to begin setting shader resources to.
+		1,													// Number of shader resources to set.
+		&pTextureView);										// &pTextureView is the address of a pointer, pTextureView, to the array of (in this case an array of one) shader resource view interfaces for the subresources created, in this case a texture image.
+
+	// End: 5. Create the texture image from an image file.
+
+	return 0;
+
+	// End: InitGraphics function
+}
+
+// RenderFrame function: Definition
+//   This function renders a single frame.
+//     1. Define the final transformation matrix, matFinal, which contains all the information necessary to transform each vertex of the object being rendered.
+//
+//     2. Assign values that determine the attributes of light.
+//
+//     3. Clear the render target, in this case one back buffer texture interface, and the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
+//
+//     4. Render text to the scene.
+//
+//     5. Specify the vertex buffers, the index buffer, and the primitive type used when drawing.
+//
+//     6. Render the objects.
+int RenderFrame(void)
+{
+	//***
+	// 1. Define the final transformation matrix, matFinal.
+	//
+	//   i.	Define the world matrix, matWorld.
+	//
+	//  ii.	Define the view matrix, matView.
+	//
+	// iii. Define the projection matrix, matProjection.
+	//
+	//  iv.	Define the final transformation matrix, matFinal.
+	//		Each geometric vertex is multiplied by the final transformation matrix.
+	//		The final transformation matrix is one member of the C++ constant buffer structure that matches the HLSL constant buffer structure.
+	//		The C++ constant buffer structure will be copied to the HLSL constant buffer structure (they are, but do not have to be, named the same).
+	//		Using the HLSL constant buffer is efficient, as multiplication and other common operations can be performed on its members by the GPU's vertex shader.
+	//***
+
+	// Declare transformation matrices that are not members of the C++ constant buffer structure.
+	XMMATRIX matRotateY, matWorld, matView, matProjection, matTranslate;
+
+	// Static Variable Declarations.
+	// Declare and initialize variables with values that must be preserved though multiple calls to the function that declares them. This supports incremental changes to the associated rendered objects.
+	//
+	// XMConvertToRadians function:
+	//   Converts the size of an angle measured in degrees into one measured in radians.
+	static float Angle =  XMConvertToRadians(1.0f);
+	static float Angle2 = XMConvertToRadians(1.0f);
+
+	// End: Static Variable Declarations.
+
+	// Define the world matrix, matWorld.
+	//   This matrix is updated each frame, causing the object to rotate.
+	Angle += XMConvertToRadians(0.05f);						// Angle of rotation in degrees, converted to radians, continuously increasing.
+	// XMMatrixRotationY function:
+	//   Builds a matrix that rotates around the y axis.
+	matRotateY = XMMatrixRotationY(Angle);					// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
+	ConstantBuffer.matRotate = matRotateY;					// The final rotation matrix is the product of all defined rotation matrices.				Here, only matRotateY is defined.
+	matWorld = ConstantBuffer.matRotate;					// The world transformation is a function of translation (movement), rotation, and scaling. Here, only rotation   is defined.
+
+	// Define the view matrix, matView.
+	// XMMatrixLookAtLH function:
+	//   Builds a view matrix for a left-handed coordinate system using a camera position, a focal point position (a position the camera is pointed at), and the up direction of the camera.
+	//   Returns a view matrix that transforms a point from world space into view space.
+	//   After the view transformation is applied to the 3D scene, the camera can be assumed to be positioned at the origin (with the top of the camera pointed in the direction of positive y) and pointed in the positive z direction (for a left-hand system).
+	//   This orientation allows the projection transformation to be much simpler than it would be otherwise.
+	//
+	// XMVectorSet function:
+	//   Creates a vector using four floating-point values.
+	//   Returns an instance of XMVECTOR each of whose four components (x, y, z, and w) is a floating-point number with the same value as the corresponding input argument to XMVectorSet.
+	//     XMVECTOR is a portable type used to represent a vector of four 32-bit floating-point or integer components, each aligned optimally and mapped to a hardware vector register.
+	//
+	// Variable EyePosition: The camera position vector
+	// The camera position's x- and y-coordinates match        those of the second instance of the object, even as it moves.
+	// The camera position's z-coordinate         differs from those of the second instance of the object, and can be manually adjusted by keyboard keys.
+	XMVECTOR EyePosition = XMVectorSet(xWorld,				// The x component of the vector to return.
+		yWorld,												// The y component of the vector to return.
+		zCamera + 5.0f,										// The z component of the vector to return.
+		0.0f);
+	CameraEyePosition = EyePosition;						// Save the camera position to a global variable so it can be included in program diagnostics.
+	//
+	// Variable FocusPosition: The focal point position vector
+	// The camera points at the second instance of the object even as it moves. Thus the second instance of the object appears static, while the first instance of the object (which is static) appears to move in the direction opposite to how the first instance of the object moves.
+	XMVECTOR FocusPosition = XMVectorSet(xWorld, yWorld, zWorld, 0.0f); // x, y, z, w
+	//
+	// Variable UpDirection: The up direction vector
+	// The up direction vector is a unit vector that points in the positive y direction, which is the top of the camera.
+	XMVECTOR UpDirection = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);			// x, y, z, w
+	//
+	// Test whether EyePosition and FocusPosition are equal, and adjust if necessary.
+	// If EyePosition and FocusPosition become equal this is an error condition. Therefore if this occurs EyePosition is slightly adjusted to keep them unequal as required.
+	if (XMVector3Equal(EyePosition, FocusPosition))
+	{
+		// EyePosition and FocusPosition are equal.
+		// Make them unequal: Increment the camera position's z-coordinate a trivial amount.
+		EyePosition = XMVectorSet(xWorld,					// The x component of the vector to return.
+			yWorld,											// The y component of the vector to return.
+			zCamera + 5.001f,								// The z component of the vector to return.
+			0.0f);
+	}
+	//
+	// Compute the view matrix, matView, using the camera position, focal point position, and up direction.
+	matView = XMMatrixLookAtLH(EyePosition,					// Position of the camera.
+		FocusPosition,										// Position of the focal point (a position the camera is pointed at).
+		UpDirection);
+
+	// Define the projection matrix, matProjection.
+	// XMMatrixPerspectiveFovLH function:
+	//   Builds a left-handed perspective projection matrix based on a field of view.
+	//   Using left-hand coordinates means the camera is pointed in the direction of the positive z axis.
+	//   The projection matrix is based on a camera located at the origin and pointing along the z axis.
+	//     This is possible because the view matrix accounts for any possible translation and rotation of the camera.
+	float FovAngleY = XMConvertToRadians(45);
+	float AspectRatio = static_cast<FLOAT>(ClientRectangleWidth) / static_cast<FLOAT>(ClientRectangleHeight);
+	float NearZ = 1.0f;
+	float FarZ = 100.0f;
+	matProjection = XMMatrixPerspectiveFovLH(FovAngleY,		// Top-down field-of-view angle in radians.
+		AspectRatio,										// Aspect ratio of view-space x:y.
+		NearZ,												// Distance to the near clipping plane. Must be greater than zero. It is converted to a normalized z-coordinate of 0.
+		FarZ);												// Distance to the far  clipping plane. Must be greater than zero. It is converted to a normalized z-coordinate of 1.
+
+	// Define the final transformation matrix, matFinal.
+	ConstantBuffer.matFinal = matWorld * matView * matProjection;
+
+	// End: 1. Define the final transformation matrix, matFinal, which contains all the information necessary to transform each geometric vertex of the object being rendered.
+
+	//***
+	// 2. Assign values that determine the attributes of light.
+	//***
+
+	// When the camera is positioned at EyePosition = (x<0, y<0, z<0), the current lighting effects place the rendered objects in shadow.
+	ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);
+	ConstantBuffer.LightColor = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+
+	// Sample alternative values and their effect.
+	// ConstantBuffer.LightVector = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);	// Dark
+	// ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);	// Medium
+	// ConstantBuffer.LightVector = XMFLOAT4(2.0f, 2.0f, 2.0f, 2.0f);	// Light
+	//
+	// ConstantBuffer.LightColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);	// Dark
+	// ConstantBuffer.LightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);	// Medium
+	// ConstantBuffer.LightColor = XMFLOAT4(2.0f, 2.0f, 2.0f, 2.0f);	// Light
+	//
+	// ConstantBuffer.AmbientColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);	// Dark
+	// ConstantBuffer.AmbientColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);	// Medium
+	// ConstantBuffer.AmbientColor = XMFLOAT4(2.0f, 2.0f, 2.0f, 2.0f);	// Light
+
+	// End: 2. Assign values that determine the attributes of light.
+
+	//***
+	// 3. Clear the render target, in this case one back buffer texture interface, and the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
+	//    Clearing the back buffer sets the color that fills the window into which the object is rendered.
+	//    Clearing the depth buffer (z-buffer) with values closer to 0.0f reduces the distance to which triangles are drawn:
+	//      0.0f:	No	triangles are drawn (or visible),	regardless of how close,   regardless of the coding of this program.
+	//      0.97f:	Triangles at the rear of the object are not drawn (or visible).	   The effect of this specific value is dependent on the coding of this program, i.e., the position of triangles.
+	//      1.0f:	All	triangles are drawn (and visible),	regardless of how distant, regardless of the coding of this program.
+	//***
+
+	// Clear the render target, in this case one back buffer texture interface, to a color that fills the window into which the object is rendered.
+	float color[4] = { 0.0f, 0.2f, 0.4f, 1.0f };			// A 4-component array that represents the color using RGBA color values. RGBA color values are an extension of RGB color values, with an A (alpha channel) value added that specifies the opacity of a color. The alpha channel value is a number between 0.0 (fully transparent) and 1.0 (fully opaque). RGBA color values are specified as (red, green, blue, alpha).
+	// ID3D11DeviceContext::ClearRenderTargetView member function:
+	//   Set all the elements in a render target to one value.
+	devcon->ClearRenderTargetView(backbuffer,				// A pointer to the render target view interface for the render target, in this case one back buffer texture interface (in this program only one back buffer is created).
+		color);												// A 4-component array that represents the color to fill the render target with.
+
+	// Clear the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
+	// ID3D11DeviceContext::ClearDepthStencilView member function:
+	//   Clear the depth-stencil resource.
+	devcon->ClearDepthStencilView(depthbuffer,				// A pointer to the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
+		D3D11_CLEAR_DEPTH,									// Flag that identifies the type of data to clear. A value of the D3D11_CLEAR_FLAG enumerated type, i.e., D3D11_CLEAR_DEPTH: Clear the depth buffer (z-buffer), using fast clear if possible, then place the resource in a compressed state.
+		1.0f,												// Clear the depth buffer (z-buffer) with this value. This value will be clamped between 0 and 1.
+		0);													// Clear the stencil buffer with this value.
+
+	// End: 3. Clear the render target, in this case one back buffer texture interface, and the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
+
+	//***
+	// 4. Render text to the scene.
+	//***
+
+	RenderText(L"Rendering objects:");						// Call the RenderText function.
+
+	// End: 4. Render text to the scene.
+
+	//***
+	// 5. Specify the vertex buffers, the index buffer, and the primitive type used when drawing.
+	//    Specify the vertex buffers to draw.
+	//      This program uses only one vertex buffer.
+	//    Specify the index buffer to use when drawing.
+	//    Specify the primitive type we are using, i.e., the triangle primitive.
+	//      Point, line, triangle and many other primitive types can be specified.
+	//***
+
+	// Specify the vertex buffers to draw.
+	//   This program uses only one vertex buffer.
+	UINT stride = sizeof(VERTEX);							// A "stride" is the size (in bytes) of the elements that are to be used from a vertex buffer.								  Define an array of strides when multiple vertex buffers are used.
+	UINT offset = 0;										// An "offset" is the number of bytes between the first element of the vertex buffer and the first element that will be used. Define an array of offsets when multiple vertex buffers are used.
+	// ID3D11DeviceContext::IASetVertexBuffers member function:
+	//   Set the array of (in this case an array of one) vertex buffers to the input-assembler stage of the graphics pipeline.
+	devcon->IASetVertexBuffers(0,							// The first input slot for binding. The first vertex buffer is explicitly bound to the start slot; this causes each additional vertex buffer in the array to be implicitly bound to each subsequent input slot.
+		1,													// The number of vertex buffers in the array.
+		&pVBuffer,											// &pVBuffer is the address of a pointer, pVBuffer, to an array of (in this case an array of one) vertex buffer interfaces.
+		&stride,											// &stride is the address of stride, and therefore a pointer to the array of (in this case an array of one) stride values (one stride value for each buffer in the vertex buffer array).
+		&offset);											// &offset is the address of offset, and therefore a pointer to the array of (in this case an array of one) offset values (one offset value for each buffer in the vertex buffer array).
+	
+	// Specify the index buffer to use when drawing.
+	// ID3D11DeviceContext::IASetIndexBuffer member function:
+	//   Set the index buffer to the input-assembler stage of the graphics pipeline.
+	devcon->IASetIndexBuffer(pIBuffer,						// A pointer to the index buffer interface.
+		DXGI_FORMAT_R32_UINT,								// A value of the DXGI_FORMAT enumerated type, i.e., DXGI_FORMAT_R32_UINT: A single-component, 32-bit unsigned-integer format that supports 32 bits for the red channel.
+		0);													// The offset (in bytes) from the start of the index buffer to the first index to use.
+
+	// Specify the primitive type we are using, i.e., the triangle primitive.
+	// ID3D11DeviceContext::IASetPrimitiveTopology member function:
+	//   Set information about the primitive type, and data order that describes input data for the input-assembler stage of the graphics pipeline.
+	devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);	// A value of the  D3D11_PRIMITIVE_TOPOLOGY enumerated type, i.e., D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST: Interpret the vertex data as a list of triangles.
+
+	// End: 5. Specify the vertex buffers, the index buffer, and the primitive type used when drawing..
+
+	//***
+	// 6. Render the objects.
+	//   i. Draw the first instance of the object to the scene.
+	//		Each UpdateSubresource() and DrawIndexed() pair draws one instance of the object to the back buffer.
+	//  ii. Draw a second instance of the same object to the scene, offset from the first object, using different transformations than those used by the first instance of the object.
+	// iii. Switch the back buffer and the front buffer to present the rendered image to the user.
+	//***
+
+	// Draw the first instance of the object to the scene.
+	//
+	// Prepare to draw the first instance of the object using the updated constant buffer.
+	// ID3D11DeviceContext::UpdateSubresource member function:
+	//   The CPU copies data from memory		   to a subresource created in non-mappable memory.
+	//   Specifically:
+	//   The CPU copies the C++ constant buffer	   to the HLSL constant buffer used by the GPU's vertex shader.
+	devcon->UpdateSubresource(pCBuffer,						// A pointer to the destination resource, in this case the constant buffer interface.
+		0,													// A zero-based index that identifies the destination subresource.
+		0,													// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
+		&ConstantBuffer,									// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
+		0,													// The size of one row of the source data.
+		0);													// The size of one depth slice of source data.
+	//
+	// Draw the first instance of the object using the updated constant buffer.
+	// ID3D11DeviceContext::DrawIndexed member function:
+	//   Draw indexed, non-instanced primitives.
+	devcon->DrawIndexed(PrimitivesTotal * 3,				// Number of indices to draw. Three indices in the index buffer, each pointing to one set of vertex attributes in the vertex buffer, describe each triangle primitive, and PrimitivesTotal is the total number of triangles comprising the object. Therefore PrimitivesTotal * 3.
+		0,													// The location of the first index read by the GPU from the index buffer.
+		0);													// A value added to each index before reading a vertex from the vertex buffer.
+
+	// Draw a second instance of the same object to the scene, offset from the first object, using different transformations than those used by the first instance of the object.
+	// The first instance of the object is drawn at the origin of world space, i.e., at (0, 0, 0). The second instance of the object is drawn at a different position, i.e., at (xWorld, yWorld, zWorld).
+	//
+	// Define a rotation matrix to transform the second instance of the object.
+	Angle2 -= XMConvertToRadians(0.05f);					// Angle of rotation in degrees, converted to radians, continuously decreasing.
+	matRotateY = XMMatrixRotationY(Angle2);					// Angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
+	ConstantBuffer.matRotate = matRotateY;					// The final rotation matrix is the product of all defined rotation matrices. Here, only matRotateY is defined.
+	//
+	// Define a translation matrix to transform the second instance of the object.
+	// XMMatrixTranslation function:
+	//   Builds a translation matrix from the specified offsets.
+	matTranslate = XMMatrixTranslation(xWorld,				// Translation along the x-axis.
+		yWorld,												// Translation along the y-axis.
+		zWorld);											// Translation along the z-axis.
+	//
+	// Define a world matrix to transform the second instance of the object.
+	// The world transformation is a function of scaling, rotation, and translation (movement).
+	// Here, only rotation and translation are used. Apply the rotation matrix first, then the translation matrix.
+	// This results in the object rotating in place as it moves, i.e., the object does not orbit as it moves.
+	matWorld = ConstantBuffer.matRotate * matTranslate;
+	//
+	// Define a final matrix to transform the second instance of the object.
+	// Update the final transformation matrix (matFinal) by multiplying the updated world matrix (matWorld) by the original view (matView) and projection (matProjection) matrices.
+	ConstantBuffer.matFinal = matWorld * matView * matProjection;
+	//
+	// Prepare to draw the second instance of the object using the updated constant buffer.
+	devcon->UpdateSubresource(pCBuffer,						// A pointer to the destination resource, in this case the constant buffer interface.
+		0,													// A zero-based index that identifies the destination subresource.
+		0,													// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
+		&ConstantBuffer,									// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
+		0,													// The size of one row of the source data.
+		0);													// The size of one depth slice of source data.
+	//
+	// Draw the second instance of the object using the updated constant buffer.
+	devcon->DrawIndexed(PrimitivesTotal * 3,				// Number of indices to draw. Three indices in the index buffer, each pointing to one set of vertex attributes in the vertex buffer, describe each triangle primitive, and PrimitivesTotal is the total number of triangles comprising the object. Therefore PrimitivesTotal * 3.
+		0,													// The location of the first index read by the GPU from the index buffer.
+		0);													// A value added to each index before reading a vertex from the vertex buffer.
+
+	// Switch the back buffer and the front buffer.
+	// IDXGISwapChain::Present member function:
+	//   Present the rendered image to the user.
+	swapchain->Present(0,									// An integer that specifies how to synchronize presentation of a frame with the vertical blank. '0' indicates the presentation occurs immediately,i.e., there is no synchronization.
+		0);													// An integer value that contains swap-chain presentation options. These options are defined by the DXGI_PRESENT constants.
+
+	// End: 6. Render the objects.
+
+	return 0;
+
+	// End: RenderFrame function
+}
+
+// RenderText function: Definition
+//   Render text to the scene.
+//   This function draws Direct2D text onto the ID2D1RenderTarget Direct2D render target.
+//   This function is called by the RenderFrame function.
+//
+//   This function must execute after the RenderFrame function clears the back buffer using the ID3D11DeviceContext::ClearRenderTargetView member function.
+//   If this function executes before the back buffer is cleared, then the Direct2D text will be cleared when the back buffer is cleared.
+//   Clearing the back buffer between frames is necessary, as otherwise Direct3D objects in each new frame will overlay those in the last frame causing, for example, rendered cubes to appear rounded.
+//
+//   This function must execute before the RenderFrame function calls the IDXGISwapChain::Present member function to present the rendered image to the user. Direct2D text is potentially overlaid by Direct3D objects.
+void RenderText(const wchar_t* pBannerText)					// pBannerText is a pointer to the string to be drawn.
+{
+	// ID2D1RenderTarget::BeginDraw member function:
+	//   Initiates drawing on this render target.
+	pD2DRenderTarget->BeginDraw();
+
+	// RectF function:
+	//   Creates a D2D1_RECT_F structure that contains the specified dimensions.
+	//   These dimensions specify a rectangle that defines the area in which the text is placed. The rectangle is defined by the top-left and bottom-right corners.
+	D2D1_RECT_F layoutRect = D2D1::RectF(0,					// The x-coordinate of the upper-left  corner of the rectangle. The default value is 0.f.
+		0,													// The y-coordinate of the upper-left  corner of the rectangle. The default value is 0.f.
+		static_cast<FLOAT>(ClientRectangleWidth),			// The x-coordinate of the lower-right corner of the rectangle. The default value is 0.f.
+		static_cast<FLOAT>(ClientRectangleHeight));			// The y-coordinate of the lower-right corner of the rectangle. The default value is 0.f.
+
+	// ID2D1RenderTarget::DrawText member function:
+	//   Draws the specified text using the format information provided by an IDWriteTextFormat object.
+	pD2DRenderTarget->DrawText(pBannerText,					// A pointer to an array of Unicode characters to draw.
+		wcslen(pBannerText),								// The number of characters to draw.
+		pTextFormat,										// A pointer an object that describes formatting details of the text to draw, such as the font, the font size, and flow direction.
+		&layoutRect,										// The size and position of the area in which the text is drawn.
+		pBrush);											// A pointer to the brush used to paint the text.
+
+	// ID2D1RenderTarget::EndDraw member function:
+	//   Ends drawing operations on the render target and indicates the current error state and associated tags.
+	//   If the member function succeeds, it returns S_OK. Otherwise, it returns an HRESULT error code and sets tag1 and tag2 to the tags that were active when the error occurred.
+	//   tag1 and tag2 are optional.
+	pD2DRenderTarget->EndDraw();
+
+	// End: RenderText function
+}
+
+// InitMenu function: Definition
+//   This function initializes and sets the window's menu.
+//   This function is called during the initialization phase of a Windows program, in the WinMain function, to set up the menu of the main window.
+void InitMenu(HWND hWnd)									// The HWND handle for the window.
+{
+	// LoadMenu function:
+	//   Loads the specified menu resource from the executable (.exe) file associated with an application instance.
+	//     Return value:
+	//     If the function succeeds, the return value is a handle to the menu resource that is used as an argument to SetMenu.
+	//     If the function fails, the return value is NULL.
+	HMENU hMenu = LoadMenu(
+		// GetModuleHandle function:
+		//   Retrieves a module handle for the specified module. The module must have been loaded by the calling process.
+		//   It has one parameter:
+		//     The name of the loaded module. If this parameter is NULL, GetModuleHandle returns a handle to the file used to create the calling process (.exe file).
+		GetModuleHandle(NULL),								// A handle to the module containing the menu resource to be loaded.
+		// MAKEINTRESOURCE macro:
+		//   Converts an integer value to a resource type compatible with the resource-management functions. This macro is used in place of a string containing the name of the menu resource.
+		//   It has one parameter:
+		//     The integer value to be converted.
+		MAKEINTRESOURCE(IDR_MENU1));						// The MAKEINTRESOURCE macro is used to create a value consisting of the resource identifier in the low-order word and zero in the high-order word. Alternatively, the name of the menu resource could be specified (In my tests. L"IDR_MENU1" does not work).
+
+	// Test whether the LoadMenu function succeeded, by inspecting whether its return value is a handle to the menu resource.
+	// This test is recommended when debugging a menu.
+	// IsMenu function:
+	//   Determines whether a handle is a menu handle.
+	//   If the handle is a menu handle, the return value is nonzero.
+	if (!IsMenu(hMenu))
+	{
+		// hMenu is not a menu handle.
+		// Alert the user that the menu failed to load, return instead of setting the menu, and continue other program processing.
+		MessageBox(hWnd, L"Failed to load menu", L"Error", MB_OK | MB_ICONINFORMATION);
+		return;
+	}
+
+	// SetMenu function:
+	//   Assigns a new menu to the specified window, or removes the current menu from the specified window.
+	SetMenu(hWnd,											// A handle to the window to which the menu is to be assigned or removed.
+		hMenu);												// A handle to the new menu. If this parameter is NULL, the window's current menu is removed.
+
+	// End: InitMenu function
+}
+
+// InputTextDlgProc function: Definition
+//   This function is the dialog box procedure (the dialog message handler) for the program.
+//   This function is called by the DialogBox macro or the DialogBoxParam function.
+//   Its return value, declared as the variable InputTextDlgProcRC and explicitly assigned a value (TRUE if the message is handled and FALSE if it is not), is automatically processed by the DialogBox macro or DialogBoxParam function to determine whether this dialog box procedure handled the message.
+INT_PTR CALLBACK InputTextDlgProc(HWND hDlg,				// The HWND handle for the dialog box window.
+	UINT message,											// The dialog box window message.
+	WPARAM wParam,											// Additional message-specific information.
+	LPARAM lParam)											// Additional message-specific information.
+{
+	INT_PTR InputTextDlgProcRC = FALSE;						// The return value of this function.
+	switch (message)
+	{
+		case WM_INITDIALOG:
+		{	// Establish a block to create a local scope for the optional local variable ptlParam.
+			// WM_INITDIALOG window message:
+			//   This window message is sent to the dialog box procedure immediately before a dialog box is displayed.
+			//   Dialog box procedures typically use this message to initialize controls and carry out any other initialization tasks that affect the appearance of the dialog box.
+			// Optionally set the position of the dialog box:
+			//   Uncomment the following definition of variable ptlParam and the call to the SetWindowPos function.
+			//   See the comment "set the position of the dialog box" in the WindowProc function window procedure for associated changes to make.
+			// Variable lParam:
+			//   An application-defined value passed to the dialog box procedure as the lParam parameter of the WM_INITDIALOG message.
+			//   In this case the application-defined value, to be passed to a SetWindowPos function, contains the x- and y-coordinates of the new position of the left side (x) and top (y) of a window, in client coordinates.
+			// POINT* ptlParam = (POINT*)lParam;				// A POINT structure that can be passed to the SetWindowPos function. It contains lParam, cast to a pointer to a POINT structure, containing the x- and y-coordinates of the new position of the left side (x) and top (y) of the dialog box window, in client coordinates.
+			// SetWindowPos function:
+			//   Changes the size, position, and z order of a child, pop-up, or top-level window. These windows are ordered according to their appearance on the screen. The topmost window receives the highest rank and is the first window in the z order.
+			// SetWindowPos(hDlg,								// A handle to the window.
+			//	HWND_TOP,										// A handle to the window to precede the positioned window in the z order, or a value (e.g., HWND_TOP) indicating the position of the dialog box window.
+			//	ptlParam->x,									// The new position of the left side of the window, in client coordinates.
+			//	ptlParam->y,									// The new position of the top of the window, in client coordinates.
+			//	0,												// The new width of the window, in pixels.
+			//	0,												// The new height of the window, in pixels.
+			//	SWP_NOSIZE | SWP_NOZORDER);						// The window sizing and positioning flags. This parameter can be a combination of the values.
+			InputTextDlgProcRC = TRUE;
+			break;
+		}
+		case WM_COMMAND:
+			// WM_COMMAND window message:
+			//   This window message is sent when the user selects a command item from a menu, when a control sends a notification message to its parent window, or when an accelerator keystroke is translated.
+			if (LOWORD(wParam) == IDOK) {
+				// IDOK: The identifier of the OK button in a dialog box.
+				// Define a buffer to store the text entered by the user. The size of the buffer (e.g., 256 characters) can be adjusted as needed.
+				wchar_t textBuffer[256];
+				// GetDlgItemText function:
+				//   Retrieves the title or text associated with a control (e.g., an Edit control) in a dialog box.
+				GetDlgItemText(hDlg,						// A handle to the dialog box that contains the control.
+					IDC_EDIT_TEXT,							// The identifier of the control whose title or text is to be retrieved.
+					textBuffer,								// The buffer to receive the title or text.
+					256);									// The maximum length, in characters, of the string to be copied to the buffer pointed to by the third argument. Alternatively: sizeof(textBuffer) / sizeof(textBuffer[0]
+				// Process the retrieved text (e.g., display it, store it, etc.) as needed.
+				MessageBox(hDlg, textBuffer, L"Entered Text", MB_OK | MB_ICONINFORMATION);
+				// EndDialog function:
+				//   Destroys a modal dialog box, causing the system to end any processing for the dialog box.
+				EndDialog(hDlg,								// A handle to the dialog box to be destroyed.
+					LOWORD(wParam));						// The value to be returned to the application from the function that created the dialog box.
+				InputTextDlgProcRC = TRUE;
+			}
+			else if (LOWORD(wParam) == IDCANCEL) {
+				// IDCANCEL: The identifier of the Cancel button in a dialog box.
+				EndDialog(hDlg, LOWORD(wParam));
+				InputTextDlgProcRC = TRUE;
+			}
+			break;
+		default:
+			// Return FALSE for unhandled messages in the dialog box procedure. This allows the system to call the DefDlgProc function automatically to handle any default processing.
+			// The DefDlgProc function must not be called by a dialog box procedure; doing so results in recursive execution.
+			InputTextDlgProcRC = FALSE;
+			break;
+	}
+
+	return InputTextDlgProcRC;
+
+	// End: InputTextDlgProc function
+}
+
+// ShutdownDirectX function: Definition
+//   This function performs an orderly termination of DirectX.
+//     1. Switch to windowed mode.
+//
+//     2. Release DirectX resources.
+void ShutdownDirectX(void)
+{
+	//***
+	// 1. Switch to windowed mode.
+	//    Switch to windowed mode, in case the user switched to full screen mode (this program starts in windowed mode).
+	//    Direct3D is incapable of closing when in full screen mode. This is due to certain threading issues that occur behind the scenes.
+	//    To correctly close down, we must make sure that we are in windowed mode.
+	//***
+
+	// IDXGISwapChain::SetFullscreenState member function:
+	//   Set the display state to windowed or full screen.
+	swapchain->SetFullscreenState(FALSE,					// TRUE for full screen, and FALSE for windowed.
+		NULL);												// If you specify FALSE as the first parameter, then you must set this parameter to NULL.
+
+	// End: 1. Switch to windowed mode.
+
+	//***
+	// 2. Release DirectX resources.
+	//    Check that all pointers are valid and have been initialized before releasing them. If any of these pointers are nullptr, calling Release on them will result in undefined behavior.
+	//    Set all pointers to nullptr after releasing them.
+	//      This is a good practice for several reasons:
+	//      1. Avoiding Dangling Pointers:		 After releasing a COM object, the pointer still holds the address of the released memory.
+	//											 If you try to use this pointer, it can lead to undefined behavior or crashes.
+	//											 Setting it to nullptr ensures that any subsequent use of the pointer will be safe, as dereferencing a nullptr will result in a predictable crash or error.
+	//		2. Double Release Prevention:		 If a pointer is not set to nullptr after releasing, there is a risk of releasing the same pointer again, which can lead to serious errors.
+	//											 By setting it to nullptr, you can easily check if the pointer has already been released.
+	//		3. Code Readability and Maintenance: It makes the code more readable and easier to maintain. Programmers can quickly understand that the pointer has been released and should not be used anymore.
+	//***
+
+	// IUnknown::Release member function:
+	//   Decrement the reference count for an interface on a COM object. If the reference count = 0, then the interface pointer is freed. If there are no other interface pointers, then the COM object is freed.
+	//
+	
+	// DirectX Global Interface Declarations: Direct3D
+	if (swapchain)
+	{
+		swapchain->Release();
+		swapchain = nullptr;
+	}
+	if (dev)
+	{
+		dev->Release();
+		dev = nullptr;
+	}
+	if (devcon)
+	{
+		devcon->Release();
+		devcon = nullptr;
+	}
+	if (pDepthBuffer)
+	{
+		pDepthBuffer->Release();
+		pDepthBuffer = nullptr;
+	}
+	if (depthbuffer)
+	{
+		depthbuffer->Release();
+		depthbuffer = nullptr;
+	}
+	if (pBackBuffer)
+	{
+		pBackBuffer->Release();
+		pBackBuffer = nullptr;
+	}
+	if (backbuffer)
+	{
+		backbuffer->Release();
+		backbuffer = nullptr;
+	}
+	if (pLayout)
+	{
+		pLayout->Release();
+		pLayout = nullptr;
+	}
+	if (pVS)
+	{
+		pVS->Release();
+		pVS = nullptr;
+	}
+	if (pPS)
+	{
+		pPS->Release();
+		pPS = nullptr;
+	}
+	if (pVBuffer)
+	{
+		pVBuffer->Release();
+		pVBuffer = nullptr;
+	}
+	if (pIBuffer)
+	{
+		pIBuffer->Release();
+		pIBuffer = nullptr;
+	}
+	if (pCBuffer)
+	{
+		pCBuffer->Release();
+		pCBuffer = nullptr;
+	}
+	if (pTextureView)
+	{
+		pTextureView->Release();
+		pTextureView = nullptr;
+	}
+
+	// DirectX Global Interface Declarations: Direct2D
+	if (pD2DFactory)
+	{
+		pD2DFactory->Release();
+		pD2DFactory = nullptr;
+	}
+	if (pDxgiSurface)
+	{
+		pDxgiSurface->Release();
+		pDxgiSurface = nullptr;
+	}
+	if (pD2DRenderTarget)
+	{
+		pD2DRenderTarget->Release();
+		pD2DRenderTarget = nullptr;
+	}
+	if (pBrush)
+	{
+		pBrush->Release();
+		pBrush = nullptr;
+	}
+
+	// DirectX Global Interface Declarations: DirectWrite
+	if (pDWriteFactory)
+	{
+		pDWriteFactory->Release();
+		pDWriteFactory = nullptr;
+	}
+	if (pTextFormat)
+	{
+		pTextFormat->Release();
+		pTextFormat = nullptr;
+	}
+
+	// End: 2. Release DirectX resources.
+
+	// End: ShutdownDirectX function
+}
