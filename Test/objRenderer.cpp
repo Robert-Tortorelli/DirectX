@@ -1,9 +1,15 @@
 ﻿// objRenderer
 // Version 3.3
 //
+<<<<<<< HEAD
 // Description:
 // The project objRenderer parses one or more 3D object's descriptions from one or more Wavefront .obj files, and renders those objects.
 // This program, objRenderer, renders the objects.
+=======
+// Description
+// The project objRenderer parses a single 3D object's description from a Wavefront .obj file, and renders that object one or more times.
+// This program, objRenderer, renders the object.
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 // This program is a C++ Windows Desktop program using the Windows (Win32) API and the DirectX 11 API.
 // All variables and functions coded in HLSL (.hlsl files) are stored in GPU memory.
 // All variables and functions coded in C++ (.cpp files) are stored in CPU memory.
@@ -25,7 +31,11 @@
 //   RC DefWindowProc():	WindowProc function:	Default window message processing.
 //   RC msg.wParam:			WinMain function:		Exit value returned to the operating system.
 //
+<<<<<<< HEAD
 // Authorship:
+=======
+// Authorship
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 // This program is based on "DirectX 11 Win32 Desktop: Direct3D: Moving to 3D: Lesson 3: Simple Modeling" and earlier lessons by Chris Hanson (http://DirectXTutorial.com).
 // All defects in this program are solely the responsibility of Robert John Tortorelli.
 
@@ -46,7 +56,10 @@
 // Global Function Declarations.
 // Function prototypes for functions defined in this program.
 //***
+<<<<<<< HEAD
 
+=======
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
 // The following functions are called asynchronously.
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -1145,12 +1158,21 @@ int InitGraphics(void)
 	// 1. Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
 	//***
 
+<<<<<<< HEAD
 	if (int objReaderEnumRC = objReaderEnum(); objReaderEnumRC != 0)	// Call the objReaderEnum function and test whether its return value is nonzero, indicating an error.
 	{
 		// The objReaderEnum function terminated abnormally. Terminate the InitGraphics function with the return value of the objReaderEnum function.
 		return objReaderEnumRC;
 	}
 	// The objReaderEnum function terminated normally.
+=======
+	if (int objReaderEnumRC = objReaderEnum(); objReaderEnumRC != 0)	// Call the objReader function and test whether its return value is nonzero, indicating an error.
+	{
+		// The objReaderEnum function terminated abnormally. Terminate the InitGraphics function with the return value of the objReader function.
+		return objReaderEnumRC;
+	}
+	// The objReader function terminated normally.
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 
 	// End: 1. Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
 
@@ -1194,7 +1216,11 @@ int InitGraphics(void)
 		D3D11_MAP_WRITE_DISCARD,							// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
 		NULL,												// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
 		&msBufferVertex);									// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
+<<<<<<< HEAD
 	memcpy(msBufferVertex.pData, &OurObjects[OurObjectsi].OurVertices[0], bdBufferVertex.ByteWidth);	// Copy all the vertex attributes from OurVertices to the vertex buffer.
+=======
+	memcpy(msBufferVertex.pData, &OurVertices[0], bdBufferVertex.ByteWidth);	// Copy the vertex attributes from OurVertices to the vertex buffer.
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 	// D3D11DeviceContext::Unmap member function:
 	//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
 	devcon->Unmap(pVBuffer,									// A pointer to the vertex buffer interface.
@@ -1228,7 +1254,11 @@ int InitGraphics(void)
 		D3D11_MAP_WRITE_DISCARD,							// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
 		NULL,												// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
 		&msBufferIndex);									// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
+<<<<<<< HEAD
 	memcpy(msBufferIndex.pData, &OurObjects[OurObjectsi].OurIndices[0], bdBufferIndex.ByteWidth);	// Copy all the index information from OurIndices to the index buffer.
+=======
+	memcpy(msBufferIndex.pData, &OurIndices[0], bdBufferIndex.ByteWidth);	// Copy the index information from OurIndices to the index buffer.
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 	// D3D11DeviceContext::Unmap member function:
 	//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
 	devcon->Unmap(pIBuffer,									// A pointer to the index buffer interface.
@@ -1272,7 +1302,11 @@ int InitGraphics(void)
 //
 //     4. Render text to the scene.
 //
+<<<<<<< HEAD
 //     5. Specify the vertex buffers, the index buffers, and the primitive type used when drawing.
+=======
+//     5. Specify the vertex buffers, the index buffer, and the primitive type used when drawing.
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 //
 //     6. Render the objects.
 int RenderFrame(void)
@@ -1297,7 +1331,11 @@ int RenderFrame(void)
 	XMMATRIX matRotateY, matWorld, matView, matProjection, matTranslate;
 
 	// Static Variable Declarations.
+<<<<<<< HEAD
 	// Define variables with values that must be preserved though multiple calls to the function that declares them. This supports incremental changes to the associated rendered objects.
+=======
+	// Declare and initialize variables with values that must be preserved though multiple calls to the function that declares them. This supports incremental changes to the associated rendered objects.
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 	//
 	// XMConvertToRadians function:
 	//   Converts the size of an angle measured in degrees into one measured in radians.
@@ -1440,8 +1478,14 @@ int RenderFrame(void)
 	// End: 4. Render text to the scene.
 
 	//***
+<<<<<<< HEAD
 	// 5. Specify the vertex buffers, the index buffers, and the primitive type used when drawing.
 	//    Specify the vertex buffers to draw.
+=======
+	// 5. Specify the vertex buffers, the index buffer, and the primitive type used when drawing.
+	//    Specify the vertex buffers to draw.
+	//      This program uses only one vertex buffer.
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 	//    Specify the index buffer to use when drawing.
 	//    Specify the primitive type we are using, i.e., the triangle primitive.
 	//      Point, line, triangle and many other primitive types can be specified.
@@ -1471,7 +1515,11 @@ int RenderFrame(void)
 	//   Set information about the primitive type, and data order that describes input data for the input-assembler stage of the graphics pipeline.
 	devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);	// A value of the  D3D11_PRIMITIVE_TOPOLOGY enumerated type, i.e., D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST: Interpret the vertex data as a list of triangles.
 
+<<<<<<< HEAD
 	// End: 5. Specify the vertex buffers, the index buffers, and the primitive type used when drawing.
+=======
+	// End: 5. Specify the vertex buffers, the index buffer, and the primitive type used when drawing..
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 
 	//***
 	// 6. Render the objects.

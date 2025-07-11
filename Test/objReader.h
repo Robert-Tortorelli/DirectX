@@ -1,7 +1,11 @@
 // objReader Header File
 // Version 3.3
 //
+<<<<<<< HEAD
 // Description:
+=======
+// Description
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 // objReader Header File for Wavefront .obj file I/O.
 //
 // This header file contains all global declarations, including external variables, functions, structures, and classes.
@@ -11,7 +15,11 @@
 //
 // Header files should not contain "using directives" (such as using namespace std;) or "using declarations" (such as using std::cout;).
 //
+<<<<<<< HEAD
 // Authorship:
+=======
+// Authorship
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 // Robert John Tortorelli
 
 //***
@@ -22,9 +30,12 @@
 // Specify that the compiler include this header file only once when compiling source code files.
 #pragma once												// Automatically included by Visual Studio 2022 when creating a header file.
 
+<<<<<<< HEAD
 // Standard Encapsulated Data and Functions for Manipulating String Data.
 #include <string>											// String class member functions stof, to_string, etc.
 
+=======
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 // Vector Container Class.
 #include <vector>											// Vector class member functions push_back, pop_back, etc.
 
@@ -38,9 +49,14 @@
 // Function Declarations.
 // Function prototypes for functions (e.g., objReader) called by programs (e.g., objRenderer) that include this header file. They are optional in the functions named here (e.g., objReader).
 //***
+<<<<<<< HEAD
 
 int objReaderEnum(void);
 int objReader(const std::string& filename);
+=======
+int objReaderEnum(void);
+int objReader(const std::string& filename);					// The objReader function parses a single 3D object's Wavefront .obj file and uses it to populate the external variables OurVertices and OurIndices.
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 
 // End: Function Declarations.
 
@@ -49,12 +65,20 @@ int objReader(const std::string& filename);
 //***
 
 //***
+<<<<<<< HEAD
 // Structure Declarations for External Variables.
 // Structures must be declared before the variables they are used to define, i.e., OurVertices and OurObjects.
 //***
 
 // VERTEX 'named structure' data type.
 // The set of vertex attributes of one of the three vertices of a triangle.
+=======
+// Structure Declarations.
+// Structures must be declared before the variables they are used to define, i.e., OurVertices.
+//***
+
+// Declare the VERTEX 'named structure' data type.
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 // The input element description structure is used to define the input-layout object that describes the VERTEX structure.
 // If the VERTEX structure is changed then the input element description structure (defined in objRenderer.cpp) must be changed accordingly.
 struct VERTEX {												// Vertex attributes.
@@ -63,6 +87,7 @@ struct VERTEX {												// Vertex attributes.
 	DirectX::XMFLOAT3 VertexNormalVector;					// Vertex normal vector attribute:		.x, .y, .z	("vn" element in the Wavefront .obj file)
 };
 
+<<<<<<< HEAD
 // OBJECT 'named structure' data type.
 // The set of attributes of one object.
 // OurVertices (used to initialize the DirectX vertex buffer), a variable containing values formatted for DirectX, is the array of unique sets of vertex attributes of a single 3D object.
@@ -76,10 +101,14 @@ struct OBJECT {
 };
 
 // End: Structure Declarations for External Variables.
+=======
+// End: Structure Declarations.
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 
 // Declare variables as external by specifying 'extern' here. Otherwise building the project results in Visual Studio Linker Tools Error LNK2005 (symbol already defined in object).
 // Define external variables in one and only one source file (not this one) and initialize them as needed.
 //
+<<<<<<< HEAD
 // OurObjects.
 extern std::vector<OBJECT> OurObjects;						// Dynamically allocated array of OBJECT structures, with each array element containing  the			   set of vertex attributes of one named object.
 // OurObjects Supplemental Variables.
@@ -87,13 +116,24 @@ extern int OurObjectsi;										// The index variable OurObjectsi of array vari
 //*TEST* Is ObjectsTotal needed too?
 //
 // OurVertices Supplemental Variables.
+=======
+// OurVertices (used to initialize the DirectX vertex buffer), a variable containing values formatted for DirectX, is the array of unique sets of vertex attributes of a single 3D object.
+extern std::vector<VERTEX> OurVertices;						// Dynamically allocated array of VERTEX structures, with each array element containing the vertex attributes of one of the three vertices of a triangle.
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 extern int OurVerticesi;									// The index variable OurVerticesi of array variable OurVertices[OurVerticesi].
 // A cube's 6 sides				 are each comprised of 4 corners (vertices) so there are 4 unique sets of vertex attributes per side   for a total of 6 x 4 = 24 unique sets of vertex attributes.
 // A cube's 8 corners (vertices) are each part		of 3 sides				so there are 3 unique sets of vertex attributes per corner for a total of 8 x 3 = 24 unique sets of vertex attributes.
 // By contrast, in a program where (unlike this program) the only vertex attribute is the geometric vertex, there are only 8 unique sets of vertex attributes, i.e., each set contains only a single geometric vertex.
 extern int VertexAttributeSetsTotal;						// The total number of array elements in OurVertices, e.g., 24 array elements specify a cube.
 //
+<<<<<<< HEAD
 // OurIndices Supplemental Variables.
+=======
+// OurIndices (used to initialize the DirectX index buffer), a variable containing values formatted for DirectX, is an array of non-unique indices of OurVertices, each pointing to an associated unique set of vertex attributes in OurVertices.
+// One unique set of vertex attributes in OurVertices, OurVertices(y), may be referenced more than once by duplicate (non-unique) indices in OurIndices:
+// e.g., OurIndices(x1) and OurIndices(x2) = y (y is the duplicate (non-unique) index in OurIndices), both pointing to the same unique set of vertex attributes of OurVertices(y), e.g., OurIndices(x1) = y so OurVertices(OurIndices(x1)) = OurVertices(y).
+extern std::vector<DWORD> OurIndices;						// Dynamically allocated array of DWORD indices, with each array element pointing to the corresponding set of vertex attributes (for one of the three vertices of a triangle) in an OurVertices array element.
+>>>>>>> 75c7ceedfea847a464fff7f3b3a6b7eb2e13d0de
 extern int OurIndicesi;										// The index variable OurIndicesi of array variable OurIndices[OurIndicesi].
 // A cube's 6 sides are comprised of 2 triangle primitives per side, for a total of 6 x 2 = 12 triangle primitives, each triangle primitive comprised of 3 vertices, for a total of 12 x 3 = 36 non-unique geometric vertex indices.
 extern int PrimitivesTotal;									// The total number of triangle primitives comprising a single 3D object, e.g., 12 triangle primitives specify a cube and the total number of array elements in OurIndices is PrimitivesTotal * 3 = 36.
