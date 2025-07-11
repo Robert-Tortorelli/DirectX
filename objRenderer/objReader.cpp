@@ -1,17 +1,14 @@
 // objReader
 // Version 3.3
 //
-// Description
-// This function parses a Wavefront .obj file for a single 3D object's descriptive information and assigns it to the external global variables used by the calling program when rendering the object.
+// Description:
+// This function reads and parses one 3D object's descriptive information from one Wavefront .obj file and uses it to define the variables needed to render the 3D object.
 //
-// Authorship
+// Authorship:
 // Robert John Tortorelli
 
 // objReader Header File for Wavefront .obj file I/O.
 #include "objReader.h"
-
-// Standard Encapsulated Data and Functions for Manipulating String Data.
-#include <string>											// String class member functions stof, to_string, etc.
 
 // File Stream Functions.
 #include <fstream>											// File stream class member functions get, close, etc.
@@ -43,8 +40,9 @@ using std::istringstream;
 
 // Define external variables in one and only one source file (this one) and initialize them as needed.
 // See the associated header file for declarations and descriptions of these external variables.
-vector<VERTEX> OurVertices;	int OurVerticesi = -1;	int VertexAttributeSetsTotal = 0;
-vector<DWORD> OurIndices;	int OurIndicesi = -1;	int PrimitivesTotal = 0;
+vector<OBJECT> OurObjects;	int OurObjectsi = -1;			//*TEST* Is ObjectsTotal needed too?
+int OurVerticesi = -1;	int VertexAttributeSetsTotal = 0;
+int OurIndicesi = -1;	int PrimitivesTotal = 0;
 
 // End: External Variable Global Definitions.
 
@@ -55,7 +53,7 @@ vector<DWORD> OurIndices;	int OurIndicesi = -1;	int PrimitivesTotal = 0;
 //***
 
 // objReader function: Definition
-int objReader(void)
+int objReader(const std::string& filename = "Text.obj")
 {
 	// Declare variables used to parse the Wavefront .obj file.
 	// Intermediate arrays to temporarily store all vertex attributes before they are copied to the array variable OurVertices:
@@ -98,7 +96,7 @@ int objReader(void)
 	// - Statements can be logically joined with the line continuation character ( \ ) at the end of a line. (This is *not* supported by this program)
 	//
 	// Open the Wavefront .obj file for input.
-	obj.open("Text.obj", ios::in);
+	obj.open(filename, ios::in);
 	// Check whether the Wavefront .obj file opened successfully. (!obj), (!obj.is_open()), and (obj.fail()) all indicate an error opening the file.
 	if (!obj)												// If not (!) successful (obj) then:
 	{
@@ -107,6 +105,13 @@ int objReader(void)
 		// Terminate this function with a return code indicating an error.
 		return 1;
 	}
+	// The Wavefront .obj file opened successfully.
+
+	// Prepare for each Wavefront .obj file.
+	OurObjects.emplace_back();								// Create a new element of dynamic array variable OurObjects.
+	++OurObjectsi;											// Increment for each Wavefront .obj file.
+	OurVerticesi = -1;										// Reset	 for each Wavefront .obj file.
+	OurIndicesi = -1;										// Reset	 for each Wavefront .obj file.
 
 	// Parse the Wavefront .obj file.
 	while (getline(obj, stringtext))						// Read an entire statement, from the input file stream object obj, into the string variable stringtext. At eof getline becomes false and the while loop is exited.
@@ -157,10 +162,10 @@ int objReader(void)
 			for (int i = 0; i <= 2; i++)
 			{
 				// Face element vertex attribute indices of the current face element triplet.
-				int fv;										// Geometric vertex index (v1, or v2, or v3).
-				int fvt;									// Vertex texture coordinate index (vt1, or vt2, or vt3).
-				int fvn;									// Vertex normal vector index (vn1, or vn2, or vn3).
-				char slash = '/';							// The slash character ('/') is a delimiter used to parse the face element.
+				int fv;																									// Geometric vertex index (v1, or v2, or v3).
+				int fvt;																								// Vertex texture coordinate index (vt1, or vt2, or vt3).
+				int fvn;																								// Vertex normal vector index (vn1, or vn2, or vn3).
+				char slash = '/';																						// The slash character ('/') is a delimiter used to parse the face element.
 
 				// Parse the current triplet (v/vt/vn) in the face element statement, storing the face element indices.
 				lineStream >> fv >> slash >> fvt >> slash >> fvn;
@@ -173,9 +178,9 @@ int objReader(void)
 				fv--; fvt--; fvn--;
 
 				// Create a new element of dynamic array variable OurIndices.
-				OurIndicesFaceTripleti++;					// Update the index variable OurIndicesFaceTripleti of the 3 element intermediate array variable OurIndicesFaceTriplet[OurIndicesFaceTripleti].
-				OurIndicesi++;								// Update the index variable OurIndicesi of array variable OurIndices[OurIndicesi].
-				OurIndices.emplace_back();					// The only OurIndices.emplace_back() statement, executed once for each face element triplet in all face element statements. Each face element triplet corresponds to a set of vertex attributes.
+				OurIndicesFaceTripleti++;																				// Update the index variable OurIndicesFaceTripleti of the 3 element intermediate array variable OurIndicesFaceTriplet[OurIndicesFaceTripleti].
+				OurObjects[OurObjectsi].OurIndices.emplace_back();														// The only OurIndices.emplace_back() statement, executed once for each face element triplet in all face element statements. Each face element triplet corresponds to a set of vertex attributes.
+				OurIndicesi++;																							// Update the index variable OurIndicesi of array variable OurIndices[OurIndicesi].
 
 				// The candidate set of vertex attributes is comprised of v[fv], vt[fvt], and vn[fvn].
 				// Test if the candidate set of vertex attributes is unique, i.e., has this set of vertex attributes been previously found in the Wavefront .obj file and stored in array variable OurVertices?
@@ -183,19 +188,19 @@ int objReader(void)
 				//
 				// The uniqueness of a given candidate set of these vertex attributes can alternatively be determined by whether the associated face element triplet is unique. This is possible because although all geometric vertices are unique, and all vertex texture coordinates are unique, and all vertex normal vertices are unique in a Wavefront .obj file, a combination of these three vertex attributes can be non-unique. (This is not done in this program)
 				// (If geometric vertices could be non-unique, or vertex texture coordinates could be non-unique, or vertex normal vertices could be non-unique, then two face element triplets comprised of different indices might mistakenly appear to be different but could still point to an identical (non-unique) set of vertex attributes)
-				bool unique = true;																// Define a semaphore to indicate whether the candidate set of vertex attributes is unique.
+				bool unique = true;																						// Define a semaphore to indicate whether the candidate set of vertex attributes is unique.
 				for (int j = 0; j <= OurVerticesi; j++)
 				{
-					if (OurVertices[j].GeometricVertex.x ==				  v[fv].x		   &&
-						OurVertices[j].GeometricVertex.y ==				  v[fv].y		   &&
-						OurVertices[j].GeometricVertex.z ==				  v[fv].z * -1.0f  &&	// Invert the geometric vertex's Z coordinate, to adjust it from the Wavefront .obj file format to the DirectX format.
+					if (OurObjects[OurObjectsi].OurVertices[j].GeometricVertex.x ==				  v[fv].x		   &&
+						OurObjects[OurObjectsi].OurVertices[j].GeometricVertex.y ==				  v[fv].y		   &&
+						OurObjects[OurObjectsi].OurVertices[j].GeometricVertex.z ==				  v[fv].z * -1.0f  &&	// Invert the geometric vertex's Z coordinate, to adjust it from the Wavefront .obj file format to the DirectX format.
 
-						OurVertices[j].VertexTextureCoordinate.x ==		  vt[fvt].x		   &&
-						OurVertices[j].VertexTextureCoordinate.y ==		  1.0f - vt[fvt].y &&	// Invert the vertex texture coordinate's V coordinate, to adjust it from the Wavefront .obj file format to the DirectX format.
+						OurObjects[OurObjectsi].OurVertices[j].VertexTextureCoordinate.x ==		  vt[fvt].x		   &&
+						OurObjects[OurObjectsi].OurVertices[j].VertexTextureCoordinate.y ==		  1.0f - vt[fvt].y &&	// Invert the vertex texture coordinate's V coordinate, to adjust it from the Wavefront .obj file format to the DirectX format.
 
-						OurVertices[j].VertexNormalVector.x ==			  vn[fvn].x		   &&
-						OurVertices[j].VertexNormalVector.y ==			  vn[fvn].y		   &&
-						OurVertices[j].VertexNormalVector.z ==			  vn[fvn].z * -1.0f)	// Invert the vertex normal vector's Z coordinate, to adjust it the Wavefront .obj file format to the DirectX format.
+						OurObjects[OurObjectsi].OurVertices[j].VertexNormalVector.x ==			  vn[fvn].x		   &&
+						OurObjects[OurObjectsi].OurVertices[j].VertexNormalVector.y ==			  vn[fvn].y		   &&
+						OurObjects[OurObjectsi].OurVertices[j].VertexNormalVector.z ==			  vn[fvn].z * -1.0f)	// Invert the vertex normal vector's Z coordinate, to adjust it the Wavefront .obj file format to the DirectX format.
 					{
 						// The candidate set of vertex attributes is non-unique, so no new set of vertex attributes is created and stored in the array variable OurVertices.
 						// No  new element of array variable OurVertices						is created, as an existing set of vertex attributes is reused.
@@ -208,24 +213,25 @@ int objReader(void)
 				if (unique)
 				{
 					// The candidate set of vertex attributes is unique, so a new set of vertex attributes is created and stored in the array variable OurVertices.
-					// A   new element of dynamic array variable OurVertices is created, and the candidate set of vertex attributes is assigned to it.
+					// Create a new element of dynamic array variable OurVertices, and assign the candidate set of vertex attributes to it.
 					// The new element of array variable OurIndicesFaceTriplet is assigned.
-					OurVerticesi++;																// Update the index variable OurVerticesi of array variable OurVertices[OurVerticesi].
-					OurVertices.emplace_back();													// The only OurVertices.emplace_back() statement, executed once for each unique set of vertex attributes in all face element statements.
+					OurObjects[OurObjectsi].OurVertices.emplace_back();													// The only OurVertices.emplace_back() statement, executed once for each unique set of vertex attributes in all face element statements.
+					OurVerticesi++;																						// Update the index variable OurVerticesi of array variable OurVertices[OurVerticesi].
 
-					OurVertices[OurVerticesi].GeometricVertex.x =		  v[fv].x;
-					OurVertices[OurVerticesi].GeometricVertex.y =		  v[fv].y;
-					OurVertices[OurVerticesi].GeometricVertex.z =		  v[fv].z * -1.0f;		// Invert the geometric vertex's Z coordinate, to adjust it from the Wavefront .obj file format to the DirectX format.
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].GeometricVertex.x =		  v[fv].x;
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].GeometricVertex.y =		  v[fv].y;
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].GeometricVertex.z =		  v[fv].z * -1.0f;		// Invert the geometric vertex's Z coordinate, to adjust it from the Wavefront .obj file format to the DirectX format.
 
-					OurVertices[OurVerticesi].VertexTextureCoordinate.x = vt[fvt].x;
-					OurVertices[OurVerticesi].VertexTextureCoordinate.y = 1.0f - vt[fvt].y;		// Invert the vertex texture coordinate's V coordinate, to adjust it from the Wavefront .obj file format to the DirectX format.
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].VertexTextureCoordinate.x = vt[fvt].x;
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].VertexTextureCoordinate.y = 1.0f - vt[fvt].y;		// Invert the vertex texture coordinate's V coordinate, to adjust it from the Wavefront .obj file format to the DirectX format.
 
-					OurVertices[OurVerticesi].VertexNormalVector.x =	  vn[fvn].x;
-					OurVertices[OurVerticesi].VertexNormalVector.y =	  vn[fvn].y;
-					OurVertices[OurVerticesi].VertexNormalVector.z =	  vn[fvn].z * -1.0f;	// Invert the vertex normal vector's Z coordinate, to adjust it the Wavefront .obj file format to the DirectX format.
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].VertexNormalVector.x =	  vn[fvn].x;
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].VertexNormalVector.y =	  vn[fvn].y;
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].VertexNormalVector.z =	  vn[fvn].z * -1.0f;	// Invert the vertex normal vector's Z coordinate, to adjust it the Wavefront .obj file format to the DirectX format.
 
-					OurIndicesFaceTriplet[OurIndicesFaceTripleti] = OurVerticesi;				// The next element of intermediate array variable OurIndicesFaceTriplet is assigned the index of the next element of array variable OurVertices.
-																								// At this point the drawing order of triangle vertices is still counter-clockwise (Wavefront .obj file) and must be converted to clockwise (DirectX).
+					OurIndicesFaceTriplet[OurIndicesFaceTripleti] = OurVerticesi;										// The next element of intermediate array variable OurIndicesFaceTriplet is assigned the index of the next element of array variable OurVertices.
+
+					// At this point the drawing order of triangle vertices is still counter-clockwise (Wavefront .obj file) and must be converted to clockwise (DirectX).
 				}
 			}
 			// Convert the drawing order of triangle vertices in the current face element statement from counter-clockwise (Wavefront .obj file) to clockwise (DirectX).
@@ -243,10 +249,10 @@ int objReader(void)
 			// - Alternatively, the elements of the array variable OurVertices could be reordered while keeping the elements of the array variable OurIndices[OurIndicesi] = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 etc. (This is not done in this program)
 			// At this point, OurIndicesi is the index of the last element of array variable OurIndices.
 			// The last three elements of the array variable OurIndices are assigned the values of the elements of the intermediate array variable OurIndicesFaceTriplet, converted to clockwise (DirectX).
-			OurIndices[OurIndicesi - 2] = OurIndicesFaceTriplet[0];								// OurIndicesi - 2 corresponds to the index of the first  element of the three element intermediate array variable OurIndicesFaceTriplet.
-			OurIndices[OurIndicesi - 1] = OurIndicesFaceTriplet[2];								// OurIndicesi - 1 corresponds to the index of the third  element of the three element intermediate array variable OurIndicesFaceTriplet.
-			OurIndices[OurIndicesi]     = OurIndicesFaceTriplet[1];								// OurIndicesi     corresponds to the index of the second element of the three element intermediate array variable OurIndicesFaceTriplet.
-		} else continue;																		// The statement read is not a geometric vertex, vertex texture coordinate, vertex normal vector, or face element statement. Ignore it and continue.
+			OurObjects[OurObjectsi].OurIndices[OurIndicesi - 2] = OurIndicesFaceTriplet[0];								// OurIndicesi - 2 corresponds to the index of the first  element of the three element intermediate array variable OurIndicesFaceTriplet.
+			OurObjects[OurObjectsi].OurIndices[OurIndicesi - 1] = OurIndicesFaceTriplet[2];								// OurIndicesi - 1 corresponds to the index of the third  element of the three element intermediate array variable OurIndicesFaceTriplet.
+			OurObjects[OurObjectsi].OurIndices[OurIndicesi]     = OurIndicesFaceTriplet[1];								// OurIndicesi     corresponds to the index of the second element of the three element intermediate array variable OurIndicesFaceTriplet.
+		} else continue;									// The statement read is not a geometric vertex, vertex texture coordinate, vertex normal vector, or face element statement. Ignore it and continue.
 	}
 	// End of the while loop. The entire Wavefront .obj file has been read and parsed.
 
