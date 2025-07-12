@@ -135,6 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="objReader.cpp" />
+    <ClCompile Include="objReaderEnum.cpp" />
     <ClCompile Include="objRenderer.cpp">
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpplatest</LanguageStandard>
     </ClCompile>
@@ -152,6 +153,18 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="shaders.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Text.Blender-Suzanne.mtl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Text.Blender-Cube.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Text.Blender-Suzanne.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Text.obj">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
