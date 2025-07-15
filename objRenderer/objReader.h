@@ -29,7 +29,7 @@
 #include <vector>											// Vector class member functions push_back, pop_back, etc.
 
 // DWORD Header File.
-#include <intsafe.h>										// Required for the DWORD data type. Note that objRenderer.cpp includes windows.h, which contains intSafe.h.
+#include <windows.h>										// Required for the DWORD data type.
 
 // DirectXMath Header File.
 #include <directxmath.h>                                    // The DirectXMath API provides SIMD-friendly C++ types and functions for common linear algebra and graphics math operations common to DirectX programs.
@@ -40,7 +40,7 @@
 //***
 
 int objReaderEnum(void);
-int objReader(const std::string& filename);
+int objReader(const std::string& filename = "Text.obj");
 
 // End: Function Declarations.
 

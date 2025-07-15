@@ -53,7 +53,7 @@ int OurIndicesi = -1;	int PrimitivesTotal = 0;
 //***
 
 // objReader function: Definition
-int objReader(const std::string& filename = "Text.obj")
+int objReader(const std::string& filename)
 {
 	// Declare variables used to parse the Wavefront .obj file.
 	// Intermediate arrays to temporarily store all vertex attributes before they are copied to the array variable OurVertices:
@@ -86,7 +86,7 @@ int objReader(const std::string& filename = "Text.obj")
 	//   The order of the face element statements determines the order in which the triangles must be drawn. This order is important when dealing with overlapping triangles, as the later triangles will be drawn on top of the earlier ones. Face element statements are parsed in this order.
 	//   All other statements are ignored.
 	//
-	// - Multiple objects are not supported.
+	// - Multiple objects are not supported by objReader within a single Wavefront .obj file.
 	//   This is because objReader as written requires that no vertex attributes follow face elements, and this happens when one object is defined after another.
 	//
 	// - No spaces are permitted before or after a slash ('/').

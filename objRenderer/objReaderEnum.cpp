@@ -16,7 +16,6 @@
 // objReader Header File for Wavefront .obj file I/O.
 #include "objReader.h"
 
-#include <print>											// Include the print      header file for input and output operations, such as std::println. This requires C++23 or later.
 #include <filesystem>										// Include the filesystem header file for file system	   operations, such as std::filesystem.
 
 // objReaderEnum function: Definition
