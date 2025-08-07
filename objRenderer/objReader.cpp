@@ -41,8 +41,8 @@ using std::istringstream;
 // Define external variables in one and only one source file (this one) and initialize them as needed.
 // See the associated header file for declarations and descriptions of these external variables.
 vector<OBJECT> OurObjects;	int OurObjectsi = -1;			//*TEST* Is ObjectsTotal needed too?
-int OurVerticesi = -1;	int VertexAttributeSetsTotal = 0;
-int OurIndicesi = -1;	int PrimitivesTotal = 0;
+int OurVerticesi = -1;
+int OurIndicesi = -1;
 
 // End: External Variable Global Definitions.
 
@@ -260,9 +260,9 @@ int objReader(const std::string& filename)
 	obj.close();
 
 	// Assign the total number of unique sets of vertex attributes in array variable OurVertices to the external global variable VertexAttributeSetsTotal.
-	VertexAttributeSetsTotal = OurVerticesi + 1;
+	OurObjects[OurObjectsi].VertexAttributeSetsTotal = OurVerticesi + 1;
 	// Assign the total number of triangle primitives (the total number of array elements in OurIndices / 3) to the external global variable PrimitivesTotal.
-	PrimitivesTotal = (OurIndicesi + 1) / 3;
+	OurObjects[OurObjectsi].PrimitivesTotal = (OurIndicesi + 1) / 3;
 
 	// Return to the calling program with a return code indicating success.
 	return 0;
