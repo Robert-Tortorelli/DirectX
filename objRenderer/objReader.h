@@ -77,14 +77,14 @@ struct VERTEX {												// Vertex attributes.
 // A cube's 8 corners (vertices) are each part		of 3 sides				so there are 3 unique sets of vertex attributes per corner for a total of 8 x 3 = 24 unique sets of vertex attributes.
 // By contrast, in a program where (unlike this program) the only vertex attribute is the geometric vertex, there are only 8 unique sets of vertex attributes, i.e., each set contains only a single geometric vertex.
 //
-// PrimitivesTotal.
-// A cube's 6 sides are comprised of 2 triangle primitives per side, for a total of 6 x 2 = 12 triangle primitives, each triangle primitive comprised of 3 vertices, for a total of 12 x 3 = 36 non-unique geometric vertex indices.
+// IndicesTotal.
+// A cube's 6 sides are comprised of 2 triangle primitives per side, for a total of 6 x 2 = 12 triangle primitives, each triangle primitive comprised of 3 vertices, for a total of 12 x 3 = 36 non-unique indices of OurVertices.
 struct OBJECT {
 	std::string OurName;									// The name of the object.
-	std::vector<VERTEX> OurVertices;						// Dynamically allocated array of VERTEX structures, with each array element containing  the			   set of vertex attributes of one of the three vertices of a triangle.
-	int VertexAttributeSetsTotal;							// The total number of array elements in OurVertices, e.g., 24 array elements specify a cube.
-	std::vector<DWORD> OurIndices;							// Dynamically allocated array of DWORD indices,	 with each array element pointing to the corresponding set of vertex attributes (for one of the three vertices of a triangle) in an OurVertices array element.
-	int PrimitivesTotal;									// The total number of triangle primitives comprising a single 3D object, e.g., 12 triangle primitives specify a cube and the total number of array elements in OurIndices is PrimitivesTotal * 3 = 36.
+	std::vector<VERTEX> OurVertices;						// The dynamically allocated array of VERTEX structures, where each array element (VERTEX structure) represents a unique set of vertex attributes. Each array element (VERTEX structure) may describe one or more triangle vertices and is referenced via the indices in array variable OurIndices.
+	int VertexAttributeSetsTotal = 0;						// The total number of array elements in array variable OurVertices, e.g., 24 array elements specify a cube. Manually initialized as type int does not have a default constructor.
+	std::vector<DWORD> OurIndices;							// The dynamically allocated array of DWORD indices, with each array element (index) pointing to the corresponding unique set of vertex attributes (for one of the three vertices of a triangle) in an OurVertices array element (VERTEX structure). Multiple array elements (indices) can point to the same OurVertices array element.
+	int IndicesTotal = 0;									// The total number of array elements in array variable OurIndices,  e.g., 36 array elements specify a cube. Manually initialized as type int does not have a default constructor.
 };
 
 // End: Structure Declarations for External Variables.

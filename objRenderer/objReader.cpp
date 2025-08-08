@@ -259,10 +259,10 @@ int objReader(const std::string& filename)
 	// Close the Wavefront .obj file.
 	obj.close();
 
-	// Assign the total number of unique sets of vertex attributes in array variable OurVertices to the external global variable VertexAttributeSetsTotal.
-	OurObjects[OurObjectsi].VertexAttributeSetsTotal = OurVerticesi + 1;
-	// Assign the total number of triangle primitives (the total number of array elements in OurIndices / 3) to the external global variable PrimitivesTotal.
-	OurObjects[OurObjectsi].PrimitivesTotal = (OurIndicesi + 1) / 3;
+	// Assign the total number of array elements in array variable OurVertices to the variable VertexAttributeSetsTotal.
+	OurObjects[OurObjectsi].VertexAttributeSetsTotal = static_cast<int>(OurObjects[OurObjectsi].OurVertices.size());
+	// Assign the total number of array elements in array variable OurIndices  to the variable IndicesTotal.
+	OurObjects[OurObjectsi].IndicesTotal =			   static_cast<int>(OurObjects[OurObjectsi].OurIndices.size());
 
 	// Return to the calling program with a return code indicating success.
 	return 0;
