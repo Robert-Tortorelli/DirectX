@@ -142,32 +142,6 @@ ID2D1SolidColorBrush* pBrush = nullptr;						// Pointer to a solid color brush i
 IDWriteFactory* pDWriteFactory = nullptr;					// Pointer to a factory interface.				The IDWriteFactory interface is the starting point for using DirectWrite. It is used to create other DirectWrite resources that you can use to draw text.
 IDWriteTextFormat* pTextFormat = nullptr;					// Pointer to a text format interface.			The IDWriteTextFormat interface specifies the font, size, and other text formatting information for text layout.
 
-// Declare the C++ constant buffer structure used to assign values to the HLSL constant buffer structure.
-// This structure represents a constant buffer used in the graphics rendering pipeline.
-// It contains information that is passed to the vertex shader stage of the pipeline and can be used to transform geometric vertices and calculate lighting effects on them.
-//
-// The matFinal member is a 4x4 matrix that represents the combined world, view, and projection transformations that are applied to the geometric vertices of the geometry being rendered.
-//
-// The matRotate member is a 4x4 matrix that represents a rotation transformation that is applied to the geometric vertices of the geometry being rendered.
-// It is a component of the world transformation, and therefore of the matFinal matrix, but is also included separately in the constant buffer structure because the vertex normal vectors at the geometric vertices also need to be transformed by the same rotation matrix in order to correctly calculate lighting effects.
-//
-// The LightVector member is a 4D vector that represents the direction of the light source in 3D space.
-// This vector can be represented by any nonzero vector and the light will shine in that direction.
-//
-// The LightColor member is a 4D vector that represents the color and brightness of the light source.
-// Any color closer to white is brighter than any color closer to black.
-//
-// The AmbientColor member is a 4D vector that represents the color and brightness of the ambient light in the scene.
-// Ambient light is a type of light that illuminates all objects in a scene equally, regardless of their distance from the light source.
-// It is used to add a basic level of illumination to a scene and can be used to simulate global illumination effects.
-struct {
-	XMMATRIX matFinal;
-	XMMATRIX matRotate;										// Vertex normal vectors, like the geometric vertices comprising the object, also need to be transformed by the rotation matrix to correctly calculate lighting effects.
-	XMFLOAT4 LightVector;									// Directional light's direction.
-	XMFLOAT4 LightColor;									// Directional light's color (whiter color == brighter color).
-	XMFLOAT4 AmbientColor;									// Ambient     light's color (whiter color == brighter color).
-} ConstantBuffer;
-
 // End: DirectX Global Declarations.
 
 //***
@@ -1107,7 +1081,7 @@ void InitPipeline(void)
 	D3D11_BUFFER_DESC bd = {};								// Describes the buffer resource.
 
 	// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-	bd.ByteWidth = sizeof(ConstantBuffer);					// Assigned a value specifying the size of the buffer in bytes. See the preceding comments for related information on the size of the constant buffer resource, including limitations.
+	bd.ByteWidth = sizeof(OurObjects[OurObjectsi].ConstantBuffer); // Assigned a value specifying the size of the buffer in bytes. See the preceding comments for related information on the size of the constant buffer resource, including limitations.
 	bd.Usage = D3D11_USAGE_DEFAULT;							// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor. A value of the D3D11_USAGE enumerated type,		i.e., D3D11_USAGE_DEFAULT:		  A resource that requires read and write access by the GPU. This is likely to be the most common usage choice.
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;				// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,	i.e., D3D11_BIND_CONSTANT_BUFFER: Bind a buffer as a constant buffer to a shader stage of the graphics pipeline; this flag may NOT be combined with any other bind flag.
 
@@ -1274,7 +1248,7 @@ int InitGraphics(void)
 
 // RenderFrame function: Definition
 //   This function renders a single frame.
-//     1. Define the final transformation matrix, matFinal, which contains all the information necessary to transform each vertex of the object being rendered.
+//     1. Define the final transformation matrix, matFinal.
 //
 //     2. Assign values that determine the attributes of light.
 //
@@ -1289,6 +1263,7 @@ int RenderFrame(void)
 {
 	//***
 	// 1. Define the final transformation matrix, matFinal.
+	//    The final transformation matrix contains all the information necessary to transform each vertex of the object being rendered.
 	//
 	//   i.	Define the world matrix, matWorld.
 	//
@@ -1314,12 +1289,12 @@ int RenderFrame(void)
 
 	// Define the world matrix, matWorld.
 	//   This matrix is updated each frame, causing the object to rotate.
-	Angle += XMConvertToRadians(0.05f);						// Angle of rotation in degrees, converted to radians, continuously increasing.
+	Angle += XMConvertToRadians(0.05f);								// Angle of rotation in degrees, converted to radians, continuously increasing.
 	// XMMatrixRotationY function:
 	//   Builds a matrix that rotates around the y axis.
-	matRotateY = XMMatrixRotationY(Angle);					// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
-	ConstantBuffer.matRotate = matRotateY;					// The final rotation matrix is the product of all defined rotation matrices.				Here, only matRotateY is defined.
-	matWorld = ConstantBuffer.matRotate;					// The world transformation is a function of translation (movement), rotation, and scaling. Here, only rotation   is defined.
+	matRotateY = XMMatrixRotationY(Angle);							// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
+	OurObjects[OurObjectsi].ConstantBuffer.matRotate = matRotateY;	// The final rotation matrix is the product of all defined rotation matrices.				Here, only matRotateY is defined.
+	matWorld = OurObjects[OurObjectsi].ConstantBuffer.matRotate;	// The world transformation is a function of translation (movement), rotation, and scaling. Here, only rotation   is defined.
 
 	// Define the view matrix, matView.
 	// XMMatrixLookAtLH function:
@@ -1383,18 +1358,18 @@ int RenderFrame(void)
 		FarZ);												// Distance to the far  clipping plane. Must be greater than zero. It is converted to a normalized z-coordinate of 1.
 
 	// Define the final transformation matrix, matFinal.
-	ConstantBuffer.matFinal = matWorld * matView * matProjection;
+	OurObjects[OurObjectsi].ConstantBuffer.matFinal = matWorld * matView * matProjection;
 
-	// End: 1. Define the final transformation matrix, matFinal, which contains all the information necessary to transform each geometric vertex of the object being rendered.
+	// End: 1. Define the final transformation matrix, matFinal.
 
 	//***
 	// 2. Assign values that determine the attributes of light.
 	//***
 
 	// When the camera is positioned at EyePosition = (x<0, y<0, z<0), the current lighting effects place the rendered objects in shadow.
-	ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);
-	ConstantBuffer.LightColor = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+	OurObjects[OurObjectsi].ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);
+	OurObjects[OurObjectsi].ConstantBuffer.LightColor = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	OurObjects[OurObjectsi].ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 
 	// Sample alternative values and their effect.
 	// ConstantBuffer.LightVector = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);	// Dark
@@ -1493,7 +1468,7 @@ int RenderFrame(void)
 	devcon->UpdateSubresource(pCBuffer,						// A pointer to the destination resource, in this case the constant buffer interface.
 		0,													// A zero-based index that identifies the destination subresource.
 		0,													// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
-		&ConstantBuffer,									// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
+		&OurObjects[OurObjectsi].ConstantBuffer,			// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
 		0,													// The size of one row of the source data.
 		0);													// The size of one depth slice of source data.
 	//
@@ -1510,7 +1485,7 @@ int RenderFrame(void)
 	// Define a rotation matrix to transform the second instance of the object.
 	Angle2 -= XMConvertToRadians(0.05f);					// Angle of rotation in degrees, converted to radians, continuously decreasing.
 	matRotateY = XMMatrixRotationY(Angle2);					// Angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
-	ConstantBuffer.matRotate = matRotateY;					// The final rotation matrix is the product of all defined rotation matrices. Here, only matRotateY is defined.
+	OurObjects[OurObjectsi].ConstantBuffer.matRotate = matRotateY; // The final rotation matrix is the product of all defined rotation matrices. Here, only matRotateY is defined.
 	//
 	// Define a translation matrix to transform the second instance of the object.
 	// XMMatrixTranslation function:
@@ -1523,17 +1498,17 @@ int RenderFrame(void)
 	// The world transformation is a function of scaling, rotation, and translation (movement).
 	// Here, only rotation and translation are used. Apply the rotation matrix first, then the translation matrix.
 	// This results in the object rotating in place as it moves, i.e., the object does not orbit as it moves.
-	matWorld = ConstantBuffer.matRotate * matTranslate;
+	matWorld = OurObjects[OurObjectsi].ConstantBuffer.matRotate * matTranslate;
 	//
 	// Define a final matrix to transform the second instance of the object.
 	// Update the final transformation matrix (matFinal) by multiplying the updated world matrix (matWorld) by the original view (matView) and projection (matProjection) matrices.
-	ConstantBuffer.matFinal = matWorld * matView * matProjection;
+	OurObjects[OurObjectsi].ConstantBuffer.matFinal = matWorld * matView * matProjection;
 	//
 	// Prepare to draw the second instance of the object using the updated constant buffer.
 	devcon->UpdateSubresource(pCBuffer,						// A pointer to the destination resource, in this case the constant buffer interface.
 		0,													// A zero-based index that identifies the destination subresource.
 		0,													// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
-		&ConstantBuffer,									// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
+		&OurObjects[OurObjectsi].ConstantBuffer,			// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
 		0,													// The size of one row of the source data.
 		0);													// The size of one depth slice of source data.
 	//

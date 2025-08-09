@@ -79,12 +79,40 @@ struct VERTEX {												// Vertex attributes.
 //
 // IndicesTotal.
 // A cube's 6 sides are comprised of 2 triangle primitives per side, for a total of 6 x 2 = 12 triangle primitives, each triangle primitive comprised of 3 vertices, for a total of 12 x 3 = 36 non-unique indices of OurVertices.
+//
+// ConstantBuffer.
+// Declare the C++ constant buffer structure used to assign values to the HLSL constant buffer structure.
+// This structure represents a constant buffer used in the graphics rendering pipeline.
+// It contains information that is passed to the vertex shader stage of the pipeline and can be used to transform geometric vertices and calculate lighting effects on them.
+//
+// The matFinal member is the 4x4 final transformation matrix that represents the combined world, view, and projection transformations that are applied to the geometric vertices of the geometry being rendered.
+//
+// The matRotate member is the 4x4 final rotation matrix that represents a rotation transformation that is applied to the geometric vertices of the geometry being rendered.
+// It is a component of the world transformation, and therefore of the matFinal matrix.
+// Vertex normal vectors at the geometric vertices, like the geometric vertices comprising the object, also need to be transformed by the rotation matrix to correctly calculate lighting effects.
+//
+// The LightVector member is a 4D vector that represents the direction of the light source in 3D space.
+// This vector can be represented by any nonzero vector and the light will shine in that direction.
+//
+// The LightColor member is a 4D vector that represents the color and brightness of the light source.
+// Any color closer to white is brighter than any color closer to black.
+//
+// The AmbientColor member is a 4D vector that represents the color and brightness of the ambient light in the scene.
+// Ambient light is a type of light that illuminates all objects in a scene equally, regardless of their distance from the light source.
+// It is used to add a basic level of illumination to a scene and can be used to simulate global illumination effects.
 struct OBJECT {
 	std::string OurName;									// The name of the object.
 	std::vector<VERTEX> OurVertices;						// The dynamically allocated array of VERTEX structures, where each array element (VERTEX structure) represents a unique set of vertex attributes. Each array element (VERTEX structure) may describe one or more triangle vertices and is referenced via the indices in array variable OurIndices.
 	int VertexAttributeSetsTotal = 0;						// The total number of array elements in array variable OurVertices, e.g., 24 array elements specify a cube. Manually initialized as type int does not have a default constructor.
 	std::vector<DWORD> OurIndices;							// The dynamically allocated array of DWORD indices, with each array element (index) pointing to the corresponding unique set of vertex attributes (for one of the three vertices of a triangle) in an OurVertices array element (VERTEX structure). Multiple array elements (indices) can point to the same OurVertices array element.
 	int IndicesTotal = 0;									// The total number of array elements in array variable OurIndices,  e.g., 36 array elements specify a cube. Manually initialized as type int does not have a default constructor.
+	struct {
+		DirectX::XMMATRIX matFinal;							// The final transformation matrix.
+		DirectX::XMMATRIX matRotate;						// The final rotation matrix.
+		DirectX::XMFLOAT4 LightVector;						// Directional light's direction.
+		DirectX::XMFLOAT4 LightColor;						// Directional light's color (whiter color == brighter color).
+		DirectX::XMFLOAT4 AmbientColor;						// Ambient     light's color (whiter color == brighter color).
+	} ConstantBuffer;
 };
 
 // End: Structure Declarations for External Variables.
