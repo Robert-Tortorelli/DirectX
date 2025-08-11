@@ -32,9 +32,6 @@
 // objReader Header File for Wavefront .obj file I/O.
 #include "objReader.h"
 
-// Windows API Header File.
-#include <windows.h>										// The Windows API (Win32 API) header file enables you to create 32-bit and 64-bit programs. It includes declarations for both Unicode and ANSI versions of the API. For more information, see Unicode in the Windows API.
-
 // String Stream classes Header File.
 #include <sstream>											// The string stream classes are used to read and write strings as if they were streams, allowing for formatted input and output operations on strings. See variables declared std::wstringstream.
 
@@ -90,7 +87,6 @@ void ShutdownDirectX(void);
 #pragma comment(lib, "d3dcompiler.lib")						// Direct3D Compiler Library. Needed for D3DCompileFromFile, which compiles shaders.
 
 // Direct3D Header Files.
-#include <d3d11.h>											// This header is used by Direct3D 11 Graphics.
 #include <d3dcompiler.h>									// Needed by D3DCompileFromFile, which compiles shaders.
 #include <wictextureloader.h>								// DirectXTK library module WICTextureLoader is a Direct3D 2D texture loader using Windows Imaging Component to load, resize, and format convert a supported bitmap and then create a 2D texture from it.
 
@@ -126,9 +122,6 @@ ID3D11RenderTargetView* backbuffer = nullptr;				// Pointer to the render target
 ID3D11InputLayout* pLayout = nullptr;						// Pointer to the input-layout interface.		An input-layout interface holds a definition of how to feed vertex data that is laid out in memory into the input-assembler stage of the graphics pipeline.
 ID3D11VertexShader* pVS = nullptr;							// Pointer to the vertex shader interface.		A vertex shader interface manages an executable program (a vertex shader) that controls the vertex shader stage of the graphics pipeline.
 ID3D11PixelShader* pPS = nullptr;							// Pointer to the pixel shader interface.		A pixel  shader interface manages an executable program (a pixel shader)  that controls the pixel shader stage of the graphics pipeline.
-ID3D11Buffer* pVBuffer = nullptr;							// Pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the vertex buffer.
-ID3D11Buffer* pIBuffer = nullptr;							// Pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the index buffer.
-ID3D11Buffer* pCBuffer = nullptr;							// Pointer to a buffer interface.				A buffer interface accesses a buffer resource, which is unstructured memory. In this case the constant buffer.
 
 ID3D11ShaderResourceView* pTextureView = nullptr;			// Pointer to a shader resource view interface.	A shader resource view interface specifies the subresource a shader can access during rendering. In this case the texture image.
 
@@ -244,6 +237,16 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 	//       The first time the ShowWindow function is called, the value of parameter nCmdShow should be the value obtained by the WinMain function in its nCmdShow parameter.
 	ShowWindow(hWnd,										// The HWND handle for the window.
 			   nCmdShow);									// Indicates if the main program window will be minimized, maximized, or shown normally.
+
+	// Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
+	if (int objReaderEnumRC = objReaderEnum(); objReaderEnumRC != 0) // Call the objReaderEnum function and test whether its return value is nonzero, indicating an error.
+	{
+		// The objReaderEnum function terminated abnormally. Terminate the WinMain function with the return value of the objReaderEnum function.
+		return objReaderEnumRC;
+	}
+	// The objReaderEnum function terminated normally.
+
+	// End: 1. Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
 
 	// Initialize and prepare Direct3D for use.
 	if (int InitD3DRC = InitD3D(hWnd); InitD3DRC != 0)		// Call the InitD3D function and test whether its return value is nonzero, indicating an error.
@@ -1089,13 +1092,13 @@ void InitPipeline(void)
 	//   Create the buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the constant buffer object.
 	dev->CreateBuffer(&bd,									// A pointer to a D3D11_BUFFER_DESC structure that describes the buffer, in this case a constant buffer as per bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER.
 		NULL,												// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bd.Usage is D3D11_USAGE_IMMUTABLE).
-		&pCBuffer);											// The newly created buffer object. &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this object.
+		&OurObjects[OurObjectsi].pCBuffer);					// The newly created buffer object. &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this object.
 
 	// ID3D11DeviceContext::VSSetConstantBuffers member function:
 	//   Set the constant buffer object to the vertex shader stage of the graphics pipeline.
 	devcon->VSSetConstantBuffers(0,							// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
 		1,													// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
-		&pCBuffer);											// &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this constant buffer object.
+		&OurObjects[OurObjectsi].pCBuffer);					// &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this constant buffer object.
 
 	// End: 3. Create the constant buffer object and set it to the vertex shader stage of the graphics pipeline.
 
@@ -1103,33 +1106,18 @@ void InitPipeline(void)
 }
 
 // InitGraphics function: Definition
-//   This function loads and initializes all graphics data.
-//     1. Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
+//   This function creates the vertex buffer, the index buffer, and the texture image.
+//     1. Create the structures used to define the vertex buffer and index buffer.
 //
-//     2. Create the structures used to define the vertex buffer and index buffer.
+//     2. Create the vertex buffer and assign values to it from the variable OurVertices.
 //
-//     3. Create the vertex buffer and assign values to it from the variable OurVertices.
+//     3. Create the index buffer and assign values to it from the variable OurIndices.
 //
-//     4. Create the index buffer and assign values to it from the variable OurIndices.
-//
-//     5. Create the texture image from an image file.
+//     4. Create the texture image from an image file.
 int InitGraphics(void)
 {
 	//***
-	// 1. Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
-	//***
-
-	if (int objReaderEnumRC = objReaderEnum(); objReaderEnumRC != 0)	// Call the objReaderEnum function and test whether its return value is nonzero, indicating an error.
-	{
-		// The objReaderEnum function terminated abnormally. Terminate the InitGraphics function with the return value of the objReaderEnum function.
-		return objReaderEnumRC;
-	}
-	// The objReaderEnum function terminated normally.
-
-	// End: 1. Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
-
-	//***
-	// 2. Create the structures used to define the vertex buffer and index buffer.
+	// 1. Create the structures used to define the vertex buffer and index buffer.
 	//***
 
 	// Create the buffer resource description structures used to define the vertex buffer and index buffer.
@@ -1140,10 +1128,10 @@ int InitGraphics(void)
 	D3D11_MAPPED_SUBRESOURCE msBufferVertex;				// Provides access to subresource data. msBufferVertex.pData is used to copy data to the vertex buffer.
 	D3D11_MAPPED_SUBRESOURCE msBufferIndex;					// Provides access to subresource data. msBufferIndex.pData	 is used to copy data to the index	buffer.
 
-	// End: 2. Create the structures used to define the vertex buffer and index buffer.
+	// End: 1. Create the structures used to define the vertex buffer and index buffer.
 
 	//***
-	// 3. Create the vertex buffer and assign values to it from the variable OurVertices.
+	// 2. Create the vertex buffer and assign values to it from the variable OurVertices.
 	//***
 
 	// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
@@ -1156,14 +1144,14 @@ int InitGraphics(void)
 	//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the vertex buffer object.
 	dev->CreateBuffer(&bdBufferVertex,						// A pointer to a buffer resource description structure that describes the buffer, in this case the vertex buffer, as per bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER.
 		NULL,												// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferVertex.Usage is D3D11_USAGE_IMMUTABLE).
-		&pVBuffer);											// The newly created buffer object. &pVBuffer is the address of a pointer, pVBuffer, to the buffer interface that represents this object.
+		&OurObjects[OurObjectsi].pVBuffer);					// The newly created buffer object. &pVBuffer is the address of a pointer, pVBuffer, to the buffer interface that represents this object.
 
 	// Assign the vertex attributes by copying them from OurVertices to the vertex buffer.
 	// ID3D11DeviceContext::Map member function:
 	//   Mapping a buffer allows us to access it.
 	//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
 	//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
-	devcon->Map(pVBuffer,									// A pointer to the vertex buffer interface.
+	devcon->Map(OurObjects[OurObjectsi].pVBuffer,			// A pointer to the vertex buffer interface.
 		NULL,												// Index number of the subresource.
 		D3D11_MAP_WRITE_DISCARD,							// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
 		NULL,												// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
@@ -1176,33 +1164,33 @@ int InitGraphics(void)
 		bdBufferVertex.ByteWidth);							// Number of bytes to copy, in this case the size of the vertex buffer in bytes.
 	// D3D11DeviceContext::Unmap member function:
 	//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
-	devcon->Unmap(pVBuffer,									// A pointer to the vertex buffer interface.
+	devcon->Unmap(OurObjects[OurObjectsi].pVBuffer,			// A pointer to the vertex buffer interface.
 		NULL);												// A subresource to be unmapped.
 
-	// End: 3. Create the vertex buffer and assign values to it from the variable OurVertices.
+	// End: 2. Create the vertex buffer and assign values to it from the variable OurVertices.
 
 	//***
-	// 4. Create the index buffer and assign values to it from the variable OurIndices.
+	// 3. Create the index buffer and assign values to it from the variable OurIndices.
 	//***
 
 	// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
 	bdBufferIndex.ByteWidth = sizeof(DWORD) * (OurObjects[OurObjectsi].IndicesTotal); // Assigned a value specifying the size of the index buffer in bytes. Three indices in the index buffer, each pointing to one set of vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of triangles comprising the object. Therefore IndicesTotal * 3.
-	bdBufferIndex.Usage = D3D11_USAGE_DYNAMIC;								// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	 A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
-	bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER;						// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_INDEX_BUFFER: Bind a buffer as an index buffer to the input-assembler stage of the graphics pipeline.
-	bdBufferIndex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;					// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	 The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
+	bdBufferIndex.Usage = D3D11_USAGE_DYNAMIC;				// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	 A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
+	bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER;		// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_INDEX_BUFFER: Bind a buffer as an index buffer to the input-assembler stage of the graphics pipeline.
+	bdBufferIndex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;	// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	 The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
 
 	// ID3D11Device::CreateBuffer member function:
 	//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the index buffer object.
 	dev->CreateBuffer(&bdBufferIndex,						// A pointer to a buffer resource description structure that describes the buffer, in this case an index buffer, as per bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER.
 		NULL,												// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferIndex.Usage is D3D11_USAGE_IMMUTABLE).
-		&pIBuffer);											// The newly created buffer object. &pIBuffer is the address of a pointer, pIBuffer, to the buffer interface that represents this object.
+		&OurObjects[OurObjectsi].pIBuffer);					// The newly created buffer object. &pIBuffer is the address of a pointer, pIBuffer, to the buffer interface that represents this object.
 
 	// Assign the index information by copying it from OurIndices to the index buffer.
 	// ID3D11DeviceContext::Map member function:
 	//   Mapping a buffer allows us to access it.
 	//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
 	//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
-	devcon->Map(pIBuffer,									// A pointer to the index buffer interface.
+	devcon->Map(OurObjects[OurObjectsi].pIBuffer,			// A pointer to the index buffer interface.
 		NULL,												// Index number of the subresource.
 		D3D11_MAP_WRITE_DISCARD,							// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
 		NULL,												// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
@@ -1215,13 +1203,13 @@ int InitGraphics(void)
 		bdBufferIndex.ByteWidth);							// Number of bytes to copy, in this case the size of the index buffer in bytes.
 	// D3D11DeviceContext::Unmap member function:
 	//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
-	devcon->Unmap(pIBuffer,									// A pointer to the index buffer interface.
+	devcon->Unmap(OurObjects[OurObjectsi].pIBuffer,			// A pointer to the index buffer interface.
 		NULL);												// A subresource to be unmapped.
 
-	// End: 4. Create the index buffer and assign values to it from the variable OurIndices.
+	// End: 3. Create the index buffer and assign values to it from the variable OurIndices.
 
 	//***
-	// 5. Create the texture image from an image file.
+	// 4. Create the texture image from an image file.
 	//***
 
 	// DirectX::CreateWICTextureFromFile function:
@@ -1239,7 +1227,7 @@ int InitGraphics(void)
 		1,													// Number of shader resources to set.
 		&pTextureView);										// &pTextureView is the address of a pointer, pTextureView, to the array of (in this case an array of one) shader resource view interfaces for the subresources created, in this case a texture image.
 
-	// End: 5. Create the texture image from an image file.
+	// End: 4. Create the texture image from an image file.
 
 	return 0;
 
@@ -1430,16 +1418,26 @@ int RenderFrame(void)
 	UINT offset = 0;										// An "offset" is the number of bytes between the first element of the vertex buffer and the first element that will be used. Define an array of offsets when multiple vertex buffers are used.
 	// ID3D11DeviceContext::IASetVertexBuffers member function:
 	//   Set the array of (in this case an array of one) vertex buffers to the input-assembler stage of the graphics pipeline.
+	//   For drawing multiple objects you bind one vertex buffer at a time per object before drawing that object.
+	//   This is done in this program.
+	//
+	//   You can set an array of multiple buffers, strides, and offsets when using advanced vertex layouts, e.g., separate position and normal buffers, and bind these multiple buffers at once for a single draw call (interleaved or parallel vertex data), not for drawing multiple objects in one call.
+	//     Interleaved vertex data: All attributes for a vertex (position, normal, color, etc.) are stored together in a single buffer, one after another:
+	//       [pos0, norm0, col0][pos1, norm1, col1][pos2, norm2, col2]...
+	//     Parallel (non-interleaved) vertex data: Each attribute is stored in a separate buffer:
+	//       positions:	[pos0][pos1][pos2]...
+	//       normals:	[norm0] [norm1] [norm2] ...
+	//       colors :	[col0] [col1] [col2] ...
 	devcon->IASetVertexBuffers(0,							// The first input slot for binding. The first vertex buffer is explicitly bound to the start slot; this causes each additional vertex buffer in the array to be implicitly bound to each subsequent input slot.
 		1,													// The number of vertex buffers in the array.
-		&pVBuffer,											// &pVBuffer is the address of a pointer, pVBuffer, to an array of (in this case an array of one) vertex buffer interfaces.
+		&OurObjects[OurObjectsi].pVBuffer,					// &pVBuffer is the address of a pointer, pVBuffer, to an array of (in this case an array of one) vertex buffer interfaces.
 		&stride,											// &stride is the address of stride, and therefore a pointer to the array of (in this case an array of one) stride values (one stride value for each buffer in the vertex buffer array).
 		&offset);											// &offset is the address of offset, and therefore a pointer to the array of (in this case an array of one) offset values (one offset value for each buffer in the vertex buffer array).
 	
 	// Specify the index buffers to use when drawing.
 	// ID3D11DeviceContext::IASetIndexBuffer member function:
 	//   Set the index buffer to the input-assembler stage of the graphics pipeline.
-	devcon->IASetIndexBuffer(pIBuffer,						// A pointer to the index buffer interface.
+	devcon->IASetIndexBuffer(OurObjects[OurObjectsi].pIBuffer, // A pointer to the index buffer interface.
 		DXGI_FORMAT_R32_UINT,								// A value of the DXGI_FORMAT enumerated type, i.e., DXGI_FORMAT_R32_UINT: A single-component, 32-bit unsigned-integer format that supports 32 bits for the red channel.
 		0);													// The offset (in bytes) from the start of the index buffer to the first index to use.
 
@@ -1465,7 +1463,7 @@ int RenderFrame(void)
 	//   The CPU copies data from memory		   to a subresource created in non-mappable memory.
 	//   Specifically:
 	//   The CPU copies the C++ constant buffer	   to the HLSL constant buffer used by the GPU's vertex shader.
-	devcon->UpdateSubresource(pCBuffer,						// A pointer to the destination resource, in this case the constant buffer interface.
+	devcon->UpdateSubresource(OurObjects[OurObjectsi].pCBuffer, // A pointer to the destination resource, in this case the constant buffer interface.
 		0,													// A zero-based index that identifies the destination subresource.
 		0,													// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
 		&OurObjects[OurObjectsi].ConstantBuffer,			// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
@@ -1505,7 +1503,7 @@ int RenderFrame(void)
 	OurObjects[OurObjectsi].ConstantBuffer.matFinal = matWorld * matView * matProjection;
 	//
 	// Prepare to draw the second instance of the object using the updated constant buffer.
-	devcon->UpdateSubresource(pCBuffer,						// A pointer to the destination resource, in this case the constant buffer interface.
+	devcon->UpdateSubresource(OurObjects[OurObjectsi].pCBuffer, // A pointer to the destination resource, in this case the constant buffer interface.
 		0,													// A zero-based index that identifies the destination subresource.
 		0,													// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
 		&OurObjects[OurObjectsi].ConstantBuffer,			// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
@@ -1778,20 +1776,20 @@ void ShutdownDirectX(void)
 		pPS->Release();
 		pPS = nullptr;
 	}
-	if (pVBuffer)
+	if (OurObjects[OurObjectsi].pVBuffer)
 	{
-		pVBuffer->Release();
-		pVBuffer = nullptr;
+		OurObjects[OurObjectsi].pVBuffer->Release();
+		OurObjects[OurObjectsi].pVBuffer = nullptr;
 	}
-	if (pIBuffer)
+	if (OurObjects[OurObjectsi].pIBuffer)
 	{
-		pIBuffer->Release();
-		pIBuffer = nullptr;
+		OurObjects[OurObjectsi].pIBuffer->Release();
+		OurObjects[OurObjectsi].pIBuffer = nullptr;
 	}
-	if (pCBuffer)
+	if (OurObjects[OurObjectsi].pCBuffer)
 	{
-		pCBuffer->Release();
-		pCBuffer = nullptr;
+		OurObjects[OurObjectsi].pCBuffer->Release();
+		OurObjects[OurObjectsi].pCBuffer = nullptr;
 	}
 	if (pTextureView)
 	{

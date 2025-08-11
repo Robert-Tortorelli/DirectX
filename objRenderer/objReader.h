@@ -28,8 +28,11 @@
 // Vector Container Class.
 #include <vector>											// Vector class member functions push_back, pop_back, etc.
 
-// DWORD Header File.
-#include <windows.h>										// Required for the DWORD data type.
+// Windows API Header File.
+#include <windows.h>										// The Windows API (Win32 API) header file enables you to create 32-bit and 64-bit programs. It includes declarations for both Unicode and ANSI versions of the API. For more information, see Unicode in the Windows API.
+
+// Direct3D Header Files.
+#include <d3d11.h>											// This header is used by Direct3D 11 Graphics.
 
 // DirectXMath Header File.
 #include <directxmath.h>                                    // The DirectXMath API provides SIMD-friendly C++ types and functions for common linear algebra and graphics math operations common to DirectX programs.
@@ -101,11 +104,15 @@ struct VERTEX {												// Vertex attributes.
 // Ambient light is a type of light that illuminates all objects in a scene equally, regardless of their distance from the light source.
 // It is used to add a basic level of illumination to a scene and can be used to simulate global illumination effects.
 struct OBJECT {
+	// CPU-side buffer data.
 	std::string OurName;									// The name of the object.
+
 	std::vector<VERTEX> OurVertices;						// The dynamically allocated array of VERTEX structures, where each array element (VERTEX structure) represents a unique set of vertex attributes. Each array element (VERTEX structure) may describe one or more triangle vertices and is referenced via the indices in array variable OurIndices.
-	int VertexAttributeSetsTotal = 0;						// The total number of array elements in array variable OurVertices, e.g., 24 array elements specify a cube. Manually initialized as type int does not have a default constructor.
+	int VertexAttributeSetsTotal = 0;						// The total number of array elements in array variable OurVertices (OurVertices.size()), e.g., 24 array elements specify a cube. Manually initialized as type int does not have a default constructor.
+
 	std::vector<DWORD> OurIndices;							// The dynamically allocated array of DWORD indices, with each array element (index) pointing to the corresponding unique set of vertex attributes (for one of the three vertices of a triangle) in an OurVertices array element (VERTEX structure). Multiple array elements (indices) can point to the same OurVertices array element.
-	int IndicesTotal = 0;									// The total number of array elements in array variable OurIndices,  e.g., 36 array elements specify a cube. Manually initialized as type int does not have a default constructor.
+	int IndicesTotal = 0;									// The total number of array elements in array variable OurIndices	(OurIndices.size()),  e.g., 36 array elements specify a cube. Manually initialized as type int does not have a default constructor.
+
 	struct {
 		DirectX::XMMATRIX matFinal;							// The final transformation matrix.
 		DirectX::XMMATRIX matRotate;						// The final rotation matrix.
@@ -113,6 +120,13 @@ struct OBJECT {
 		DirectX::XMFLOAT4 LightColor;						// Directional light's color (whiter color == brighter color).
 		DirectX::XMFLOAT4 AmbientColor;						// Ambient     light's color (whiter color == brighter color).
 	} ConstantBuffer;
+
+	// GPU-side buffer data.
+	ID3D11Buffer* pVBuffer = nullptr;						// Pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the vertex buffer.
+
+	ID3D11Buffer* pIBuffer = nullptr;						// Pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the index buffer.
+
+	ID3D11Buffer* pCBuffer = nullptr;						// Pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the constant buffer.
 };
 
 // End: Structure Declarations for External Variables.
@@ -127,7 +141,6 @@ struct OBJECT {
 extern std::vector<OBJECT> OurObjects;						// Dynamically allocated array of OBJECT structures, with each array element containing  the			   set of vertex attributes of one named object.
 // OurObjects Supplemental Variables.
 extern int OurObjectsi;										// The index variable OurObjectsi of array variable OurObjects[OurObjectsi].
-//*TEST* Is ObjectsTotal needed too?
 
 // OurVertices Supplemental Variables.
 extern int OurVerticesi;									// The index variable OurVerticesi of array variable OurVertices[OurVerticesi].
