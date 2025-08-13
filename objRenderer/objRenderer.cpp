@@ -1109,9 +1109,10 @@ void InitPipeline(void)
 //   This function creates the vertex buffer, the index buffer, and the texture image.
 //     1. Create the structures used to define the vertex buffer and index buffer.
 //
-//     2. Create the vertex buffer and assign values to it from the variable OurVertices.
+//     Create vertex buffers and index buffers for all objects in the variable OurObjects.
+//       2. Create the vertex buffer and assign values to it from the variable OurVertices.
 //
-//     3. Create the index buffer and assign values to it from the variable OurIndices.
+//       3. Create the index buffer and assign values to it from the variable OurIndices.
 //
 //     4. Create the texture image from an image file.
 int InitGraphics(void)
@@ -1130,83 +1131,87 @@ int InitGraphics(void)
 
 	// End: 1. Create the structures used to define the vertex buffer and index buffer.
 
-	//***
-	// 2. Create the vertex buffer and assign values to it from the variable OurVertices.
-	//***
+	// Create vertex buffers and index buffers for all objects in the variable OurObjects.
+	for (auto& object : OurObjects) {
+		// Use object.OurVertices[OurVerticesi]
+		//***
+		// 2. Create the vertex buffer and assign values to it from the variable OurVertices.
+		//***
 
-	// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-	bdBufferVertex.ByteWidth = sizeof(VERTEX) * OurObjects[OurObjectsi].VertexAttributeSetsTotal; // Assigned a value specifying the size of the vertex buffer in bytes. The vertex buffer resource's size is the size of the VERTEX structure * the total number of array elements in OurVertices (VertexAttributeSetsTotal).
-	bdBufferVertex.Usage = D3D11_USAGE_DYNAMIC;								// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	  A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
-	bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER;					// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_VERTEX_BUFFER: Bind a buffer as a vertex buffer to the input-assembler stage of the graphics pipeline.
-	bdBufferVertex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;					// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	  The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
+		// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
+		bdBufferVertex.ByteWidth = sizeof(VERTEX) * object.VertexAttributeSetsTotal; // Assigned a value specifying the size of the vertex buffer in bytes. The vertex buffer resource's size is the size of the VERTEX structure * the total number of array elements in OurVertices (VertexAttributeSetsTotal).
+		bdBufferVertex.Usage = D3D11_USAGE_DYNAMIC;								// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	  A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
+		bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER;					// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_VERTEX_BUFFER: Bind a buffer as a vertex buffer to the input-assembler stage of the graphics pipeline.
+		bdBufferVertex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;					// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	  The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
 
-	// ID3D11Device::CreateBuffer member function:
-	//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the vertex buffer object.
-	dev->CreateBuffer(&bdBufferVertex,						// A pointer to a buffer resource description structure that describes the buffer, in this case the vertex buffer, as per bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER.
-		NULL,												// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferVertex.Usage is D3D11_USAGE_IMMUTABLE).
-		&OurObjects[OurObjectsi].pVBuffer);					// The newly created buffer object. &pVBuffer is the address of a pointer, pVBuffer, to the buffer interface that represents this object.
+		// ID3D11Device::CreateBuffer member function:
+		//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the vertex buffer object.
+		dev->CreateBuffer(&bdBufferVertex,						// A pointer to a buffer resource description structure that describes the buffer, in this case the vertex buffer, as per bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER.
+			NULL,												// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferVertex.Usage is D3D11_USAGE_IMMUTABLE).
+			&object.pVBuffer);					// The newly created buffer object. &pVBuffer is the address of a pointer, pVBuffer, to the buffer interface that represents this object.
 
-	// Assign the vertex attributes by copying them from OurVertices to the vertex buffer.
-	// ID3D11DeviceContext::Map member function:
-	//   Mapping a buffer allows us to access it.
-	//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
-	//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
-	devcon->Map(OurObjects[OurObjectsi].pVBuffer,			// A pointer to the vertex buffer interface.
-		NULL,												// Index number of the subresource.
-		D3D11_MAP_WRITE_DISCARD,							// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
-		NULL,												// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
-		&msBufferVertex);									// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
-	// Copy all the vertex attributes from OurVertices to the vertex buffer.
-	// memcpy function:
-	//   Copy a block of memory.
-	memcpy(msBufferVertex.pData,							// Pointer to the destination memory block, in this case the vertex buffer's memory block.
-		&OurObjects[OurObjectsi].OurVertices[0],			// Pointer to the source memory block, in this case the OurVertices array's memory block. .OurVertices[0] is specified to get a pointer to the start of the vertex data array, so the entire array can be copied efficiently into the vertex buffer.
-		bdBufferVertex.ByteWidth);							// Number of bytes to copy, in this case the size of the vertex buffer in bytes.
-	// D3D11DeviceContext::Unmap member function:
-	//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
-	devcon->Unmap(OurObjects[OurObjectsi].pVBuffer,			// A pointer to the vertex buffer interface.
-		NULL);												// A subresource to be unmapped.
+		// Assign the vertex attributes by copying them from OurVertices to the vertex buffer.
+		// ID3D11DeviceContext::Map member function:
+		//   Mapping a buffer allows us to access it.
+		//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
+		//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
+		devcon->Map(object.pVBuffer,			// A pointer to the vertex buffer interface.
+			NULL,												// Index number of the subresource.
+			D3D11_MAP_WRITE_DISCARD,							// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
+			NULL,												// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
+			&msBufferVertex);									// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
+		// Copy all the vertex attributes from OurVertices to the vertex buffer.
+		// memcpy function:
+		//   Copy a block of memory.
+		memcpy(msBufferVertex.pData,							// Pointer to the destination memory block, in this case the vertex buffer's memory block.
+			&object.OurVertices[0],			// Pointer to the source memory block, in this case the OurVertices array's memory block. .OurVertices[0] is specified to get a pointer to the start of the vertex data array, so the entire array can be copied efficiently into the vertex buffer.
+			bdBufferVertex.ByteWidth);							// Number of bytes to copy, in this case the size of the vertex buffer in bytes.
+		// D3D11DeviceContext::Unmap member function:
+		//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
+		devcon->Unmap(object.pVBuffer,			// A pointer to the vertex buffer interface.
+			NULL);												// A subresource to be unmapped.
 
-	// End: 2. Create the vertex buffer and assign values to it from the variable OurVertices.
+		// End: 2. Create the vertex buffer and assign values to it from the variable OurVertices.
 
-	//***
-	// 3. Create the index buffer and assign values to it from the variable OurIndices.
-	//***
+		//***
+		// 3. Create the index buffer and assign values to it from the variable OurIndices.
+		//***
 
-	// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-	bdBufferIndex.ByteWidth = sizeof(DWORD) * (OurObjects[OurObjectsi].IndicesTotal); // Assigned a value specifying the size of the index buffer in bytes. Three indices in the index buffer, each pointing to one set of vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of triangles comprising the object. Therefore IndicesTotal * 3.
-	bdBufferIndex.Usage = D3D11_USAGE_DYNAMIC;				// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	 A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
-	bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER;		// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_INDEX_BUFFER: Bind a buffer as an index buffer to the input-assembler stage of the graphics pipeline.
-	bdBufferIndex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;	// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	 The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
+		// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
+		bdBufferIndex.ByteWidth = sizeof(DWORD) * (object.IndicesTotal); // Assigned a value specifying the size of the index buffer in bytes. Three indices in the index buffer, each pointing to one set of vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of triangles comprising the object. Therefore IndicesTotal * 3.
+		bdBufferIndex.Usage = D3D11_USAGE_DYNAMIC;				// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	 A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
+		bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER;		// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_INDEX_BUFFER: Bind a buffer as an index buffer to the input-assembler stage of the graphics pipeline.
+		bdBufferIndex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;	// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	 The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
 
-	// ID3D11Device::CreateBuffer member function:
-	//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the index buffer object.
-	dev->CreateBuffer(&bdBufferIndex,						// A pointer to a buffer resource description structure that describes the buffer, in this case an index buffer, as per bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER.
-		NULL,												// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferIndex.Usage is D3D11_USAGE_IMMUTABLE).
-		&OurObjects[OurObjectsi].pIBuffer);					// The newly created buffer object. &pIBuffer is the address of a pointer, pIBuffer, to the buffer interface that represents this object.
+		// ID3D11Device::CreateBuffer member function:
+		//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the index buffer object.
+		dev->CreateBuffer(&bdBufferIndex,						// A pointer to a buffer resource description structure that describes the buffer, in this case an index buffer, as per bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER.
+			NULL,												// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferIndex.Usage is D3D11_USAGE_IMMUTABLE).
+			&object.pIBuffer);					// The newly created buffer object. &pIBuffer is the address of a pointer, pIBuffer, to the buffer interface that represents this object.
 
-	// Assign the index information by copying it from OurIndices to the index buffer.
-	// ID3D11DeviceContext::Map member function:
-	//   Mapping a buffer allows us to access it.
-	//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
-	//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
-	devcon->Map(OurObjects[OurObjectsi].pIBuffer,			// A pointer to the index buffer interface.
-		NULL,												// Index number of the subresource.
-		D3D11_MAP_WRITE_DISCARD,							// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
-		NULL,												// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
-		&msBufferIndex);									// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
-	// Copy all the index information from OurIndices to the index buffer.
-	// memcpy function:
-	//   Copy a block of memory.
-	memcpy(msBufferIndex.pData,								// Pointer to the destination memory block, in this case the index buffer's memory block.
-		&OurObjects[OurObjectsi].OurIndices[0],				// Pointer to the source memory block, in this case the OurIndices array's memory block. .OurIndices[0] is specified to get a pointer to the start of the index data array, so the entire array can be copied efficiently into the index buffer.
-		bdBufferIndex.ByteWidth);							// Number of bytes to copy, in this case the size of the index buffer in bytes.
-	// D3D11DeviceContext::Unmap member function:
-	//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
-	devcon->Unmap(OurObjects[OurObjectsi].pIBuffer,			// A pointer to the index buffer interface.
-		NULL);												// A subresource to be unmapped.
+		// Assign the index information by copying it from OurIndices to the index buffer.
+		// ID3D11DeviceContext::Map member function:
+		//   Mapping a buffer allows us to access it.
+		//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
+		//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
+		devcon->Map(object.pIBuffer,			// A pointer to the index buffer interface.
+			NULL,												// Index number of the subresource.
+			D3D11_MAP_WRITE_DISCARD,							// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
+			NULL,												// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
+			&msBufferIndex);									// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
+		// Copy all the index information from OurIndices to the index buffer.
+		// memcpy function:
+		//   Copy a block of memory.
+		memcpy(msBufferIndex.pData,								// Pointer to the destination memory block, in this case the index buffer's memory block.
+			&object.OurIndices[0],				// Pointer to the source memory block, in this case the OurIndices array's memory block. .OurIndices[0] is specified to get a pointer to the start of the index data array, so the entire array can be copied efficiently into the index buffer.
+			bdBufferIndex.ByteWidth);							// Number of bytes to copy, in this case the size of the index buffer in bytes.
+		// D3D11DeviceContext::Unmap member function:
+		//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
+		devcon->Unmap(object.pIBuffer,			// A pointer to the index buffer interface.
+			NULL);												// A subresource to be unmapped.
 
-	// End: 3. Create the index buffer and assign values to it from the variable OurIndices.
+		// End: 3. Create the index buffer and assign values to it from the variable OurIndices.
+	}
 
 	//***
 	// 4. Create the texture image from an image file.

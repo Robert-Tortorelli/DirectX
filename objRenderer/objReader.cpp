@@ -40,7 +40,7 @@ using std::istringstream;
 
 // Define external variables in one and only one source file (this one) and initialize them as needed.
 // See the associated header file for declarations and descriptions of these external variables.
-vector<OBJECT> OurObjects;	int OurObjectsi = -1;			//*TEST* Is ObjectsTotal needed too?
+vector<OBJECT> OurObjects;	int OurObjectsi = -1;
 int OurVerticesi = -1;
 int OurIndicesi = -1;
 
@@ -66,8 +66,8 @@ int objReader(const std::string& filename)
 	vector<DirectX::XMFLOAT3> v;  int vi = -1;					// Geometric vertices		  dynamically allocated intermediate array, and index (v[vi]).
 	vector<DirectX::XMFLOAT2> vt; int vti = -1;					// Vertex texture coordinates dynamically allocated intermediate array, and index (vt[vti]).
 	vector<DirectX::XMFLOAT3> vn; int vni = -1;					// Vertex normal vectors	  dynamically allocated intermediate array, and index (vn[vni]).
-	// Intermediate array variable OurIndicesFaceTriplet temporarily stores three indices of array variable OurVertices. Each index is derived from one of the three face element triplets in a face element statement (e.g., v1/vt1/vn1) that represent the set of vertex attributes for one of the three vertices of a triangle.
-	// The three indices are stored in the counter-clockwise drawing order specified by the order of face element statements in the Wavefront .obj file. These indices will be converted to the clockwise drawing order used by DirectX, and then stored in the array variable OurIndices.
+	// Intermediate array variable OurIndicesFaceTriplet temporarily stores three indices of array variable OurVertices. Each index is derived from one of the three face element triplets in a face element statement (e.g., one set of v1/vt1/vn1) that represent the set of vertex attributes for one of the three vertices of a triangle.
+	// The three indices are stored in the counter-clockwise drawing order (for the three vertices of a triangle) specified by the order of face element statements in the Wavefront .obj file. These indices will be converted to the clockwise drawing order used by DirectX, and then stored in the array variable OurIndices.
 	int OurIndicesFaceTriplet[3];
 	int OurIndicesFaceTripleti;									// The index variable OurIndicesFaceTripleti of intermediate array variable OurIndicesFaceTriplet[OurIndicesFaceTripleti].
 
