@@ -138,7 +138,7 @@ struct OBJECT {
 //***
 
 // OurObjects.
-extern std::vector<OBJECT> OurObjects;						// Dynamically allocated array of OBJECT structures, with each array element containing  the			   set of vertex attributes of one named object.
+extern std::vector<OBJECT> OurObjects;						// The dynamically allocated array of OBJECT structures, with each array element containing the set of attributes of one named object.
 // OurObjects Supplemental Variables.
 extern int OurObjectsi;										// The index variable OurObjectsi of array variable OurObjects[OurObjectsi].
 
