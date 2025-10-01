@@ -629,9 +629,29 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	//    Both types of buffer are frame buffers. The frame buffer that is currently being displayed is called the front buffer, and the frame buffers that we are rendering to are called the back buffers.
 	//***
 
+	// DeviceFlags parameter of the D3D11CreateDeviceAndSwapChain function.
+	// Combine optional flags of the D3D11_CREATE_DEVICE_FLAG enumeration used to create the Direct3D 11 runtime layers that are used to create the device.
+	UINT DeviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;	// Required for Direct2D interoperability with Direct3D resources.
+	#ifdef _DEBUG											// The debug layer is only added in debug builds to avoid performance overhead in release builds (The _DEBUG macro is only defined in debug builds).
+	DeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;				// Creates a device that supports the debug layer, which provides detailed debugging information about Direct3D operations.
+															//   If the debug runtime is not installed on Windows, the D3D11CreateDeviceAndSwapChain function will return an error code, typically DXGI_ERROR_SDK_COMPONENT_MISSING.
+	#endif
+
+	// pFeatureLevelsIn parameter of the D3D11CreateDeviceAndSwapChain function.
+	// Create the Direct3D feature level enumeration used to describe the set of features targeted by the Direct3D device.
+	D3D_FEATURE_LEVEL pFeatureLevelsIn[] = {				// A pointer to an array of members selected from the enumerator-list defined in the D3D_FEATURE_LEVEL enumerated type.
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_10_1,
+		D3D_FEATURE_LEVEL_10_0,
+		D3D_FEATURE_LEVEL_9_3,
+		D3D_FEATURE_LEVEL_9_2,
+		D3D_FEATURE_LEVEL_9_1
+	};
+
+	// scd parameter of the D3D11CreateDeviceAndSwapChain function.
 	// Create the swap chain description structure used to describe the swap chain.
 	DXGI_SWAP_CHAIN_DESC scd = {};							// The swap chain description structure.
-
 	// Assign values to the swap chain description DXGI_SWAP_CHAIN_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
 	scd.BufferDesc.Width = ClientRectangleWidth;			// .Width:	A member of DXGI_MODE_DESC structure assigned a value specifying the resolution width.	Set the back buffer width (needed when going full screen).
 	scd.BufferDesc.Height = ClientRectangleHeight;			// .Height:	A member of DXGI_MODE_DESC structure assigned a value specifying the resolution height.	Set the back buffer height (needed when going full screen).
@@ -644,17 +664,9 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	// scd.SwapEffect										// Assigned a value that describes options for handling the contents of the presentation buffer after presenting a surface. A value of the DXGI_SWAP_EFFECT enumerated type.
 	scd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;		// Assigned a value that describes options for swap-chain behavior.															A value of the DXGI_SWAP_CHAIN_FLAG enumerated type, i.e., DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH: Enable an program to switch modes by calling IDXGISwapChain::ResizeTarget. When switching from windowed to full screen mode, the display mode (or monitor resolution) will be changed to match the dimensions of the program window. This allows switching to full screen via Alt-Enter.
 
-	// Create the Direct3D feature level enumeration used to describe the set of features targeted by the Direct3D device.
-	D3D_FEATURE_LEVEL pFeatureLevelsIn[] = {				// A pointer to an array of members selected from the enumerator-list defined in the D3D_FEATURE_LEVEL enumerated type.
-		D3D_FEATURE_LEVEL_11_1,
-		D3D_FEATURE_LEVEL_11_0,
-		D3D_FEATURE_LEVEL_10_1,
-		D3D_FEATURE_LEVEL_10_0,
-		D3D_FEATURE_LEVEL_9_3,
-		D3D_FEATURE_LEVEL_9_2,
-		D3D_FEATURE_LEVEL_9_1
-	};
-	D3D_FEATURE_LEVEL pFeatureLevelOut;						// The first element in an array of Direct3D driver types supported by the device created by the D3D11CreateDeviceAndSwapChain function.
+	// pFeatureLevelOut parameter of the D3D11CreateDeviceAndSwapChain function.
+	// The D3D11CreateDeviceAndSwapChain function returns a pointer to a D3D_FEATURE_LEVEL enumeration, which represents the first element in an array of feature levels supported by the device. Supply NULL as an input if you don't need to determine which feature level is supported.
+	D3D_FEATURE_LEVEL pFeatureLevelOut;
 
 	// D3D11CreateDeviceAndSwapChain function:
 	//   Creates a device that represents the display adapter and a swap chain used for rendering.
@@ -665,7 +677,7 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	//						D3D_DRIVER_TYPE_WARP		(implements a high-performance software rasterizer in software. A WARP driver is designed for speed and is useful for testing)
 	//						D3D_DRIVER_TYPE_SOFTWARE	(implements a low-performance software rasterizer in software, in which case the 3rd parameter is a handle to a DLL that implements the software rasterizer.
 	//	 3rd Parameter: (3) Conditionally NULL or, when the 2nd parameter (Direct3D driver type) is specified as D3D_DRIVER_TYPE_SOFTWARE, this parameter specifies a handle to a DLL that implements a software rasterizer.
-	//	 4th Parameter: (4) Conditionally NULL or,																						   this parameter specifies optional flags such as D3D11_CREATE_DEVICE_BGRA_SUPPORT, which is required for Direct2D interoperability with Direct3D resources.
+	//	 4th Parameter: (4) Conditionally NULL or,																						   this parameter specifies optional flags of the D3D11_CREATE_DEVICE_FLAG enumeration used to create the Direct3D 11 runtime layers that are used to create the device.
 	//	 5th Parameter: (5) An array of Direct3D feature levels, which determine the order of feature levels to attempt to create. If NULL is specified then a preset array of feature levels is used.
 	//  11th Parameter: (11) Direct3D feature level supported by the computer's display adapter, unless the 2nd parameter is specified as D3D_DRIVER_TYPE_WARP or D3D_DRIVER_TYPE_SOFTWARE, in which case this parameter potentially returns a higher feature level than what is supported by the computer's display adapter.
 	//						NULL is sufficient if both of the following two conditions are true:
@@ -683,7 +695,7 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	D3D11CreateDeviceAndSwapChain(NULL,						// A pointer to the display adapter to use when creating a device. Pass NULL to use the default display adapter, which is the first display adapter enumerated by IDXGIFactory1::EnumAdapters.
 		D3D_DRIVER_TYPE_HARDWARE,							// (2) The Direct3D driver type, which represents the Direct3D driver type to create.
 		NULL,												// (3) Conditionally NULL or a handle to a DLL that implements a software rasterizer.
-		D3D11_CREATE_DEVICE_BGRA_SUPPORT,					// (4) Conditionally NULL or optional flags describing parameters used to create the device: D3D11_CREATE_DEVICE_BGRA_SUPPORT is required for Direct2D interoperability with Direct3D resources.
+		DeviceFlags,										// (4) Conditionally NULL or optional flags of the D3D11_CREATE_DEVICE_FLAG enumeration used to create the Direct3D 11 runtime layers that are used to create the device.
 		pFeatureLevelsIn,									// (5) An array of Direct3D feature levels, which determine the order of feature levels to attempt to create.
 		ARRAYSIZE(pFeatureLevelsIn),						// This is the number of elements in the 5th parameter.
 		D3D11_SDK_VERSION,									// The SDK version; use D3D11_SDK_VERSION as D3D11CreateDeviceAndSwapChain is a D3D11 function.
@@ -1318,14 +1330,13 @@ int RenderFrame(void)
 		XMMATRIX matRotateY, matWorld, matView, matProjection, matTranslate;
 
 		// To support incremental changes to affected rendered objects, the following variables must be declared static to preserve their values though multiple calls to the RenderFrame function.
-		// XMConvertToRadians function:
-		//   Converts the size of an angle measured in degrees into one measured in radians.
-		static float Angle = XMConvertToRadians(1.0f);
-		static float Angle2 = XMConvertToRadians(1.0f);
+		static float Angle = 0.0f;							// The angle in radians (0 radians = 0 degrees).
+		static float Angle2 = 0.0f;							// The angle in radians (0 radians = 0 degrees).
 
 		// Define the world matrix, matWorld.
-		//   This matrix is updated each frame, causing the object to rotate.
-		Angle += XMConvertToRadians(0.05f);					// Angle of rotation in degrees, converted to radians, continuously increasing.
+		//   This matrix is updated each frame, causing the object to rotate clockwise.
+		// Increment Angle by 5% of 1 degree (5% of 0.0174532 radians). mod 360 degrees (mod 6.283185f radians) results in angles from 0 - 359 degrees then back to 0 degrees.
+		Angle = fmod(Angle + 0.0008727f, 6.283185f);
 		// XMMatrixRotationY function:
 		//   Builds a matrix that rotates around the y axis.
 		matRotateY = XMMatrixRotationY(Angle);				// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
@@ -1493,10 +1504,12 @@ int RenderFrame(void)
 
 		// Draw a second instance of the same object to the scene, offset from the first object, using different transformations than those used by the first instance of the object.
 		// The first instance of the object is drawn at the origin of world space, i.e., at (0, 0, 0). The second instance of the object is drawn at a different position, i.e., at (xWorld, yWorld, zWorld).
+		// The first instance of the object rotates clockwise.										   The second instance of the object rotates counterclockwise.
 		//
-		// Define a rotation matrix to transform the second instance of the object.
-		Angle2 -= XMConvertToRadians(0.05f);				// Angle of rotation in degrees, converted to radians, continuously decreasing.
-		matRotateY = XMMatrixRotationY(Angle2);				// Angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
+		// Define a rotation matrix to transform the second instance of the object counterclockwise.
+		// Decrement Angle2 by 5% of 1 degree (5% of 0.0174532 radians). mod 360 degrees (mod 6.283185f radians) results in angles from 359 - 0 degrees then back to 359 degrees.
+		Angle2 = fmod(Angle2 - 0.0008727f, 6.283185f);
+		matRotateY = XMMatrixRotationY(Angle2);				// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
 		object.ConstantBuffer.matRotate = matRotateY;		// The final rotation matrix is the product of all defined rotation matrices. Here, only matRotateY is defined.
 		//
 		// Define a translation matrix to transform the second instance of the object.

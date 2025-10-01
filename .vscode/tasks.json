@@ -1,0 +1,18 @@
+// filepath: .vscode/tasks.json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build with build.bat",
+            "type": "shell",
+            "command": "${workspaceFolder}\\.vscode\\build.bat", // D:\Users\rober\OneDrive\source\repos\DirectX\.vscode\build.bat
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        }
+    ]
+}
