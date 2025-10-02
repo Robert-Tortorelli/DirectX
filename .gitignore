@@ -352,18 +352,3 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-
-# Backup folder for Package Reference Convert tool in Visual Studio 2017
-MigrationBackup/
-/objRenderer/objRenderer (2025-06-08 test).cpp
-/objRenderer/objRenderer (2025-06-10 test).cpp
-/objRenderer/objRenderer - Copy (2025-05-21).cpp
-/objRenderer/objRenderer - Copy (2025-06-02 original).cpp
-/objRenderer/objRenderer - Copy (2025-06-08 original).cpp
-/objRenderer/objRenderer - Copy.cpp
-/objRenderer/objRenderer- test.cpp
-/objRenderer/objRenderer- test2.cpp
-/objRenderer/shaders - Copy.hlsl
-/objRenderer/shaders- test.hlsl
-/objRenderer/shaders- test2.hlsl
-/objRenderer/Source1.cpp
