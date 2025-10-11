@@ -22,6 +22,9 @@
 // Specify that the compiler include this header file only once when compiling source code files.
 #pragma once												// Automatically included by Visual Studio 2022 when creating a header file.
 
+// Windows Runtime Template Library (WRL) Header File.
+#include <wrl.h>											// Needed by the Microsoft::WRL::ComPtr smart pointer.
+
 // Standard Encapsulated Data and Functions for Manipulating String Data.
 #include <string>											// String class member functions stof, to_string, etc.
 
@@ -122,11 +125,11 @@ struct OBJECT {
 	} ConstantBuffer;
 
 	// GPU-side buffer data.
-	ID3D11Buffer* pVBuffer = nullptr;						// Pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the vertex buffer.
+	Microsoft::WRL::ComPtr<ID3D11Buffer> pVBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the vertex buffer.
 
-	ID3D11Buffer* pIBuffer = nullptr;						// Pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the index buffer.
+	Microsoft::WRL::ComPtr<ID3D11Buffer> pIBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the index buffer.
 
-	ID3D11Buffer* pCBuffer = nullptr;						// Pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the constant buffer.
+	Microsoft::WRL::ComPtr<ID3D11Buffer> pCBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the constant buffer.
 };
 
 // End: Structure Declarations for External Variables.

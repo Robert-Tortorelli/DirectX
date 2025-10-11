@@ -105,35 +105,36 @@ void ShutdownDirectX(void);
 // Using declarations are preferred to using directives.
 // Using declarations and directives must appear after their respective header file includes.
 // Consider grouping using statements into a namespace if they're used across multiple files.
+using Microsoft::WRL::ComPtr;								// The ComPtr smart pointer is a template class that provides automatic reference counting and resource management for COM objects.
 using namespace DirectX;									// The DirectX namespace is used to access the DirectX Direct3D and DirectXMath APIs.
 using namespace D2D1;										// The D2D1	   namespace is used to access the DirectX Direct2D API.
 
 // DirectX Global Interface Declarations: Direct3D
-IDXGISwapChain* swapchain = nullptr;						// Pointer to the swap chain interface.			The swap chain interface implements one or more surfaces (image-data objects) for storing rendered data before presenting it to an output. It is the series of buffer resources (front buffer, back buffers) which take turns being rendered on.
-ID3D11Device* dev = nullptr;								// Pointer to the device interface.				A device is the virtual representation of the computer's display adapter. It is used to access video memory and create other Direct3D COM objects, such as graphics and special effects.
-ID3D11DeviceContext* devcon = nullptr;						// Pointer to the device context interface.		A device context is responsible for managing the graphics pipeline. It control the rendering sequence and the process that translates 3D models into the final 2D image that appears on the screen.
+ComPtr<IDXGISwapChain> swapchain;							// Smart pointer to the swap chain interface.			The swap chain interface implements one or more surfaces (image-data objects) for storing rendered data before presenting it to an output. It is the series of buffer resources (front buffer, back buffers) which take turns being rendered on.
+ComPtr<ID3D11Device> dev;									// Smart pointer to the device interface.				A device is the virtual representation of the computer's display adapter. It is used to access video memory and create other Direct3D COM objects, such as graphics and special effects.
+ComPtr<ID3D11DeviceContext> devcon;							// Smart pointer to the device context interface.		A device context is responsible for managing the graphics pipeline. It control the rendering sequence and the process that translates 3D models into the final 2D image that appears on the screen.
 
-ID3D11Texture2D* pDepthBuffer = nullptr;					// Pointer to a 2D texture interface.			A 2D texture interface manages texel data, which is structured memory. In this case the 2D texture that serves as the depth-stencil surface.
-ID3D11DepthStencilView* depthbuffer = nullptr;				// Pointer to the depth-stencil view interface.	A depth-stencil view interface accesses a texture resource (via the depth-stencil surface interface, pDepthBuffer) during depth-stencil testing. The stencil buffer typically shares the same memory space as the depth buffer (z-buffer). The depth-stencil view interface created by this program will only interpret the depth-stencil surface as a depth buffer (z-buffer) rather than a depth-stencil buffer.
+ComPtr<ID3D11Texture2D> pDepthBuffer;						// Smart pointer to a 2D texture interface.				A 2D texture interface manages texel data, which is structured memory. In this case the 2D texture that serves as the depth-stencil surface.
+ComPtr<ID3D11DepthStencilView> depthbuffer;					// Smart pointer to the depth-stencil view interface.	A depth-stencil view interface accesses a texture resource (via the depth-stencil surface interface, pDepthBuffer) during depth-stencil testing. The stencil buffer typically shares the same memory space as the depth buffer (z-buffer). The depth-stencil view interface created by this program will only interpret the depth-stencil surface as a depth buffer (z-buffer) rather than a depth-stencil buffer.
 
-ID3D11Texture2D* pBackBuffer = nullptr;						// Pointer to a 2D texture interface.			A 2D texture interface manages texel data, which is structured memory. In this case for the back buffer texture interface.
-ID3D11RenderTargetView* backbuffer = nullptr;				// Pointer to the render target view interface. A render target view interface identifies the render target subresources (pBackBuffer) that can be accessed during rendering, in this case the back buffer.
+ComPtr<ID3D11Texture2D> pBackBuffer;						// Smart pointer to a 2D texture interface.				A 2D texture interface manages texel data, which is structured memory. In this case for the back buffer texture interface.
+ComPtr<ID3D11RenderTargetView> backbuffer;					// Smart pointer to the render target view interface.	A render target view interface identifies the render target subresources (pBackBuffer) that can be accessed during rendering, in this case the back buffer.
 
-ID3D11InputLayout* pLayout = nullptr;						// Pointer to the input-layout interface.		An input-layout interface holds a definition of how to feed vertex data that is laid out in memory into the input-assembler stage of the graphics pipeline.
-ID3D11VertexShader* pVS = nullptr;							// Pointer to the vertex shader interface.		A vertex shader interface manages an executable program (a vertex shader) that controls the vertex shader stage of the graphics pipeline.
-ID3D11PixelShader* pPS = nullptr;							// Pointer to the pixel shader interface.		A pixel  shader interface manages an executable program (a pixel shader)  that controls the pixel shader stage of the graphics pipeline.
+ComPtr<ID3D11InputLayout> pLayout;							// Smart pointer to the input-layout interface.			An input-layout interface holds a definition of how to feed vertex data that is laid out in memory into the input-assembler stage of the graphics pipeline.
+ComPtr<ID3D11VertexShader> pVS;								// Smart pointer to the vertex shader interface.		A vertex shader interface manages an executable program (a vertex shader) that controls the vertex shader stage of the graphics pipeline.
+ComPtr<ID3D11PixelShader> pPS;								// Smart pointer to the pixel shader interface.			A pixel  shader interface manages an executable program (a pixel shader)  that controls the pixel shader stage of the graphics pipeline.
 
-ID3D11ShaderResourceView* pTextureView = nullptr;			// Pointer to a shader resource view interface.	A shader resource view interface specifies the subresource a shader can access during rendering. In this case the texture image.
+ComPtr<ID3D11ShaderResourceView> pTextureView;				// Smart pointer to a shader resource view interface.	A shader resource view interface specifies the subresource a shader can access during rendering. In this case the texture image.
 
 // DirectX Global Interface Declarations: Direct2D
-ID2D1Factory* pD2DFactory = nullptr;						// Pointer to a factory interface.				The ID2D1Factory interface is the starting point for using Direct2D; it's what you use to create other Direct2D resources that you can use to draw or describe shapes.
-IDXGISurface* pDxgiSurface = nullptr;						// Pointer to a surface interface.				The IDXGISurface interface implements methods for image-data objects. An image-data object is a 2D section of memory, commonly called a surface.
-ID2D1RenderTarget* pD2DRenderTarget = nullptr;				// Pointer to a render target interface.		The ID2D1RenderTarget interface represents a target that can receive drawing commands. It is used to draw 2D graphics.
-ID2D1SolidColorBrush* pBrush = nullptr;						// Pointer to a solid color brush interface.	The ID2D1SolidColorBrush interface is used to paint areas with a solid color.
+ComPtr<ID2D1Factory> pD2DFactory;							// Smart pointer to a factory interface.				The ID2D1Factory interface is the starting point for using Direct2D; it's what you use to create other Direct2D resources that you can use to draw or describe shapes.
+ComPtr<IDXGISurface> pDxgiSurface;							// Smart pointer to a surface interface.				The IDXGISurface interface implements methods for image-data objects. An image-data object is a 2D section of memory, commonly called a surface.
+ComPtr<ID2D1RenderTarget> pD2DRenderTarget;					// Smart pointer to a render target interface.			The ID2D1RenderTarget interface represents a target that can receive drawing commands. It is used to draw 2D graphics.
+ComPtr<ID2D1SolidColorBrush> pBrush;						// Smart pointer to a solid color brush interface.		The ID2D1SolidColorBrush interface is used to paint areas with a solid color.
 
 // DirectX Global Interface Declarations: DirectWrite
-IDWriteFactory* pDWriteFactory = nullptr;					// Pointer to a factory interface.				The IDWriteFactory interface is the starting point for using DirectWrite. It is used to create other DirectWrite resources that you can use to draw text.
-IDWriteTextFormat* pTextFormat = nullptr;					// Pointer to a text format interface.			The IDWriteTextFormat interface specifies the font, size, and other text formatting information for text layout.
+ComPtr<IDWriteFactory> pDWriteFactory;						// Smart pointer to a factory interface.				The IDWriteFactory interface is the starting point for using DirectWrite. It is used to create other DirectWrite resources that you can use to draw text.
+ComPtr<IDWriteTextFormat> pTextFormat;						// Smart pointer to a text format interface.			The IDWriteTextFormat interface specifies the font, size, and other text formatting information for text layout.
 
 // End: DirectX Global Declarations.
 
@@ -245,8 +246,6 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 		return objReaderEnumRC;
 	}
 	// The objReaderEnum function terminated normally.
-
-	// End: 1. Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
 
 	// Initialize and prepare Direct3D for use.
 	if (int InitD3DRC = InitD3D(hWnd); InitD3DRC != 0)		// Call the InitD3D function and test whether its return value is nonzero, indicating an error.
@@ -700,10 +699,10 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 		ARRAYSIZE(pFeatureLevelsIn),						// This is the number of elements in the 5th parameter.
 		D3D11_SDK_VERSION,									// The SDK version; use D3D11_SDK_VERSION as D3D11CreateDeviceAndSwapChain is a D3D11 function.
 		&scd,												// "&scd" is the address of (and therefore a pointer to) a swap chain description structure that contains initialization parameters for the swap chain.
-		&swapchain,											// The newly created swap chain		object. "&swapchain" is the address of a pointer, "swapchain", to the swap chain	 interface that represents this object and that implements one or more surfaces for storing rendered data before presenting it to an output.
-		&dev,												// The newly created device			object. "&dev"		 is the address of a pointer, "dev",	   to the device		 interface that represents this object and that is the virtual representation of the computer's display adapter.
+		swapchain.GetAddressOf(),							// The newly created swap chain		object. "&swapchain" is the address of a pointer, "swapchain", to the swap chain	 interface that represents this object and that implements one or more surfaces for storing rendered data before presenting it to an output.
+		dev.GetAddressOf(),									// The newly created device			object. "&dev"		 is the address of a pointer, "dev",	   to the device		 interface that represents this object and that is the virtual representation of the computer's display adapter.
 		&pFeatureLevelOut,									// (11) The function returns &pFeatureLevelOut,	which is the address of (and therefore a pointer to) the first element in the array of Direct3D feature levels supported by the device.
-		&devcon);											// The newly created device context object. "&devcon",	 is the address of a pointer, "devcon",	   to the device context interface that represents this object and that is responsible for managing the graphics pipeline.
+		devcon.GetAddressOf());								// The newly created device context object. "&devcon",	 is the address of a pointer, "devcon",	   to the device context interface that represents this object and that is responsible for managing the graphics pipeline.
 
 	// End: 1. Create the device, the device context, and the swap chain with one back buffer.
 
@@ -730,8 +729,8 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	// ID3D11Device::CreateTexture2D member function:
 	//   Create the 2D texture array (in this case an array of one) that will serve as the depth-stencil surface.
 	dev->CreateTexture2D(&texd,								// "&texd" is the address of (and therefore a pointer to) the 2D texture description structure used to describe the 2D texture array (in this case an array of one) that will serve as the depth-stencil surface.
-		NULL,												// A pointer to the array of subresource initialization data structures that describe subresources for the 2D texture resource. If the resource is multisampled, this parameter must be NULL because multisampled resources cannot be initialized with data when they are created.
-		&pDepthBuffer);										// The newly created 2D texture array. &pDepthBuffer is the address of a pointer, pDepthBuffer, to the 2D texture interface for the created textures.
+		nullptr,											// A pointer to the array of subresource initialization data structures that describe subresources for the 2D texture resource. If the resource is multisampled, this parameter must be NULL because multisampled resources cannot be initialized with data when they are created.
+		pDepthBuffer.GetAddressOf());						// The newly created 2D texture array. &pDepthBuffer is the address of a pointer, pDepthBuffer, to the 2D texture interface for the created textures.
 
 	// Create the depth-stencil view description structure used to describe the depth-stencil view.
 	D3D11_DEPTH_STENCIL_VIEW_DESC dsvd = {};				// The depth-stencil view description structure.
@@ -742,10 +741,9 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 
 	// ID3D11Device::CreateDepthStencilView member function:
 	//   Create a depth-stencil view for accessing resource data.
-	dev->CreateDepthStencilView(pDepthBuffer,				// A pointer to the 2D texture interface for the created textures, an array of (in this case an array of one) textures that will serve as the depth-stencil surface.
+	dev->CreateDepthStencilView(pDepthBuffer.Get(),			// A pointer to the 2D texture interface for the created textures, an array of (in this case an array of one) textures that will serve as the depth-stencil surface.
 		&dsvd,												// "&dsvd" is the address of (and therefore a pointer to) the depth-stencil view description structure used to describe the depth-stencil view interface.
-		&depthbuffer);										// The newly created depth-stencil view. "&depthbuffer" is the address of a pointer, "depthbuffer", to the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
-	pDepthBuffer->Release();								// Decrements the reference count for an interface on a COM object. If the reference count = 0, then the interface pointer is freed. If there are no other interface pointers, then the COM object is freed.
+		depthbuffer.GetAddressOf());						// The newly created depth-stencil view. "&depthbuffer" is the address of a pointer, "depthbuffer", to the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
 
 	// End: 2. Create the depth-stencil buffer (depth buffer (z-buffer)).
 
@@ -759,14 +757,13 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	//   Access one of the swap-chain's back buffers (in this program only one back buffer is created).
 	swapchain->GetBuffer(0,									// "0" indicates the first back buffer is accessed (in this program only one back buffer is created).
 		__uuidof(ID3D11Texture2D),							// The type of interface used to manipulate the back buffer; identifying the interface by a reference to its universally unique identifier (UUID) (in this case, ID3D11Texture2D).
-		(LPVOID*)&pBackBuffer);								// The accessed back buffer object. &pBackBuffer is the address of a pointer, pBackBuffer, to the 2D texture interface that represents this object and that will serve as the back buffer texture interface.
+		(LPVOID*)pBackBuffer.GetAddressOf());				// The accessed back buffer object. &pBackBuffer is the address of a pointer, pBackBuffer, to the 2D texture interface that represents this object and that will serve as the back buffer texture interface.
 
 	// ID3D11Device::CreateRenderTargetView member function:
 	//   Creates a render-target view for accessing resource data.
-	dev->CreateRenderTargetView(pBackBuffer,				// A pointer to the 2D texture interface that will serve as the render target, in this case one back buffer texture interface (in this program only one back buffer is created).
+	dev->CreateRenderTargetView(pBackBuffer.Get(),			// A pointer to the 2D texture interface that will serve as the render target, in this case one back buffer texture interface (in this program only one back buffer is created).
 		NULL,												// A pointer to the render target view description structure that represents a render target view description. Setting this parameter to NULL creates a view that accesses all of the subresources in mipmap level 0.
-		&backbuffer);										// The newly created render-target view. "&backbuffer" is the address of a pointer, "backbuffer", to the render target view interface for the render target, in this case one back buffer texture interface (in this program only one back buffer is created).
-	pBackBuffer->Release();									// Decrements the reference count for an interface on a COM object. If the reference count = 0, then the interface pointer is freed. If there are no other interface pointers, then the COM object is freed.
+		backbuffer.GetAddressOf());							// The newly created render-target view. "&backbuffer" is the address of a pointer, "backbuffer", to the render target view interface for the render target, in this case one back buffer texture interface (in this program only one back buffer is created).
 
 	// End: 3. Complete setting up the back buffer.
 
@@ -778,8 +775,8 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	//   Bind (set) the render target (back buffer) and the depth buffer (z-buffer) to the output-merger stage of the graphics pipeline.
 	//   Depth buffering can be disabled by changing "devcon->OMSetRenderTargets(1, &backbuffer, depthbuffer)" to "devcon->OMSetRenderTargets(1, &backbuffer, NULL)".
 	devcon->OMSetRenderTargets(1,							// Number of render targets to bind.
-		&backbuffer,										// "&backbuffer" is the address of a pointer, "backbuffer", to the render target view interface for the render target, in this case one back buffer texture interface (in this program only one back buffer is created).
-		depthbuffer);										// A pointer to the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
+		backbuffer.GetAddressOf(),							// "&backbuffer" is the address of a pointer, "backbuffer", to the render target view interface for the render target, in this case one back buffer texture interface (in this program only one back buffer is created).
+		depthbuffer.Get());									// A pointer to the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
 
 	// End: 4. Set the render target (back buffer) and the depth buffer (z-buffer) to the output-merger stage of the graphics pipeline.
 
@@ -844,7 +841,7 @@ void InitD2D_DW(void)
 	// D2D1CreateFactory function:
 	//	 Creates a factory object that can be used to create Direct2D resources.
 	D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED,	// The threading model of the factory and the resources it creates: D2D1_FACTORY_TYPE_SINGLE_THREADED indicates they will be used from a single thread, unless the program provides access locking (it does not).
-		&pD2DFactory);										// The newly created factory object. &pD2DFactory is the address of a pointer, pD2DFactory, to the factory interface.
+		pD2DFactory.GetAddressOf());						// The newly created factory object. &pD2DFactory is the address of a pointer, pD2DFactory, to the factory interface.
 
 	// IUnknown::QueryInterface member function:
 	//   Queries a COM object (in this case, pBackBuffer, the 2D texture interface for the back buffer texture interface) for a pointer (pDxgiSurface) to one of its interfaces (in this case, the surface interface); identifying the interface by a reference to its interface identifier (IID) (in this case, __uuidof(IDXGISurface), a universally unique identifier (UUID)).
@@ -853,7 +850,7 @@ void InitD2D_DW(void)
 	//     Runtimes earlier than Direct3D 12 automatically create an IDXGISurface surface interface when they create a Direct3D resource object that represents a surface.
 	//     IDXGISurface surface interfaces are not supported in Direct3D 12.
 	pBackBuffer->QueryInterface(__uuidof(IDXGISurface),		// __uuidof(IDXGISurface) is the universally unique identifier (UUID) that identifies the IDXGISurface interface, and the interface identifier (IID) of the interface being queried for (in this case the back buffer texture interface is being queried for its surface interface).
-		(void**)&pDxgiSurface);								// The pointer to the requested interface, returned from the query. &pDxgiSurface is the address of a pointer, pDxgiSurface, to the requested interface (__uuidof(IDXGISurface) (in this case the surface interface of the back buffer texture interface). Upon successful return, *pDxgiSurface (the dereferenced address) contains a pointer to the requested interface.
+		(void**)pDxgiSurface.GetAddressOf());				// The pointer to the requested interface, returned from the query. &pDxgiSurface is the address of a pointer, pDxgiSurface, to the requested interface (__uuidof(IDXGISurface) (in this case the surface interface of the back buffer texture interface). Upon successful return, *pDxgiSurface (the dereferenced address) contains a pointer to the requested interface.
 
 	// RenderTargetProperties function:
 	//   Creates a D2D1_RENDER_TARGET_PROPERTIES structure, which contains rendering options (hardware or software), pixel format (via the PixelFormat function), DPI information, remoting options, and Direct3D support requirements for a render target.
@@ -874,10 +871,9 @@ void InitD2D_DW(void)
 	//     The D3D11CreateDeviceAndSwapChain function (Direct3D) is also used in this program.
 	//     Its 4th parameter must specify the flag D3D11_CREATE_DEVICE_BGRA_SUPPORT for Direct2D interoperability with Direct3D resources.
 	//     Otherwise, the CreateDxgiSurfaceRenderTarget member function (Direct2D) returns the error _INVALIDARG, pD2DRenderTarget remains NULL and, although the program continues, any subsequent attempt to call pD2DRenderTarget's member functions (e.g., pD2DRenderTarget->CreateSolidColorBrush()), terminates this program because pD2DRenderTarget is NULL.
-	pD2DFactory->CreateDxgiSurfaceRenderTarget(pDxgiSurface,// pDxgiSurface is a pointer to the surface interface (in this case the surface interface of the back buffer texture interface) to which the render target will draw. It is assigned value by the QueryInterface member function.
-		&D2Drtp,											// &D2Drtp is the address of (and therefore a pointer to) the Direct2D render target properties structure. It is the return value of the RenderTargetProperties function.
-		&pD2DRenderTarget);									// The newly created render target object. &pD2DRenderTarget is the address of a pointer, pD2DRenderTarget, to the render target interface that represents this object.
-	pDxgiSurface->Release();								// Decrements the reference count for an interface on a COM object. If the reference count = 0, then the interface pointer is freed. If there are no other interface pointers, then the COM object is freed.
+	pD2DFactory->CreateDxgiSurfaceRenderTarget(pDxgiSurface.Get(),	// pDxgiSurface is a pointer to the surface interface (in this case the surface interface of the back buffer texture interface) to which the render target will draw. It is assigned value by the QueryInterface member function.
+		&D2Drtp,													// &D2Drtp is the address of (and therefore a pointer to) the Direct2D render target properties structure. It is the return value of the RenderTargetProperties function.
+		pD2DRenderTarget.GetAddressOf());							// The newly created render target object. &pD2DRenderTarget is the address of a pointer, pD2DRenderTarget, to the render target interface that represents this object.
 
 	// ID2D1RenderTarget::CreateSolidColorBrush member function
 	//   Creates a new ID2D1SolidColorBrush brush object that has the specified color and a base opacity of 1.0f.
@@ -901,16 +897,16 @@ void InitD2D_DW(void)
 		//         Static members are shared among all instances of the class and can be accessed using the class name followed by the scope resolution operator ::.
 		//       In summary, ColorF(ColorF::White) creates a new instance of the ColorF class, initialized with the predefined color value White. This is equivalent to creating a color object with the color white.
 		ColorF(ColorF::White),								// The red, green, blue, and alpha values of the brush's color. In this case, the color is white (fully opaque).
-		&pBrush);											// The newly created ID2D1SolidColorBrush brush object. &pBrush is the address of a pointer, pBrush, to the ID2D1SolidColorBrush brush interface that represents this object.
+			pBrush.GetAddressOf());							// The newly created ID2D1SolidColorBrush brush object. &pBrush is the address of a pointer, pBrush, to the ID2D1SolidColorBrush brush interface that represents this object.
 
 	// DWriteCreateFactory function:
 	//   Creates a DirectWrite factory object that is used for subsequent creation of individual DirectWrite objects; identifying the type of DirectWrite factory object to be created by a reference to a DirectWrite factory interface's globally unique identifier (GUID) (in this case, __uuidof(IDWriteFactory), a universally unique identifier (UUID)).
 	//   In addition to the IDWriteFactory interface, a IDWriteFactory1 interface or a IDWriteFactory2 interface may be referenced. These interfaces provide additional functionality and improvements over the original IDWriteFactory interface.
 	//   A GUID is used here as a specific type of UUID in the context of COM programming to identify objects, while a UUID is a general-purpose unique identifier used across various systems and applications.
 	//   A GUID may be used in various other contexts, not limited to COM programming. For example, it can be used to identify database records, components, or any other entities that require a unique identifier.
-	DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,			// DWRITE_FACTORY_TYPE_SHARED indicates that the DirectWrite factory is a shared factory and that it allows for the reuse of cached font data across multiple in-process components.
-		__uuidof(IDWriteFactory),							// __uuidof(IDWriteFactory) is the universally unique identifier (UUID) that identifies the type of factory interface used to create the DirectWrite factory object.
-		reinterpret_cast<IUnknown**>(&pDWriteFactory));		// The newly created DirectWrite factory object. &pDWriteFactory is the address of a pointer, pDWriteFactory, to the DirectWrite factory interface that represents this object. reinterpret_cast is used to convert the type of the pointer to IUnknown**, which is the base interface for all COM objects.
+	DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,						// DWRITE_FACTORY_TYPE_SHARED indicates that the DirectWrite factory is a shared factory and that it allows for the reuse of cached font data across multiple in-process components.
+		__uuidof(IDWriteFactory),										// __uuidof(IDWriteFactory) is the universally unique identifier (UUID) that identifies the type of factory interface used to create the DirectWrite factory object.
+		reinterpret_cast<IUnknown**>(pDWriteFactory.GetAddressOf()));	// The newly created DirectWrite factory object. &pDWriteFactory is the address of a pointer, pDWriteFactory, to the DirectWrite factory interface that represents this object. reinterpret_cast is used to convert the type of the pointer to IUnknown**, which is the base interface for all COM objects.
 
 	// IDWriteFactory::CreateTextFormat member function:
 	//   Creates a text format object used for text layout.
@@ -922,7 +918,7 @@ void InitD2D_DW(void)
 		DWRITE_FONT_STRETCH_NORMAL,							// A value that indicates the font stretch for the text object created by this method.
 		24,													// The logical size of the font in DIP ("device-independent pixel") units. A DIP equals 1/96 inch.
 		L"en-us",											// An array of characters that contains the locale name.
-		&pTextFormat);										// The newly created text format object. &pTextFormat is the address of a pointer, pTextFormat, to the text format interface that represents this object.
+		pTextFormat.GetAddressOf());						// The newly created text format object. &pTextFormat is the address of a pointer, pTextFormat, to the text format interface that represents this object.
 
 	// End: InitD2D_DW function
 }
@@ -985,11 +981,11 @@ void InitPipeline(void)
 	dev->CreateVertexShader(VS->GetBufferPointer(),			// A pointer to the compiled vertex shader.
 		VS->GetBufferSize(),								// Size of the compiled vertex shader.
 		NULL,												// An optional pointer to a class linkage ID3D11ClassLinkage interface.
-		&pVS);												// The newly created vertex shader object. &pVS is the address of a pointer, pVS, to the vertex shader interface that represents this object.
+		pVS.GetAddressOf());								// The newly created vertex shader object. &pVS is the address of a pointer, pVS, to the vertex shader interface that represents this object.
 
 	// ID3D11DeviceContext::VSSetShader member function:
 	//   Set the vertex shader object to the vertex shader stage of the graphics pipeline.
-	devcon->VSSetShader(pVS,								// Pointer to the vertex shader interface that represents the vertex shader object.
+	devcon->VSSetShader(pVS.Get(),							// Pointer to the vertex shader interface that represents the vertex shader object.
 		0,													// An optional pointer to an array of class-instance ID3D11ClassInstance interfaces.
 		0);													// The number of class-instance interfaces in the array.
 
@@ -998,11 +994,11 @@ void InitPipeline(void)
 	dev->CreatePixelShader(PS->GetBufferPointer(),			// A pointer to the compiled pixel shader.
 		PS->GetBufferSize(),								// Size of the compiled pixel shader.
 		NULL,												// An optional pointer to a class linkage ID3D11ClassLinkage interface. 
-		&pPS);												// The newly created pixel shader object. &pPS is the address of a pointer, pPS, to the pixel shader interface that represents this object.
+		pPS.GetAddressOf());								// The newly created pixel shader object. &pPS is the address of a pointer, pPS, to the pixel shader interface that represents this object.
 
 	// ID3D11DeviceContext::PSSetShader member function:
 	//   Set the pixel shader object to the pixel shader stage of the graphics pipeline.
-	devcon->PSSetShader(pPS,								// Pointer to the pixel shader interface that represents the pixel shader object.
+	devcon->PSSetShader(pPS.Get(),							// Pointer to the pixel shader interface that represents the pixel shader object.
 		0,													// An optional pointer to an array of class-instance ID3D11ClassInstance interfaces.
 		0);													// The number of class-instance interfaces in the array.
 
@@ -1050,11 +1046,11 @@ void InitPipeline(void)
 		3,													// The number of input data types in the array, in this case 2 (POSITION and NORMAL), used to define the input-layout object.
 		VS->GetBufferPointer(),								// Pointer to the compiled shader.
 		VS->GetBufferSize(),								// Size of the compiled shader.
-		&pLayout);											// The newly created input-layout object. &pLayout is the address of a pointer, pLayout, to the input-layout interface that represents this object.
+		pLayout.GetAddressOf());							// The newly created input-layout object. &pLayout is the address of a pointer, pLayout, to the input-layout interface that represents this object.
 
 	// ID3D11DeviceContext::IASetInputLayout member function:
 	//   Set the input-layout object to the input-assembler stage of the graphics pipeline.
-	devcon->IASetInputLayout(pLayout);						// Pointer to the input-layout interface.
+	devcon->IASetInputLayout(pLayout.Get());				// Pointer to the input-layout interface.
 
 	// End: 2. Create the input-layout object and set it to the input-assembler stage of the graphics pipeline.
 
@@ -1107,13 +1103,13 @@ void InitPipeline(void)
 		//   Create the buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the constant buffer object.
 		dev->CreateBuffer(&bd,								// A pointer to a D3D11_BUFFER_DESC structure that describes the buffer, in this case a constant buffer as per bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER.
 			NULL,											// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bd.Usage is D3D11_USAGE_IMMUTABLE).
-			&object.pCBuffer);								// The newly created constant buffer object. &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this object.
+			object.pCBuffer.GetAddressOf());				// The newly created constant buffer object. &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this object.
 
 		// ID3D11DeviceContext::VSSetConstantBuffers member function:
 		//   Set the constant buffer object to the vertex shader stage of the graphics pipeline.
 		devcon->VSSetConstantBuffers(0,						// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
 			1,												// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
-			&object.pCBuffer);								// &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this constant buffer object.
+			object.pCBuffer.GetAddressOf());				// &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this constant buffer object.
 
 		// End: 3. Create the constant buffer object and set it to the vertex shader stage of the graphics pipeline.
 	}
@@ -1163,14 +1159,14 @@ int InitGraphics(void)
 		//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the vertex buffer object.
 		dev->CreateBuffer(&bdBufferVertex,					// A pointer to a buffer resource description structure that describes the buffer, in this case the vertex buffer, as per bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER.
 			NULL,											// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferVertex.Usage is D3D11_USAGE_IMMUTABLE).
-			&object.pVBuffer);								// The newly created vertex buffer object. &pVBuffer is the address of a pointer, pVBuffer, to the buffer interface that represents this object.
+			object.pVBuffer.GetAddressOf());				// The newly created vertex buffer object. &pVBuffer is the address of a pointer, pVBuffer, to the buffer interface that represents this object.
 
 		// Assign the vertex attributes by copying them from array variable OurVertices to the vertex buffer (pVBuffer).
 		// ID3D11DeviceContext::Map member function:
 		//   Mapping a buffer allows us to access it.
 		//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
 		//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
-		devcon->Map(object.pVBuffer,						// A pointer to the vertex buffer interface.
+		devcon->Map(object.pVBuffer.Get(),					// A pointer to the vertex buffer interface.
 			NULL,											// Index number of the subresource.
 			D3D11_MAP_WRITE_DISCARD,						// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
 			NULL,											// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
@@ -1183,7 +1179,7 @@ int InitGraphics(void)
 			bdBufferVertex.ByteWidth);						// Number of bytes to copy, in this case the size of the vertex buffer in bytes.
 		// D3D11DeviceContext::Unmap member function:
 		//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
-		devcon->Unmap(object.pVBuffer,						// A pointer to the vertex buffer interface.
+		devcon->Unmap(object.pVBuffer.Get(),				// A pointer to the vertex buffer interface.
 			NULL);											// A subresource to be unmapped.
 
 		// End: 2. Create the next vertex buffer (pVBuffer) and assign values to it from the array variable OurVertices.
@@ -1202,14 +1198,14 @@ int InitGraphics(void)
 		//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the index buffer object.
 		dev->CreateBuffer(&bdBufferIndex,					// A pointer to a buffer resource description structure that describes the buffer, in this case an index buffer, as per bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER.
 			NULL,											// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferIndex.Usage is D3D11_USAGE_IMMUTABLE).
-			&object.pIBuffer);								// The newly created index buffer object. &pIBuffer is the address of a pointer, pIBuffer, to the buffer interface that represents this object.
+			object.pIBuffer.GetAddressOf());				// The newly created index buffer object. &pIBuffer is the address of a pointer, pIBuffer, to the buffer interface that represents this object.
 
 		// Assign the index information by copying it from array variable OurIndices to the index buffer (pIBuffer).
 		// ID3D11DeviceContext::Map member function:
 		//   Mapping a buffer allows us to access it.
 		//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
 		//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
-		devcon->Map(object.pIBuffer,						// A pointer to the index buffer interface.
+		devcon->Map(object.pIBuffer.Get(),					// A pointer to the index buffer interface.
 			NULL,											// Index number of the subresource.
 			D3D11_MAP_WRITE_DISCARD,						// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
 			NULL,											// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
@@ -1222,7 +1218,7 @@ int InitGraphics(void)
 			bdBufferIndex.ByteWidth);						// Number of bytes to copy, in this case the size of the index buffer in bytes.
 		// D3D11DeviceContext::Unmap member function:
 		//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
-		devcon->Unmap(object.pIBuffer,						// A pointer to the index buffer interface.
+		devcon->Unmap(object.pIBuffer.Get(),				// A pointer to the index buffer interface.
 			NULL);											// A subresource to be unmapped.
 
 		// End: 3. Create the next index buffer (pIBuffer) and assign values to it from the array variable OurIndices.
@@ -1234,18 +1230,18 @@ int InitGraphics(void)
 
 	// DirectX::CreateWICTextureFromFile function:
 	//   Loads a WIC-supported bitmap file from disk, creates a Direct3D 11 resource from it, and optionally a Direct3D 11 shader resource view.
-	CreateWICTextureFromFile(dev,							// A pointer to the device interface.
+	CreateWICTextureFromFile(dev.Get(),						// A pointer to the device interface.
 		L"Wood.png",										// The filename of the texture image file.
 		NULL,												// NULL, as in most use cases for rendering you only need the shader resource view interface (the parameter below).
 															// Otherwise, you would specify &pTexture:
 															// &pTexture	 is the address of a pointer, pTexture,		to the resource				interface for the resource	  created, in this case a texture image.
-		&pTextureView);										// &pTextureView is the address of a pointer, pTextureView, to the shader resource view interface for the subresource created, in this case a texture image.
+		pTextureView.GetAddressOf());						// &pTextureView is the address of a pointer, pTextureView, to the shader resource view interface for the subresource created, in this case a texture image.
 
 	// ID3D11DeviceContext::PSSetShaderResources member function:
 	//   Bind an array of shader resources to the pixel shader stage.
 	devcon->PSSetShaderResources(0,							// Index into the device's zero-based array (in this case an array of one) to begin setting shader resources to.
 		1,													// Number of shader resources to set.
-		&pTextureView);										// &pTextureView is the address of a pointer, pTextureView, to the array of (in this case an array of one) shader resource view interfaces for the subresources created, in this case a texture image.
+		pTextureView.GetAddressOf());						// &pTextureView is the address of a pointer, pTextureView, to the array of (in this case an array of one) shader resource view interfaces for the subresources created, in this case a texture image.
 
 	// End: 4. Create the texture image from an image file.
 
@@ -1269,7 +1265,7 @@ int InitGraphics(void)
 //
 //       6. Render the objects.
 //
-//     7. Switch the back buffer and the front buffer.
+//       7. Switch the back buffer and the front buffer.
 int RenderFrame(void)
 {
 
@@ -1286,13 +1282,13 @@ int RenderFrame(void)
 	float color[4] = { 0.0f, 0.2f, 0.4f, 1.0f };			// A 4-component array that represents the color using RGBA color values. RGBA color values are an extension of RGB color values, with an A (alpha channel) value added that specifies the opacity of a color. The alpha channel value is a number between 0.0 (fully transparent) and 1.0 (fully opaque). RGBA color values are specified as (red, green, blue, alpha).
 	// ID3D11DeviceContext::ClearRenderTargetView member function:
 	//   Set all the elements in a render target to one value.
-	devcon->ClearRenderTargetView(backbuffer,				// A pointer to the render target view interface for the render target, in this case one back buffer texture interface (in this program only one back buffer is created).
+	devcon->ClearRenderTargetView(backbuffer.Get(),			// A pointer to the render target view interface for the render target, in this case one back buffer texture interface (in this program only one back buffer is created).
 		color);												// A 4-component array that represents the color to fill the render target with.
 
 	// Clear the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
 	// ID3D11DeviceContext::ClearDepthStencilView member function:
 	//   Clear the depth-stencil resource.
-	devcon->ClearDepthStencilView(depthbuffer,				// A pointer to the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
+	devcon->ClearDepthStencilView(depthbuffer.Get(),		// A pointer to the depth-stencil view interface, which effectively is the depth buffer (z-buffer).
 		D3D11_CLEAR_DEPTH,									// Flag that identifies the type of data to clear. A value of the D3D11_CLEAR_FLAG enumerated type, i.e., D3D11_CLEAR_DEPTH: Clear the depth buffer (z-buffer), using fast clear if possible, then place the resource in a compressed state.
 		1.0f,												// Clear the depth buffer (z-buffer) with this value. This value will be clamped between 0 and 1.
 		0);													// Clear the stencil buffer with this value.
@@ -1455,14 +1451,14 @@ int RenderFrame(void)
 		//       colors :	[col0] [col1] [col2] ...
 		devcon->IASetVertexBuffers(0,						// The first input slot for binding. The first vertex buffer is explicitly bound to the start slot; this causes each additional vertex buffer in the array to be implicitly bound to each subsequent input slot.
 			1,												// The number of vertex buffers in the array.
-			&object.pVBuffer,								// &pVBuffer is the address of a pointer, pVBuffer, to an array of (in this case an array of one) vertex buffer interfaces.
+			object.pVBuffer.GetAddressOf(),					// &pVBuffer is the address of a pointer, pVBuffer, to an array of (in this case an array of one) vertex buffer interfaces.
 			&stride,										// &stride is the address of stride, and therefore a pointer to the array of (in this case an array of one) stride values (one stride value for each buffer in the vertex buffer array).
 			&offset);										// &offset is the address of offset, and therefore a pointer to the array of (in this case an array of one) offset values (one offset value for each buffer in the vertex buffer array).
 
 		// Specify the index buffers to use when drawing.
 		// ID3D11DeviceContext::IASetIndexBuffer member function:
 		//   Set the index buffer to the input-assembler stage of the graphics pipeline.
-		devcon->IASetIndexBuffer(object.pIBuffer, // A pointer, pIBuffer, to the index buffer interface.
+		devcon->IASetIndexBuffer(object.pIBuffer.Get(),		// A pointer, pIBuffer, to the index buffer interface.
 			DXGI_FORMAT_R32_UINT,							// A value of the DXGI_FORMAT enumerated type, i.e., DXGI_FORMAT_R32_UINT: A single-component, 32-bit unsigned-integer format that supports 32 bits for the red channel.
 			0);												// The offset (in bytes) from the start of the index buffer to the first index to use.
 
@@ -1488,7 +1484,7 @@ int RenderFrame(void)
 		//   The CPU copies data from memory				  to a subresource created in non-mappable memory.
 		//   Specifically:
 		//   The CPU copies data from the C++ constant buffer to the HLSL constant buffer used by the GPU's vertex shader.
-		devcon->UpdateSubresource(object.pCBuffer,			// A pointer to the destination resource, in this case the constant buffer interface.
+		devcon->UpdateSubresource(object.pCBuffer.Get(),	// A pointer to the destination resource, in this case the constant buffer interface.
 			0,												// A zero-based index that identifies the destination subresource.
 			0,												// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
 			&object.ConstantBuffer,							// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
@@ -1530,7 +1526,7 @@ int RenderFrame(void)
 		object.ConstantBuffer.matFinal = matWorld * matView * matProjection;
 		//
 		// Prepare to draw the second instance of the object using the updated constant buffer.
-		devcon->UpdateSubresource(object.pCBuffer,			// A pointer to the destination resource, in this case the constant buffer interface.
+		devcon->UpdateSubresource(object.pCBuffer.Get(),	// A pointer to the destination resource, in this case the constant buffer interface.
 			0,												// A zero-based index that identifies the destination subresource.
 			0,												// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
 			&object.ConstantBuffer,							// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
@@ -1589,9 +1585,9 @@ void RenderText(const wchar_t* pBannerText)					// pBannerText is a pointer to t
 	//   Draws the specified text using the format information provided by an IDWriteTextFormat object.
 	pD2DRenderTarget->DrawText(pBannerText,					// A pointer to an array of Unicode characters to draw.
 		wcslen(pBannerText),								// The number of characters to draw.
-		pTextFormat,										// A pointer an object that describes formatting details of the text to draw, such as the font, the font size, and flow direction.
+		pTextFormat.Get(),									// A pointer an object that describes formatting details of the text to draw, such as the font, the font size, and flow direction.
 		&layoutRect,										// The size and position of the area in which the text is drawn.
-		pBrush);											// A pointer to the brush used to paint the text.
+		pBrush.Get());										// A pointer to the brush used to paint the text.
 
 	// ID2D1RenderTarget::EndDraw member function:
 	//   Ends drawing operations on the render target and indicates the current error state and associated tags.
@@ -1723,8 +1719,6 @@ INT_PTR CALLBACK InputTextDlgProc(HWND hDlg,				// The HWND handle for the dialo
 // ShutdownDirectX function: Definition
 //   This function performs an orderly termination of DirectX.
 //     1. Switch to windowed mode.
-//
-//     2. Release DirectX resources.
 void ShutdownDirectX(void)
 {
 	//***
@@ -1740,131 +1734,6 @@ void ShutdownDirectX(void)
 		NULL);												// If you specify FALSE as the first parameter, then you must set this parameter to NULL.
 
 	// End: 1. Switch to windowed mode.
-
-	//***
-	// 2. Release DirectX resources.
-	//    Check that all pointers are valid and have been initialized before releasing them. If any of these pointers are nullptr, calling Release on them will result in undefined behavior.
-	//    Set all pointers to nullptr after releasing them.
-	//      This is a good practice for several reasons:
-	//      1. Avoiding Dangling Pointers:		 After releasing a COM object, the pointer still holds the address of the released memory.
-	//											 If you try to use this pointer, it can lead to undefined behavior or crashes.
-	//											 Setting it to nullptr ensures that any subsequent use of the pointer will be safe, as dereferencing a nullptr will result in a predictable crash or error.
-	//		2. Double Release Prevention:		 If a pointer is not set to nullptr after releasing, there is a risk of releasing the same pointer again, which can lead to serious errors.
-	//											 By setting it to nullptr, you can easily check if the pointer has already been released.
-	//		3. Code Readability and Maintenance: It makes the code more readable and easier to maintain. Programmers can quickly understand that the pointer has been released and should not be used anymore.
-	//***
-
-	// IUnknown::Release member function:
-	//   Decrement the reference count for an interface on a COM object. If the reference count = 0, then the interface pointer is freed. If there are no other interface pointers, then the COM object is freed.
-	//
-	
-	// DirectX Global Interface Declarations: Direct3D
-	if (swapchain)
-	{
-		swapchain->Release();
-		swapchain = nullptr;
-	}
-	if (dev)
-	{
-		dev->Release();
-		dev = nullptr;
-	}
-	if (devcon)
-	{
-		devcon->Release();
-		devcon = nullptr;
-	}
-	if (pDepthBuffer)
-	{
-		pDepthBuffer->Release();
-		pDepthBuffer = nullptr;
-	}
-	if (depthbuffer)
-	{
-		depthbuffer->Release();
-		depthbuffer = nullptr;
-	}
-	if (pBackBuffer)
-	{
-		pBackBuffer->Release();
-		pBackBuffer = nullptr;
-	}
-	if (backbuffer)
-	{
-		backbuffer->Release();
-		backbuffer = nullptr;
-	}
-	if (pLayout)
-	{
-		pLayout->Release();
-		pLayout = nullptr;
-	}
-	if (pVS)
-	{
-		pVS->Release();
-		pVS = nullptr;
-	}
-	if (pPS)
-	{
-		pPS->Release();
-		pPS = nullptr;
-	}
-	if (OurObjects[OurObjectsi].pVBuffer)
-	{
-		OurObjects[OurObjectsi].pVBuffer->Release();
-		OurObjects[OurObjectsi].pVBuffer = nullptr;
-	}
-	if (OurObjects[OurObjectsi].pIBuffer)
-	{
-		OurObjects[OurObjectsi].pIBuffer->Release();
-		OurObjects[OurObjectsi].pIBuffer = nullptr;
-	}
-	if (OurObjects[OurObjectsi].pCBuffer)
-	{
-		OurObjects[OurObjectsi].pCBuffer->Release();
-		OurObjects[OurObjectsi].pCBuffer = nullptr;
-	}
-	if (pTextureView)
-	{
-		pTextureView->Release();
-		pTextureView = nullptr;
-	}
-
-	// DirectX Global Interface Declarations: Direct2D
-	if (pD2DFactory)
-	{
-		pD2DFactory->Release();
-		pD2DFactory = nullptr;
-	}
-	if (pDxgiSurface)
-	{
-		pDxgiSurface->Release();
-		pDxgiSurface = nullptr;
-	}
-	if (pD2DRenderTarget)
-	{
-		pD2DRenderTarget->Release();
-		pD2DRenderTarget = nullptr;
-	}
-	if (pBrush)
-	{
-		pBrush->Release();
-		pBrush = nullptr;
-	}
-
-	// DirectX Global Interface Declarations: DirectWrite
-	if (pDWriteFactory)
-	{
-		pDWriteFactory->Release();
-		pDWriteFactory = nullptr;
-	}
-	if (pTextFormat)
-	{
-		pTextFormat->Release();
-		pTextFormat = nullptr;
-	}
-
-	// End: 2. Release DirectX resources.
 
 	// End: ShutdownDirectX function
 }
