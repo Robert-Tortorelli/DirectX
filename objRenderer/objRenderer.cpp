@@ -632,7 +632,7 @@ int InitD3D(HWND hWnd)										// The HWND handle for the window.
 	// Combine optional flags of the D3D11_CREATE_DEVICE_FLAG enumeration used to create the Direct3D 11 runtime layers that are used to create the device.
 	UINT DeviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;	// Required for Direct2D interoperability with Direct3D resources.
 	#ifdef _DEBUG											// The debug layer is only added in debug builds to avoid performance overhead in release builds (The _DEBUG macro is only defined in debug builds).
-	DeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;				// Creates a device that supports the debug layer, which provides detailed debugging information about Direct3D operations.
+	DeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;				// Creates a Direct3D device that supports the debug layer, which provides detailed debugging information about Direct3D operations.
 															//   If the debug runtime is not installed on Windows, the D3D11CreateDeviceAndSwapChain function will return an error code, typically DXGI_ERROR_SDK_COMPONENT_MISSING.
 	#endif
 
@@ -950,8 +950,8 @@ void InitPipeline(void)
 	//      Optionally, this shader can output the color, brightness, contrast, and other characteristics of a single pixel.
 	//***
 
-	ID3DBlob* VS;											// VS (Vertex Shader) is a pointer to the ID3DBlob interface used to return Direct3D data of arbitrary length.
-	ID3DBlob* PS;											// PS (Pixel Shader)  is a pointer to the ID3DBlob interface used to return Direct3D data of arbitrary length.
+	ComPtr<ID3DBlob> VS;									// VS (Vertex Shader) is a pointer to the ID3DBlob interface used to return Direct3D data of arbitrary length.
+	ComPtr<ID3DBlob> PS;									// PS (Pixel Shader)  is a pointer to the ID3DBlob interface used to return Direct3D data of arbitrary length.
 
 	// D3DCompileFromFile function:
 	//   Compile Microsoft High Level Shader Language (HLSL) code into bytecode for a given target.
@@ -963,7 +963,7 @@ void InitPipeline(void)
 		"vs_4_1",											// A pointer to a constant null-terminated string that specifies the shader target or set of shader features to compile against. The shader target can be a shader model. vs_4_1 is the vertex shader model (a shader target) of the Direct3D 10.1 feature level.
 		D3DCOMPILE_DEBUG,									// A combination of shader compile options that are combined by using a bitwise OR operation. The resulting value specifies how the compiler compiles the HLSL code (set it to zero (0) to indicate no options). The D3DCOMPILE_DEBUG option directs the compiler to insert debug file/line/type/symbol information into the output code.
 		0,													// A combination of effect compile options that are combined by using a bitwise OR operation. The resulting value specifies how the compiler compiles the effect. When you compile a shader and not an effect file, D3DCompileFromFile ignores this parameter (set it to zero (0) to indicate no options).
-		&VS,												// &VS is the address of a pointer, VS, to the interface that you can use to access the compiled code.
+		VS.GetAddressOf(),									// &VS is the address of a pointer, VS, to the interface that you can use to access the compiled code.
 		0);													// An optional pointer to a variable that receives a pointer to the ID3DBlob interface that you can use to access compiler error messages
 	//   Compile the pixel shader:
 	D3DCompileFromFile(L"shaders.hlsl",						// A pointer to a constant null-terminated string that contains the name of the file that contains the shader code.
@@ -973,7 +973,7 @@ void InitPipeline(void)
 		"ps_4_1",											// A pointer to a constant null-terminated string that specifies the shader target or set of shader features to compile against. The shader target can be a shader model. ps_4_1 is the pixel shader model (a shader target) of the Direct3D 10.1 feature level.
 		D3DCOMPILE_DEBUG,									// A combination of shader compile options that are combined by using a bitwise OR operation. The resulting value specifies how the compiler compiles the HLSL code (set it to zero (0) to indicate no options). The D3DCOMPILE_DEBUG option directs the compiler to insert debug file/line/type/symbol information into the output code.
 		0,													// A combination of effect compile options that are combined by using a bitwise OR operation. The resulting value specifies how the compiler compiles the effect. When you compile a shader and not an effect file, D3DCompileFromFile ignores this parameter (set it to zero (0) to indicate no options).
-		&PS,												// &PS is the address of a pointer, PS, to the interface that you can use to access the compiled code.
+		PS.GetAddressOf(),									// &PS is the address of a pointer, PS, to the interface that you can use to access the compiled code.
 		0);													// An optional pointer to a variable that receives a pointer to the ID3DBlob interface that you can use to access compiler error messages.
 
 	// ID3D11Device::CreateVertexShader member function:
