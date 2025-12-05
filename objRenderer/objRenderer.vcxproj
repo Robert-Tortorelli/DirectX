@@ -135,13 +135,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="objReader.cpp" />
-    <ClCompile Include="objReaderEnum.cpp" />
     <ClCompile Include="objRenderer.cpp">
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp23</LanguageStandard>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="objReader.h" />
+    <ClInclude Include="objRenderer.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

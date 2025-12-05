@@ -1,62 +1,39 @@
-// objReader Header File
+// objRenderer Header File
 // Version 3.3
 //
 // Description:
-// objReader Header File for Wavefront .obj file I/O.
-//
-// This header file contains all global declarations, including external variables, functions, structures, and classes.
-// Include it in all source files that reference these global declarations.
-// The only variables declared here are external. The objReader function source file defines the external variables declared here.
-// Internal variables are declared in the source files that define them.
-//
-// Header files should not contain "using directives" (such as using namespace std;) or "using declarations" (such as using std::cout;).
+// objRenderer Header File for Wavefront .obj file I/O.
+// This header file contains all declarations shared by multiple source files in this project.
+// Header files should not contain "using declarations" (such as using std::string;) or  "using directives" (such as using namespace std;).
 //
 // Authorship:
 // Robert John Tortorelli
-
-//***
-// Declarations.
-//***
 
 // Pragma Directives.
 // Specify that the compiler include this header file only once when compiling source code files.
 #pragma once												// Automatically included by Visual Studio 2022 when creating a header file.
 
+// Header Files.
 // Windows Runtime Template Library (WRL) Header File.
 #include <wrl.h>											// Needed by the Microsoft::WRL::ComPtr smart pointer.
-
-// Standard Encapsulated Data and Functions for Manipulating String Data.
+// Standard Encapsulated Data and Functions for Manipulating String Data Header File.
 #include <string>											// String class member functions stof, to_string, etc.
-
-// Vector Container Class.
+// Vector Container Class Header File.
 #include <vector>											// Vector class member functions push_back, pop_back, etc.
-
 // Windows API Header File.
 #include <windows.h>										// The Windows API (Win32 API) header file enables you to create 32-bit and 64-bit programs. It includes declarations for both Unicode and ANSI versions of the API. For more information, see Unicode in the Windows API.
-
-// Direct3D Header Files.
+// Direct3D 11 Header File.
 #include <d3d11.h>											// This header is used by Direct3D 11 Graphics.
-
 // DirectXMath Header File.
 #include <directxmath.h>                                    // The DirectXMath API provides SIMD-friendly C++ types and functions for common linear algebra and graphics math operations common to DirectX programs.
 
-//***
-// Function Declarations.
-// Function prototypes for functions (e.g., objReader) called by programs (e.g., objRenderer) that include this header file. They are optional in the functions named here (e.g., objReader).
-//***
-
-int objReaderEnum(void);
-int objReader(const std::string& filename = "Text.obj");
-
-// End: Function Declarations.
+// Function Prototypes.
+int objReader(void);
+int objParser(const std::string& filename = "Text.obj");
 
 //***
-// External Variables.
-//***
-
-//***
-// Structure Declarations for External Variables.
-// Structures must be declared before the variables they are used to define, e.g., OurVertices and OurObjects.
+// Structure Declarations.
+// Structures declarations appear before variable declarations that reference them.
 //***
 
 // VERTEX 'named structure' data type.
@@ -132,7 +109,7 @@ struct OBJECT {
 	Microsoft::WRL::ComPtr<ID3D11Buffer> pCBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the constant buffer.
 };
 
-// End: Structure Declarations for External Variables.
+// End: Structure Declarations.
 
 //***
 // External Variable Declarations.
@@ -152,7 +129,3 @@ extern int OurVerticesi;									// The index variable OurVerticesi of array var
 extern int OurIndicesi;										// The index variable OurIndicesi of array variable OurIndices[OurIndicesi].
 
 // End: External Variable Declarations.
-
-// End: External Variables.
-
-// End: Declarations.

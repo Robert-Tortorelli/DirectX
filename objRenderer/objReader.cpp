@@ -7,14 +7,13 @@
 // Authorship:
 // Robert John Tortorelli
 
-// objReader Header File for Wavefront .obj file I/O.
-#include "objReader.h"
-
+// Header Files.
+// objRenderer Header File.
+#include "objRenderer.h"
+// File System Functions.
+#include <filesystem>										// File system operations; i.e., manipulate and retrieve information about paths, directories, and files.
 // File Stream Functions.
-#include <fstream>											// File stream class member functions get, close, etc.
-
-// String stream class member functions.
-#include <sstream>											// String stream class member functions getline, etc.
+#include <fstream>											// File stream operations; i.e., input/output on file based streams.
 
 // Using Declarations and Directives.
 // Using declarations such as using std::string;   bring one identifier	 in the named namespace into scope.
@@ -31,11 +30,7 @@ using std::vector;
 using std::istringstream;
 
 //***
-// Global Declarations.
-//***
-
-//***
-// External Variable Global Definitions.
+// External Variable Definitions.
 //***
 
 // Define external variables in one and only one source file (this one) and initialize them as needed.
@@ -44,16 +39,48 @@ vector<OBJECT> OurObjects;	int OurObjectsi = -1;
 int OurVerticesi = -1;
 int OurIndicesi = -1;
 
-// End: External Variable Global Definitions.
-
-// End: Global Declarations.
+// End: External Variable Definitions.
 
 //***
 // Function Definitions.
 //***
 
 // objReader function: Definition
-int objReader(const std::string& filename)
+int objReader(void)
+{
+	// Get the path to the current executable and store it in variable exePath.
+	std::filesystem::path exePath = std::filesystem::current_path();
+
+	// Iterate over all files in the current directory.
+	// The following for statement is a range-based for loop that iterates over each file and directory in the directory specified by exePath.
+	//   The auto keyword tells the compiler to automatically deduce the type of the variable entry from its initializer.
+	//   In the following statement auto deduces the type of variable entry to be a constant reference to a std::filesystem::directory_entry object,
+	//   because directory_iterator yields elements of type std::filesystem::directory_entry.
+	//   This allows the code to be more concise and maintainable, especially when dealing with complex or verbose types.
+	//   .is_regular_file(), .path().extension(), and .path().filename().string() are member functions of the entry object.
+	for (const auto& entry : std::filesystem::directory_iterator(exePath))
+	{
+		if (entry.is_regular_file() && entry.path().extension() == ".obj")
+		{
+			// The entry is a regular file and its extension is ".obj".
+
+			// Read and parse one 3D object's descriptive information from one Wavefront .obj file and use it to define the variables needed to render the 3D object.
+			//   Call the objParser function and test whether its return value is nonzero, indicating an error.
+			if (int objParserRC = objParser(entry.path().filename().string()); objParserRC != 0)
+			{
+				// The objParser function terminated abnormally.
+				return objParserRC;
+			}
+			// The objParser function terminated normally.
+		}
+	}
+
+	// Return to the calling program with a return code indicating success.
+	return 0;
+}
+
+// objParser function: Definition
+int objParser(const std::string& filename)
 {
 	// Declare variables used to parse the Wavefront .obj file.
 	// Intermediate arrays to temporarily store all vertex attributes before they are copied to the array variable OurVertices:
@@ -86,8 +113,8 @@ int objReader(const std::string& filename)
 	//   The order of the face element statements determines the order in which the triangles must be drawn. This order is important when dealing with overlapping triangles, as the later triangles will be drawn on top of the earlier ones. Face element statements are parsed in this order.
 	//   All other statements are ignored.
 	//
-	// - Multiple objects are not supported by objReader within a single Wavefront .obj file.
-	//   This is because objReader as written requires that no vertex attributes follow face elements, and this happens when one object is defined after another.
+	// - Multiple objects are not supported by objParser within a single Wavefront .obj file.
+	//   This is because objParser as written requires that no vertex attributes follow face elements, and this happens when one object is defined after another.
 	//
 	// - No spaces are permitted before or after a slash ('/').
 	//
