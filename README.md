@@ -1,4 +1,7 @@
 The project objRenderer is a C++ program that parses one or more 3D object descriptions from one or more Wavefront .obj files, and renders those objects.
+In order to be usable by this program each Wavefront .obj file must contain geometric vertex statements (v), vertex texture coordinate statements (vt), vertex normal vector statements (vn), and their associated face element statements (f).
+A Wavefront .obj file that only contains geometric vertex statements and their associated face element statements, but not vertex texture coordinate statements and vertex normal vector statements, is a valid Wavefront .obj file but is not usable by this program.
+
 In its present intermediate form, two rotating objects are rendered.
 The first object is initially drawn at the origin of world space (0, 0, 0). The second object is initially drawn above the first object at (0, 3, 0).
 
