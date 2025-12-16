@@ -134,11 +134,11 @@ ComPtr<IDWriteTextFormat> pTextFormat;						// Smart pointer to a text format in
 int ClientRectangleWidth = 800;
 int ClientRectangleHeight = 600;
 
-// Define coordinates to set the position in 3D space for the second instance of the object.
-static float zCamera = 0.0f;								// A modifier to the z-coordinate of the camera's position in 3D space. Incrementing the value of z makes the camera's new position appear deeper into the physical screen, such that world objects appear further away from the end-user.
-static float xWorld = 0.0f;									// A modifier to the x-coordinate of the object's position in 3D space.
-static float yWorld = 3.0f;									// A modifier to the y-coordinate of the object's position in 3D space.
-static float zWorld = 0.0f;									// A modifier to the z-coordinate of the object's position in 3D space.
+static float zCamera = 0.0f;								// A modifier to the z-coordinate of the camera's position in 3D space. Incrementing the value of z (zCamera) moves the camera's new position (EyePosition) deeper into the physical screen, such that world objects appear further away from the end-user.
+
+static float x = 0.0f;										// A modifier to the x-coordinate of the object's position in 3D space.
+static float y = 3.0f;										// A modifier to the y-coordinate of the object's position in 3D space.
+static float z = 0.0f;										// A modifier to the z-coordinate of the object's position in 3D space.
 
 XMVECTOR CameraEyePosition;									// A variable to save the camera position so it can be included in program diagnostics.
 
@@ -454,25 +454,25 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 				case VK_W:
 					// The user pressed the W key (window messages = WM_KEYDOWN -> VK_W -> Move the object +x).
 					//
-					xWorld += 0.5f;							// Gradually increment the variable xWorld.
+					x += 0.5f;								// Gradually increment the variable x.
 					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
 					break;
 				case VK_S:
 					// The user pressed the S key (window messages = WM_KEYDOWN -> VK_S -> Move the object -x).
 					//
-					xWorld -= 0.5f;							// Gradually decrement the variable xWorld.
+					x -= 0.5f;								// Gradually decrement the variable x.
 					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
 					break;
 				case VK_A:
 					// The user pressed the A key (window messages = WM_KEYDOWN -> VK_A -> Move the object +y).
 					//
-					yWorld += 0.5f;							// Gradually increment the variable yWorld.
+					y += 0.5f;								// Gradually increment the variable y.
 					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
 					break;
 				case VK_D:
 					// The user pressed the D key (window messages = WM_KEYDOWN -> VK_D -> Move the object -y).
 					//
-					yWorld -= 0.5f;							// Gradually decrement the variable yWorld.
+					y -= 0.5f;								// Gradually decrement the variable y.
 					WindowProcRC = 0;						// Set the return value of the WindowProc function to 0.
 					break;
 				default:
@@ -510,7 +510,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 					//
 					// Define a wide string stream object to build text to render.
 					std::wstringstream ss;					// Program Diagnostics.
-					ss << L"Diagnostics: xWorld=" << xWorld << L", yWorld=" << yWorld << L", zWorld=" << zWorld << L", zCamera=" << zCamera << L", EyePosition z=" << XMVectorGetZ(CameraEyePosition);
+					ss << L"Diagnostics: x=" << x << L", y=" << y << L", z=" << z << L", zCamera=" << zCamera << L", EyePosition z=" << XMVectorGetZ(CameraEyePosition);
 					// MessageBox function:
 					//   Displays a modal dialog box that contains a system icon, a set of buttons, and a brief application-specific message, such as status or error information. The message box returns an integer value that indicates which button the user clicked.
 					MessageBox(hWnd,						// A handle to the owner window of the message box to be created. If this parameter is NULL, the message box has no owner window.
@@ -911,7 +911,7 @@ void InitD2D_DW(void)
 //
 //     2. Create the input-layout object and set it to the input-assembler stage of the graphics pipeline.
 //
-//     Create constant buffers for all objects in the array variable OurObjects.
+//     Create constant buffers (variable pCBuffer) for all objects in the array variable OurObjects.
 //       3. Create the constant buffer object and set it to the vertex shader stage of the graphics pipeline.
 void InitPipeline(void)
 {
@@ -1036,7 +1036,7 @@ void InitPipeline(void)
 
 	// End: 2. Create the input-layout object and set it to the input-assembler stage of the graphics pipeline.
 
-	// Create constant buffers for all objects in the array variable OurObjects.
+	// Create constant buffers (variable pCBuffer) for all objects in the array variable OurObjects.
 	for (auto& object : OurObjects) {
 		//***
 		// 3. Create the constant buffer object and set it to the vertex shader stage of the graphics pipeline.
@@ -1103,10 +1103,10 @@ void InitPipeline(void)
 //   This function creates the vertex buffer, the index buffer, and the texture image.
 //     1. Create the structures used to define the vertex buffer and index buffer.
 //
-//     Create vertex buffers (pVBuffer) and index buffers (pIBuffer) for all objects in the array variable OurObjects.
-//       2. Create the next vertex buffer (pVBuffer) and assign values to it from the array variable OurVertices.
+//     Create vertex buffers (variable pVBuffer) and index buffers (variable pIBuffer) for all objects in the array variable OurObjects.
+//       2. Create the next vertex buffer (variable pVBuffer) and assign values to it from the array variable OurVertices.
 //
-//       3. Create the next index buffer (pIBuffer) and assign values to it from the array variable OurIndices.
+//       3. Create the next index buffer (variable pIBuffer) and assign values to it from the array variable OurIndices.
 //
 //     4. Create the texture image from an image file.
 int InitGraphics(void)
@@ -1125,10 +1125,10 @@ int InitGraphics(void)
 
 	// End: 1. Create the structures used to define the vertex buffer and index buffer.
 
-	// Create vertex buffers (pVBuffer) and index buffers (pIBuffer) for all objects in the array variable OurObjects.
+	// Create vertex buffers (variable pVBuffer) and index buffers (variable pIBuffer) for all objects in the array variable OurObjects.
 	for (auto& object : OurObjects) {
 		//***
-		// 2. Create the next vertex buffer (pVBuffer) and assign values to it from the array variable OurVertices.
+		// 2. Create the next vertex buffer (variable pVBuffer) and assign values to it from the array variable OurVertices.
 		//***
 
 		// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
@@ -1143,7 +1143,7 @@ int InitGraphics(void)
 			NULL,											// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferVertex.Usage is D3D11_USAGE_IMMUTABLE).
 			object.pVBuffer.GetAddressOf());				// The newly created vertex buffer object. &pVBuffer is the address of a pointer, pVBuffer, to the buffer interface that represents this object.
 
-		// Assign the vertex attributes by copying them from array variable OurVertices to the vertex buffer (pVBuffer).
+		// Assign the vertex attributes by copying them from array variable OurVertices to the vertex buffer (variable pVBuffer).
 		// ID3D11DeviceContext::Map member function:
 		//   Mapping a buffer allows us to access it.
 		//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
@@ -1153,7 +1153,7 @@ int InitGraphics(void)
 			D3D11_MAP_WRITE_DISCARD,						// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
 			NULL,											// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
 			&msBufferVertex);								// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
-		// Copy all the vertex attributes from array variable OurVertices to the vertex buffer (pVBuffer).
+		// Copy all the vertex attributes from array variable OurVertices to the vertex buffer (variable pVBuffer).
 		// memcpy function:
 		//   Copy a block of memory.
 		memcpy(msBufferVertex.pData,						// Pointer to the destination memory block, in this case the vertex buffer's memory block.
@@ -1164,10 +1164,10 @@ int InitGraphics(void)
 		devcon->Unmap(object.pVBuffer.Get(),				// A pointer to the vertex buffer interface.
 			NULL);											// A subresource to be unmapped.
 
-		// End: 2. Create the next vertex buffer (pVBuffer) and assign values to it from the array variable OurVertices.
+		// End: 2. Create the next vertex buffer (variable pVBuffer) and assign values to it from the array variable OurVertices.
 
 		//***
-		// 3. Create the next index buffer (pIBuffer) and assign values to it from the array variable OurIndices.
+		// 3. Create the next index buffer (variable pIBuffer) and assign values to it from the array variable OurIndices.
 		//***
 
 		// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
@@ -1182,7 +1182,7 @@ int InitGraphics(void)
 			NULL,											// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferIndex.Usage is D3D11_USAGE_IMMUTABLE).
 			object.pIBuffer.GetAddressOf());				// The newly created index buffer object. &pIBuffer is the address of a pointer, pIBuffer, to the buffer interface that represents this object.
 
-		// Assign the index information by copying it from array variable OurIndices to the index buffer (pIBuffer).
+		// Assign the index information by copying it from array variable OurIndices to the index buffer (variable pIBuffer).
 		// ID3D11DeviceContext::Map member function:
 		//   Mapping a buffer allows us to access it.
 		//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
@@ -1192,7 +1192,7 @@ int InitGraphics(void)
 			D3D11_MAP_WRITE_DISCARD,						// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
 			NULL,											// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
 			&msBufferIndex);								// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
-		// Copy all the index information from array variable OurIndices to the index buffer (pIBuffer).
+		// Copy all the index information from array variable OurIndices to the index buffer (variable pIBuffer).
 		// memcpy function:
 		//   Copy a block of memory.
 		memcpy(msBufferIndex.pData,							// Pointer to the destination memory block, in this case the index buffer's memory block.
@@ -1203,7 +1203,7 @@ int InitGraphics(void)
 		devcon->Unmap(object.pIBuffer.Get(),				// A pointer to the index buffer interface.
 			NULL);											// A subresource to be unmapped.
 
-		// End: 3. Create the next index buffer (pIBuffer) and assign values to it from the array variable OurIndices.
+		// End: 3. Create the next index buffer (variable pIBuffer) and assign values to it from the array variable OurIndices.
 	}
 
 	//***
@@ -1286,7 +1286,22 @@ int RenderFrame(void)
 	// End: 2. Render text to the scene.
 
 	// Prepare to render, and then render, all objects in the array variable OurObjects.
-	for (auto& object : OurObjects) {
+	// TEST 2: Loop through all objects in OurObjects using alternative syntax. Does the variable object work here (it's defined as in TEST 1)?
+	for (size_t i = 0; i < OurObjects.size(); ++i) {
+	//	OBJECT& object = OurObjects[i];						// Works, but processes all objects in OurObjects.
+		OBJECT& object = OurObjects[0];						// FAILS, but processes all objects in OurObjects.
+	// TEST 2: End: Loop through all objects in OurObjects using alternative syntax.
+	// TEST 1: Loop for a single object only in OurObjects even though there are multiple objects.
+	// TEST 1: for (int i = 0; i < 1 /*OurObjects.size()*/; ++i) { // 'size_t i = 0' is better, but 'int i = 0' works here.
+	// TEST 1:     OBJECT& object = OurObjects[0];			// Select the object to be rendered (one object). <- FAILS
+	// ORIGINAL: for (auto& object : OurObjects) {			// Select the object to be rendered (all objects).
+	// TEST 1: End: Loop for a single object only in OurObjects even though there are multiple objects.
+		// This for loop performs these tasks:
+		//   3. Define the final transformation matrix, matFinal.
+		//   4. Assign values that determine the attributes of light.
+		//   5. Specify the vertex buffers, the index buffers, and the primitive type used when drawing.
+		//   6. Render the objects.
+
 		//***
 		// 3. Define the final transformation matrix, matFinal.
 		//    The final transformation matrix contains all the information necessary to transform each vertex of the object being rendered.
@@ -1312,14 +1327,14 @@ int RenderFrame(void)
 		static float Angle2 = 0.0f;							// The angle in radians (0 radians = 0 degrees).
 
 		// Define the world matrix, matWorld.
-		//   This matrix is updated each frame, causing the object to rotate clockwise.
-		// Increment Angle by 5% of 1 degree (5% of 0.0174532 radians). mod 360 degrees (mod 6.283185f radians) results in angles from 0 - 359 degrees then back to 0 degrees.
-		Angle = fmod(Angle + 0.0008727f, 6.283185f);
 		// XMMatrixRotationY function:
 		//   Builds a matrix that rotates around the y axis.
+		// This matrix is updated each frame, causing the object to rotate clockwise.
+		Angle = fmod(Angle + 0.0008727f, 6.283185f);		// Increment Angle by 5% of 1 degree (5% of 0.0174532 radians = 0.0008727f) and then apply mod 360 degrees (mod 6.283185f radians). This generates angles from 0 - 359 degrees then back to 0 degrees.
 		matRotateY = XMMatrixRotationY(Angle);				// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
 		object.ConstantBuffer.matRotate = matRotateY;		// The final rotation matrix is the product of all defined rotation matrices.				Here, only matRotateY is defined.
-		matWorld = object.ConstantBuffer.matRotate;			// The world transformation is a function of translation (movement), rotation, and scaling. Here, only rotation   is defined.
+		// The world transformation is a function of scaling, rotation, and translation (movement).														Here, only rotation   is defined.
+		matWorld = object.ConstantBuffer.matRotate;			
 
 		// Define the view matrix, matView.
 		// XMMatrixLookAtLH function:
@@ -1334,21 +1349,21 @@ int RenderFrame(void)
 		//     XMVECTOR is a portable type used to represent a vector of four 32-bit floating-point or integer components, each aligned optimally and mapped to a hardware vector register.
 		//
 		// Variable EyePosition: The camera position vector.
-		// The camera position's x- and y-coordinates			   equal		those of the second instance of the object, even as it moves.
-		// The camera position's					  z-coordinate differs from those of the second instance of the object, and can be manually adjusted by keyboard keys.
-		XMVECTOR EyePosition = XMVectorSet(xWorld,			// The x component of the vector to return.
-			yWorld,											// The y component of the vector to return.
+		// The camera position's x- and y-coordinates			   equal		those of the second object, even as it moves.
+		// The camera position's					  z-coordinate differs from those of the second object, and can be manually adjusted by keyboard keys.
+		XMVECTOR EyePosition = XMVectorSet(x,				// The x component of the vector to return.
+			y,												// The y component of the vector to return.
 			zCamera + 5.0f,									// The z component of the vector to return.
 			0.0f);
 		CameraEyePosition = EyePosition;					// Save the camera position to a global variable so it can be included in program diagnostics.
 		//
 		// Variable FocusPosition: The focal point position vector
-		// The camera points at the second instance of the object even as it moves. Thus the second instance of the object appears stationary, while the first instance of the object (which is stationary) appears to move in the direction opposite to how the second instance of the object moves.
-		XMVECTOR FocusPosition = XMVectorSet(xWorld, yWorld, zWorld, 0.0f);	// x, y, z, w
+		// The camera points at the second object even as it moves. Thus the second object appears stationary, while the first object (which is stationary) appears to move in the direction opposite to how the second object moves.
+		XMVECTOR FocusPosition = XMVectorSet(x, y, z, 0.0f);		// x, y, z, w
 		//
 		// Variable UpDirection: The up direction vector
 		// The up direction vector is a unit vector that points in the positive y direction, which is the top of the camera.
-		XMVECTOR UpDirection = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);			// x, y, z, w
+		XMVECTOR UpDirection = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);	// x, y, z, w
 		//
 		// Test whether EyePosition and FocusPosition are equal, and adjust if necessary.
 		// If EyePosition and FocusPosition become equal this is an error condition. Therefore if this occurs EyePosition is slightly adjusted to keep them unequal as required.
@@ -1356,8 +1371,8 @@ int RenderFrame(void)
 		{
 			// EyePosition and FocusPosition are equal.
 			// Make them unequal: Increment the camera position's z-coordinate a trivial amount.
-			EyePosition = XMVectorSet(xWorld,				// The x component of the vector to return.
-				yWorld,										// The y component of the vector to return.
+			EyePosition = XMVectorSet(x,					// The x component of the vector to return.
+				y,											// The y component of the vector to return.
 				zCamera + 5.001f,							// The z component of the vector to return.
 				0.0f);
 		}
@@ -1392,9 +1407,9 @@ int RenderFrame(void)
 		//***
 
 		// When the camera is positioned at EyePosition = (x<0, y<0, z<0), the current lighting effects place the rendered objects in shadow.
-		object.ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);
-		object.ConstantBuffer.LightColor = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-		object.ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+		object.ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);	// Dark
+		object.ConstantBuffer.LightColor = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);	// Medium
+		object.ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);	// Light
 
 		// Sample alternative values and their effect.
 		// ConstantBuffer.LightVector = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);	// Dark
@@ -1453,15 +1468,21 @@ int RenderFrame(void)
 
 		//***
 		// 6. Render the objects.
-		//   i. Draw the first instance of the object to the scene.
-		//		Each UpdateSubresource() and DrawIndexed() pair draws one instance of the object to the back buffer.
-		//  ii. Draw a second instance of the same object to the scene, offset from the first object, using different transformations than those used by the first instance of the object.
+		//   i. Draw the first occurrence of the current object to the scene.
+		//		Each UpdateSubresource() and DrawIndexed() pair draws to the back buffer.
+		//  ii. Draw a second occurrence of the current object to the scene, offset from the first occurrence of the current object, using different transformations than those used by the first occurrence of the current object.
 		// iii. Switch the back buffer and the front buffer to present the rendered image to the user.
 		//***
 
-		// Draw the first instance of the object to the scene.
+		// Draw the first occurrence of the current object to the scene.
 		//
-		// Prepare to draw the first instance of the object using the updated constant buffer.
+		// Prepare to draw the first occurrence of the current object using the current constant buffer.
+		// The first occurrence of the current object is drawn at the origin of world space, i.e., at (0, 0, 0).
+		// The first occurrence of the current object rotates clockwise.
+		//
+		// Update the constant buffer used to draw the first occurrence of the current object.
+		// TEST 3: Add VSSetConstantBuffers in the RenderFrame loop to bind the correct constant buffer for each object:
+		devcon->VSSetConstantBuffers(0, 1, object.pCBuffer.GetAddressOf());
 		// ID3D11DeviceContext::UpdateSubresource member function:
 		//   The CPU copies data from memory				  to a subresource created in non-mappable memory.
 		//   Specifically:
@@ -1473,41 +1494,40 @@ int RenderFrame(void)
 			0,												// The size of one row of the source data.
 			0);												// The size of one depth slice of source data.
 		//
-		// Draw the first instance of the object using the updated constant buffer.
+		// Draw the first occurrence of the current object using the updated constant buffer.
 		// ID3D11DeviceContext::DrawIndexed member function:
 		//   Draw indexed, non-instanced primitives.
 		devcon->DrawIndexed(object.IndicesTotal,			// Number of indices to draw. Three non-unique indices in the index buffer, each pointing to one set of unique vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of non-unique indices in the index buffer.
 			0,												// The location of the first index read by the GPU from the index buffer.
 			0);												// A value added to each index before reading a vertex from the vertex buffer.
 
-		// Draw a second instance of the same object to the scene, offset from the first object, using different transformations than those used by the first instance of the object.
-		// The first instance of the object is drawn at the origin of world space, i.e., at (0, 0, 0). The second instance of the object is drawn at a different position, i.e., at (xWorld, yWorld, zWorld).
-		// The first instance of the object rotates clockwise.										   The second instance of the object rotates counterclockwise.
+		// Draw the second occurrence of the current object to the scene using different transformations than those used by the first occurrence of the current object.
 		//
-		// Define a rotation matrix to transform the second instance of the object counterclockwise.
-		// Decrement Angle2 by 5% of 1 degree (5% of 0.0174532 radians). mod 360 degrees (mod 6.283185f radians) results in angles from 359 - 0 degrees then back to 359 degrees.
-		Angle2 = fmod(Angle2 - 0.0008727f, 6.283185f);
+		// Prepare to draw the second occurrence of the current object using an updated constant buffer and updated final matrix.
+		// The second occurrence of the current object is drawn at a different position, i.e., at (x, y, z).
+		// The second occurrence of the current object rotates counterclockwise.
+		//
+		// Update the transformation matrices used to draw the second occurrence of the current object.
+		//   A transformation matrix to rotate	  the second occurrence of the current object counterclockwise:	object.ConstantBuffer.matRotate
+		//   A transformation matrix to translate the second occurrence of the current object above the origin:	object.ConstantBuffer.matFinal
+		// object.ConstantBuffer.matRotate:
+		Angle2 = fmod(Angle2 - 0.0008727f, 6.283185f);      // Decrement Angle2 by 5% of 1 degree (5% of 0.0174532 radians = 0.0008727f) and then apply mod 360 degrees (mod 6.283185f radians). This generates angles from 359 - 0 degrees then back to 359 degrees.
 		matRotateY = XMMatrixRotationY(Angle2);				// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
 		object.ConstantBuffer.matRotate = matRotateY;		// The final rotation matrix is the product of all defined rotation matrices. Here, only matRotateY is defined.
-		//
-		// Define a translation matrix to transform the second instance of the object.
+		// object.ConstantBuffer.matFinal:
 		// XMMatrixTranslation function:
 		//   Builds a translation matrix from the specified offsets.
-		matTranslate = XMMatrixTranslation(xWorld,			// Translation along the x-axis.
-			yWorld,											// Translation along the y-axis.
-			zWorld);										// Translation along the z-axis.
+		matTranslate = XMMatrixTranslation(x,				// Translation along the x-axis.
+			y,												// Translation along the y-axis.
+			z);												// Translation along the z-axis.
+		// The world transformation is a function of scaling, rotation, and translation (movement). Here, only rotation and translation are used.
+		matWorld = object.ConstantBuffer.matRotate * matTranslate;			 // Apply the rotation matrix first, then the translation matrix. This results in the object rotating in place as it moves, i.e., the object does not orbit as it moves.
+		// Define a final matrix to transform the second occurrence of the current object.
+		object.ConstantBuffer.matFinal = matWorld * matView * matProjection; // Update the final transformation matrix (matFinal) by multiplying the updated world matrix (matWorld) by the original view (matView) and projection (matProjection) matrices.
 		//
-		// Define a world matrix to transform the second instance of the object.
-		// The world transformation is a function of scaling, rotation, and translation (movement).
-		// Here, only rotation and translation are used. Apply the rotation matrix first, then the translation matrix.
-		// This results in the object rotating in place as it moves, i.e., the object does not orbit as it moves.
-		matWorld = object.ConstantBuffer.matRotate * matTranslate;
-		//
-		// Define a final matrix to transform the second instance of the object.
-		// Update the final transformation matrix (matFinal) by multiplying the updated world matrix (matWorld) by the original view (matView) and projection (matProjection) matrices.
-		object.ConstantBuffer.matFinal = matWorld * matView * matProjection;
-		//
-		// Prepare to draw the second instance of the object using the updated constant buffer.
+		// Update the constant buffer used to draw the second occurrence of the current object.
+		// TEST 3: Add VSSetConstantBuffers in the RenderFrame loop to bind the correct constant buffer for each object:
+		devcon->VSSetConstantBuffers(0, 1, object.pCBuffer.GetAddressOf());
 		devcon->UpdateSubresource(object.pCBuffer.Get(),	// A pointer to the destination resource, in this case the constant buffer interface.
 			0,												// A zero-based index that identifies the destination subresource.
 			0,												// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
@@ -1515,7 +1535,7 @@ int RenderFrame(void)
 			0,												// The size of one row of the source data.
 			0);												// The size of one depth slice of source data.
 		//
-		// Draw the second instance of the object using the updated constant buffer.
+		// Draw the second occurrence of the current object using the updated constant buffer.
 		devcon->DrawIndexed(object.IndicesTotal,			// Number of indices to draw. Three non-unique indices in the index buffer, each pointing to one set of unique vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of non-unique indices in the index buffer.
 			0,												// The location of the first index read by the GPU from the index buffer.
 			0);												// A value added to each index before reading a vertex from the vertex buffer.
