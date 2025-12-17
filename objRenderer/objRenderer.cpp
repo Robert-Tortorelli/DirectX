@@ -1087,14 +1087,6 @@ void InitPipeline(void)
 			NULL,											// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bd.Usage is D3D11_USAGE_IMMUTABLE).
 			object.pCBuffer.GetAddressOf());				// The newly created constant buffer object. &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this object.
 
-		/* The following code is moved to the RenderFrame function (See TEST 3), because the constant buffer's data may change every frame.
-		// ID3D11DeviceContext::VSSetConstantBuffers member function:
-		//   Set the constant buffer object to the vertex shader stage of the graphics pipeline.
-		devcon->VSSetConstantBuffers(0,						// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
-			1,												// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
-			object.pCBuffer.GetAddressOf());				// &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this constant buffer object.
-		*/
-
 		// End: 3. Create the constant buffer object and set it to the vertex shader stage of the graphics pipeline.
 	}
 
@@ -1288,12 +1280,7 @@ int RenderFrame(void)
 	// End: 2. Render text to the scene.
 
 	// Prepare to render, and then render, all objects in the array variable OurObjects.
-	// TEST 2: Loop through all objects in OurObjects using alternative syntax.
-	for (size_t i = 0; i < OurObjects.size(); ++i) {
-		OBJECT& object = OurObjects[i];						// Process all objects in OurObjects.
-	//	OBJECT& object = OurObjects[0];						// Process a specific object in OurObjects.
-	// TEST 2: End: Loop through all objects in OurObjects using alternative syntax.
-	// ORIGINAL: for (auto& object : OurObjects) {			// Process all objects in OurObjects.
+	for (auto& object : OurObjects) {						// Process all objects in OurObjects.
 		// This for loop performs these tasks:
 		//   3. Define the final transformation matrix, matFinal.
 		//   4. Assign values that determine the attributes of light.
@@ -1479,7 +1466,6 @@ int RenderFrame(void)
 		// The first occurrence of the current object rotates clockwise.
 		//
 		// Update the constant buffer used to draw the first occurrence of the current object.
-		// TEST 3: Add VSSetConstantBuffers in the RenderFrame loop to bind the correct constant buffer for each object:
 		// ID3D11DeviceContext::VSSetConstantBuffers member function:
 		//   Set the constant buffer object to the vertex shader stage of the graphics pipeline.
 		devcon->VSSetConstantBuffers(0,						// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
@@ -1528,7 +1514,6 @@ int RenderFrame(void)
 		object.ConstantBuffer.matFinal = matWorld * matView * matProjection; // Update the final transformation matrix (matFinal) by multiplying the updated world matrix (matWorld) by the original view (matView) and projection (matProjection) matrices.
 		//
 		// Update the constant buffer used to draw the second occurrence of the current object.
-		// TEST 3: Add VSSetConstantBuffers in the RenderFrame loop to bind the correct constant buffer for each object:
 		devcon->VSSetConstantBuffers(0,						// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
 			1,												// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
 			object.pCBuffer.GetAddressOf());				// &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this constant buffer object.
