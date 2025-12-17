@@ -1087,11 +1087,13 @@ void InitPipeline(void)
 			NULL,											// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bd.Usage is D3D11_USAGE_IMMUTABLE).
 			object.pCBuffer.GetAddressOf());				// The newly created constant buffer object. &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this object.
 
+		/* The following code is moved to the RenderFrame function (See TEST 3), because the constant buffer's data may change every frame.
 		// ID3D11DeviceContext::VSSetConstantBuffers member function:
 		//   Set the constant buffer object to the vertex shader stage of the graphics pipeline.
 		devcon->VSSetConstantBuffers(0,						// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
 			1,												// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
 			object.pCBuffer.GetAddressOf());				// &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this constant buffer object.
+		*/
 
 		// End: 3. Create the constant buffer object and set it to the vertex shader stage of the graphics pipeline.
 	}
@@ -1286,16 +1288,12 @@ int RenderFrame(void)
 	// End: 2. Render text to the scene.
 
 	// Prepare to render, and then render, all objects in the array variable OurObjects.
-	// TEST 2: Loop through all objects in OurObjects using alternative syntax. Does the variable object work here (it's defined as in TEST 1)?
+	// TEST 2: Loop through all objects in OurObjects using alternative syntax.
 	for (size_t i = 0; i < OurObjects.size(); ++i) {
-	//	OBJECT& object = OurObjects[i];						// Works, but processes all objects in OurObjects.
-		OBJECT& object = OurObjects[0];						// FAILS, but processes all objects in OurObjects.
+		OBJECT& object = OurObjects[i];						// Process all objects in OurObjects.
+	//	OBJECT& object = OurObjects[0];						// Process a specific object in OurObjects.
 	// TEST 2: End: Loop through all objects in OurObjects using alternative syntax.
-	// TEST 1: Loop for a single object only in OurObjects even though there are multiple objects.
-	// TEST 1: for (int i = 0; i < 1 /*OurObjects.size()*/; ++i) { // 'size_t i = 0' is better, but 'int i = 0' works here.
-	// TEST 1:     OBJECT& object = OurObjects[0];			// Select the object to be rendered (one object). <- FAILS
-	// ORIGINAL: for (auto& object : OurObjects) {			// Select the object to be rendered (all objects).
-	// TEST 1: End: Loop for a single object only in OurObjects even though there are multiple objects.
+	// ORIGINAL: for (auto& object : OurObjects) {			// Process all objects in OurObjects.
 		// This for loop performs these tasks:
 		//   3. Define the final transformation matrix, matFinal.
 		//   4. Assign values that determine the attributes of light.
@@ -1469,7 +1467,7 @@ int RenderFrame(void)
 		//***
 		// 6. Render the objects.
 		//   i. Draw the first occurrence of the current object to the scene.
-		//		Each UpdateSubresource() and DrawIndexed() pair draws to the back buffer.
+		//		In combination, VSSetConstantBuffers, UpdateSubresource(), and DrawIndexed() draw to the back buffer.
 		//  ii. Draw a second occurrence of the current object to the scene, offset from the first occurrence of the current object, using different transformations than those used by the first occurrence of the current object.
 		// iii. Switch the back buffer and the front buffer to present the rendered image to the user.
 		//***
@@ -1482,7 +1480,11 @@ int RenderFrame(void)
 		//
 		// Update the constant buffer used to draw the first occurrence of the current object.
 		// TEST 3: Add VSSetConstantBuffers in the RenderFrame loop to bind the correct constant buffer for each object:
-		devcon->VSSetConstantBuffers(0, 1, object.pCBuffer.GetAddressOf());
+		// ID3D11DeviceContext::VSSetConstantBuffers member function:
+		//   Set the constant buffer object to the vertex shader stage of the graphics pipeline.
+		devcon->VSSetConstantBuffers(0,						// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
+			1,												// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
+			object.pCBuffer.GetAddressOf());				// &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this constant buffer object.
 		// ID3D11DeviceContext::UpdateSubresource member function:
 		//   The CPU copies data from memory				  to a subresource created in non-mappable memory.
 		//   Specifically:
@@ -1527,7 +1529,9 @@ int RenderFrame(void)
 		//
 		// Update the constant buffer used to draw the second occurrence of the current object.
 		// TEST 3: Add VSSetConstantBuffers in the RenderFrame loop to bind the correct constant buffer for each object:
-		devcon->VSSetConstantBuffers(0, 1, object.pCBuffer.GetAddressOf());
+		devcon->VSSetConstantBuffers(0,						// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
+			1,												// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
+			object.pCBuffer.GetAddressOf());				// &pCBuffer is the address of a pointer, pCBuffer, to the buffer interface that represents this constant buffer object.
 		devcon->UpdateSubresource(object.pCBuffer.Get(),	// A pointer to the destination resource, in this case the constant buffer interface.
 			0,												// A zero-based index that identifies the destination subresource.
 			0,												// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
