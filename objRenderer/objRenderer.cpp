@@ -1342,11 +1342,11 @@ int RenderFrame(void)
 			0.0f);
 		CameraEyePosition = EyePosition;					// Save the camera position to a global variable so it can be included in program diagnostics.
 		//
-		// Variable FocusPosition: The focal point position vector
-		// The camera points at the second object even as it moves. Thus the second object appears stationary, while the first object (which is stationary) appears to move in the direction opposite to how the second object moves.
+		// Variable FocusPosition: The focal point position vector.
+		// The camera points at the second occurrence of the current object even as this second occurrence of the current object moves. Thus the second occurrence of the current object *appears* stationary, while the first occurrence of the current object (which is stationary) *appears* to move in the direction opposite to how the second occurrence of the current object moves.
 		XMVECTOR FocusPosition = XMVectorSet(x, y, z, 0.0f);		// x, y, z, w
 		//
-		// Variable UpDirection: The up direction vector
+		// Variable UpDirection: The up direction vector.
 		// The up direction vector is a unit vector that points in the positive y direction, which is the top of the camera.
 		XMVECTOR UpDirection = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);	// x, y, z, w
 		//
@@ -1492,8 +1492,8 @@ int RenderFrame(void)
 		// Draw the second occurrence of the current object to the scene using different transformations than those used by the first occurrence of the current object.
 		//
 		// Prepare to draw the second occurrence of the current object using an updated constant buffer and updated final matrix.
-		// The second occurrence of the current object is drawn at a different position, i.e., at (x, y, z).
 		// The second occurrence of the current object rotates counterclockwise.
+		// The second occurrence of the current object is drawn at a different position, i.e., at (x, y, z).
 		//
 		// Update the transformation matrices used to draw the second occurrence of the current object.
 		//   A transformation matrix to rotate	  the second occurrence of the current object counterclockwise:	object.ConstantBuffer.matRotate

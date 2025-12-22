@@ -155,16 +155,16 @@
       <FileType>Document</FileType>
     </None>
     <None Include="Text.Blender-Suzanne.mtl" />
-    <None Include="Text.Blender-Suzanne.obj" />
+    <None Include="Text.Blender-Suzanne.obj-" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Text.Blender-Cube.obj">
       <FileType>Document</FileType>
     </None>
-    <None Include="Text.obj-">
+    <None Include="Text.obj">
       <FileType>Document</FileType>
     </None>
-    <None Include="Valley and Mountain Scene.obj-">
+    <None Include="Valley and Mountain Scene.obj">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

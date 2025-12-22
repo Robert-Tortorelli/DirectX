@@ -34,10 +34,10 @@
     <None Include="shaders.hlsl" />
     <None Include="packages.config" />
     <None Include="Text.Blender-Suzanne.mtl" />
-    <None Include="Text.Blender-Suzanne.obj" />
+    <None Include="Text.Blender-Suzanne.obj-" />
     <None Include="Text.Blender-Cube.obj" />
-    <None Include="Text.obj-" />
-    <None Include="Valley and Mountain Scene.obj-" />
+    <None Include="Text.obj" />
+    <None Include="Valley and Mountain Scene.obj" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Wood.png">
