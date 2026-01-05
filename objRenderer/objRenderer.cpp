@@ -1391,23 +1391,34 @@ int RenderFrame(void)
 		// 4. Assign values that determine the attributes of light.
 		//***
 
-		// When the camera is positioned at EyePosition = (x<0, y<0, z<0), the current lighting effects place the rendered objects in shadow.
-		object.ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);	// Dark
-		object.ConstantBuffer.LightColor = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);	// Medium
-		object.ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);	// Light
+		object.ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);		// Diagonal light direction.
+		object.ConstantBuffer.LightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);		// Full-intensity white light color (standard).
+		object.ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);		// Minimal ambient light (dark).
 
-		// Sample alternative values and their effect.
-		// ConstantBuffer.LightVector = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);	// Dark
-		// ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);	// Medium
-		// ConstantBuffer.LightVector = XMFLOAT4(2.0f, 2.0f, 2.0f, 2.0f);	// Light
+		// Sample alternative light direction values and their effects:
+		// Light direction is specified as a vector pointing in the direction that the light is traveling (from the light source toward the object).
+		// The first three components (XYZ) define the direction of the directional light.
+		// The fourth component typically isn't used in lighting calculations, so it should remain consistent (usually 0.0f).
+		// object.ConstantBuffer.LightVector = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);	// No directional light.
+		// object.ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);	// Diagonal light direction.
+		// object.ConstantBuffer.LightVector = XMFLOAT4(2.0f, 2.0f, 2.0f, 0.0f);	// Stronger diagonal light direction (non-normalized).
 		//
-		// ConstantBuffer.LightColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);	// Dark
-		// ConstantBuffer.LightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);	// Medium
-		// ConstantBuffer.LightColor = XMFLOAT4(2.0f, 2.0f, 2.0f, 2.0f);	// Light
+		// Sample alternative light color/intensity values and their effects:
+		// Light color provides both the color and intensity of the directional light.
+		// The first three components (RGB) define both the color and intensity of the directional light.
+		// The fourth component typically isn't used in lighting calculations, so it should remain consistent (usually 1.0f).
+		// object.ConstantBuffer.LightColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);		// No light color (dark).
+		// object.ConstantBuffer.LightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);		// Full-intensity white light color (standard).
+		// object.ConstantBuffer.LightColor = XMFLOAT4(2.0f, 2.0f, 2.0f, 1.0f);		// Over-bright white light color (HDR-style).
 		//
-		// ConstantBuffer.AmbientColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);	// Dark
-		// ConstantBuffer.AmbientColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);	// Medium
-		// ConstantBuffer.AmbientColor = XMFLOAT4(2.0f, 2.0f, 2.0f, 2.0f);	// Light
+		// Sample alternative ambient light color/intensity values:
+		// Ambient light provides base illumination from all directions.
+		// The first three components (RGB) define both the color and intensity of ambient light.
+		// The fourth component typically isn't used in lighting calculations, so it should remain consistent (usually 1.0f).
+		// object.ConstantBuffer.AmbientColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);	// No ambient light: pure directional lighting only.
+		// object.ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);	// Minimal ambient light.
+		// object.ConstantBuffer.AmbientColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);	// Full-intensity white ambient light.
+		// object.ConstantBuffer.AmbientColor = XMFLOAT4(2.0f, 2.0f, 2.0f, 1.0f);	// Over-bright white ambient light: may wash out details.
 
 		// End: 4. Assign values that determine the attributes of light.
 

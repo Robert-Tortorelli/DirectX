@@ -150,21 +150,19 @@
     <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".editorconfig" />
     <None Include="packages.config" />
     <None Include="shaders.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="Text.Blender-Suzanne.mtl" />
-    <None Include="Text.Blender-Suzanne.obj-" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Text.Blender-Cube.obj">
       <FileType>Document</FileType>
     </None>
-    <None Include="Text.obj">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="Valley and Mountain Scene.obj">
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Text.Gemini-Valley and Mountain Scene (normalized).obj">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
