@@ -26,20 +26,20 @@
 // All variables and functions coded in C++  (.cpp  files) are processed in CPU memory.
 
 // Vector variables store between one and four scalar values and are declared by placing a number at the end of the type specification, 
-// e.g., a vector variable named "color"  containing four float scaler values can be declared and defined using 
+// e.g., a vector variable named color  containing four float scaler values can be declared and defined using 
 // float4 color = (1.0f, 2.0f, 3.0f, 4.0f);
-// color = (1.0f, 2.0f, 3.0f, 4.0f); // This definition is valid after "color" is declared.
+// color = (1.0f, 2.0f, 3.0f, 4.0f); // This definition is valid after color is declared.
 //
 // Matrix variables store between one and sixteen scaler values and are declared by placing the number of rows and columns at the end of the type specification, 
-// e.g., a matrix variable named "matrix" containing four float scaler values can be declared and defined using 
+// e.g., a matrix variable named matrix containing four float scaler values can be declared and defined using 
 // float2x2 matrix = (1.0f, 2.0f,	 // row 1
 //                    3.0f, 4.0f);	 // row 2
 // matrix = (1.0f, 2.0f,
-//           3.0f, 4.0f);			 // This definition is valid after "matrix" is declared.
+//           3.0f, 4.0f);			 // This definition is valid after variable matrix is declared.
 //
 // HLSL variables may be larger than the corresponding C++ variables used to indirectly (by way of the vertex buffer) assign them data.
-// For example, a HLSL float4 variable, such as "position3D" in "float4 position3D : POSITION;" is assigned values from the vertex buffer, that were originally copied to the vertex buffer (using C++), from the smaller C++ variable OurVertices (defined as the VERTEX structure).
-// OurVertices only specifies three floats for geometric vertex position, and they are assigned to the first three floats of "position3D", leaving the last float of "position3D" undefined.
+// For example, a HLSL float4 variable, such as position3D in "float4 position3D : POSITION;" is assigned values from the vertex buffer, that were originally copied to the vertex buffer (using C++), from the smaller C++ variable OurVertices (defined as the VERTEX structure).
+// OurVertices only specifies three floats for geometric vertex position, and they are assigned to the first three floats of variable position3D, leaving the last float of variable position3D undefined.
 
 // Declare the constant buffer.
 // Note this is defined using the type cbuffer, not the type struct.
@@ -99,15 +99,24 @@ VOut VShader(float4 position3D : POSITION, float2 texcoord : TEXCOORD, float4 no
 {
 	VOut output;
 
-	// Calculate the geometric vertex's 2D position (screen position) from its 3D position.
-	output.position2D = mul(matFinal, position3D);						// output.position2D with semantic SV_POSITION = f(constant buffer's matFinal, VShader parameter position3D with semantic POSITION)
+	// Calculate the geometric vertex's 2D position (its vertex position in screen space) from its 3D position (its vertex position in 3D space).
+	output.position2D = mul(matFinal, position3D);			// output.position2D with semantic SV_POSITION = f(constant buffer's matFinal, VShader parameter position3D with semantic POSITION)
 
 	// Calculate changes in color based on the level of light.
-	// normalVector is necessary because VShader parameter "normal" cannot be modified.
-	float4 normalVector = normalize(mul(matRotate, normal));			// Rotate the vertex normal vector to match the rotation of the object.																   The "normalize" intrinsic scales the calculated value of a vector to make its length equal to 1.0.
-	float diffusebrightness = saturate(dot(normalVector, LightVector)); // Calculate the amount of light at the vertex (diffuse brightness) as the dot product of the vertex normal vector and the light vector. The "saturate" intrinsic clamps the calculated values between 0 and 1.
-	output.color = AmbientColor + (LightColor * diffusebrightness);		// output.color with semantic COLOR = f(constant buffer's ambient light's color, constant buffer's light's color, calculated diffuse brightness)
-	output.texcoord = texcoord;											// Set the texture coordinates, unmodified.
+	// Variable normalVector is necessary because VShader parameter normal cannot be modified.
+	//   The normal vector, like the vertex position in 3D space, must be rotated to match the rotation of the object.
+	//   The normalize intrinsic scales the calculated value of a vector to make its length equal to 1.0. This is necessary if the normal vectors in the Wavefront .obj file are not already normalized.
+	float4 normalVector = normalize(mul(matRotate, normal));						// Rotate and normalize the normal vector to match the rotation of the object.
+	// Calculate diffuse brightness using the Lambertian reflectance model, also known as Lambert's cosine law.
+	//   This model states that the apparent brightness of a diffusely reflecting surface is directly proportional to the cosine of the angle between the surface normal and the direction of the incident light.
+	//   This is true regardless of the observer's angle of view: The brightness of the surface appears the same from all viewing angles.
+	//   Normalizing variable LightVector gives the mathematically correct diffuse lighting with proper gradual falloff.
+	//     If variable LightVector is not normalized, the diffuse lighting will be too bright.
+	//   The dot product returns the true cosine of the angle between the two vectors shown.
+	//   The saturate intrinsic clamps the calculated values between 0 and 1. This is necessary because negative values (back-facing surfaces) must be clamped to 0, and values greater than 1 must be clamped to 1.
+	float diffusebrightness = saturate(dot(normalVector, normalize(LightVector)));	// Calculate the amount of light at the vertex (diffuse brightness) as the dot product of variable normalVector and the normalized variable LightVector.
+	output.color = AmbientColor + (LightColor * diffusebrightness);					// output.color with semantic COLOR = f(constant buffer's ambient light's color, constant buffer's light's color, calculated diffuse brightness)
+	output.texcoord = texcoord;														// Set the texture coordinates, unmodified.
 
 	return output;
 }
@@ -137,7 +146,7 @@ VOut VShader(float4 position3D : POSITION, float2 texcoord : TEXCOORD, float4 no
 // SV_TARGET:   Final color of the pixel of the render target.                                    Pixel shader  -> (Output-Merger Stage)
 float4 PShader(float4 color : COLOR, float2 texcoord : TEXCOORD) : SV_TARGET
 {
-	// Return color with semantic SV_TARGET = f(PShader parameter color with semantic COLOR, sampled texture (= f(PShader parameter "texcoord" with semantic TEXCOORD)))
+	// Return color with semantic SV_TARGET = f(PShader parameter color with semantic COLOR, sampled texture (= f(PShader parameter texcoord with semantic TEXCOORD)))
 	// texture-Object.Sample member function:
 	//   Sample a texture object.
 	//   texture-Object.Sample( sampler_state S, float Location [, int Offset] );
