@@ -95,6 +95,12 @@ SamplerState ss;											// A SamplerState sampler type.
 // POSITION:    Vertex position in 3D space.                                                                    -> Vertex shader
 // TEXCOORD:	Texture Coordinates.																			-> Vertex shader | Vertex shader -> Pixel shader
 // NORMAL:      Normal vector.                                                                                  -> Vertex shader
+//
+// Note:
+// Normal vectors represent directions in 3D space and only require the three x, y, and z components. Using float4 with w = 0.0 for a normal vector wastes memory.
+// Therefore, normal vectors and directions use float3 because they should only be rotated, not translated (translation requires float4).
+// However, the matRotate function returns a float4x4, so you would need to expand a float3 normal to float4 for the multiplication to ensure that the translation components of the matrix are ignored, i.e., float4 normalVector = normalize(mul(matRotate, float4(normal, 0.0f)));
+// Therefore, to keep the code simpler, VShader parameter normal is defined here as float4, even though only the x, y, and z components are used.
 VOut VShader(float4 position3D : POSITION, float2 texcoord : TEXCOORD, float4 normal : NORMAL)
 {
 	VOut output;

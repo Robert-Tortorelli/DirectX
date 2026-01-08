@@ -1397,15 +1397,16 @@ int RenderFrame(void)
 
 		// Sample alternative light direction values and their effects:
 		// Light direction is specified as a vector pointing in the direction that the light is traveling (from the light source toward the object).
-		// The first three components (XYZ) define the direction of the directional light.
+		// If variable LightVector is not normalized, the diffuse lighting will be too bright. It is normalized by this program's vertex shader function.
+		// The first three components (x, y, z) define the direction of the directional light.
 		// The fourth component typically isn't used in lighting calculations, so it should remain consistent (usually 0.0f).
 		// object.ConstantBuffer.LightVector = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);	// No directional light.
 		// object.ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);	// Diagonal light direction.
-		// object.ConstantBuffer.LightVector = XMFLOAT4(2.0f, 2.0f, 2.0f, 0.0f);	// Stronger diagonal light direction (non-normalized).
+		// object.ConstantBuffer.LightVector = XMFLOAT4(2.0f, 2.0f, 2.0f, 0.0f);	// Stronger diagonal light direction.
 		//
 		// Sample alternative light color/intensity values and their effects:
 		// Light color provides both the color and intensity of the directional light.
-		// The first three components (RGB) define both the color and intensity of the directional light.
+		// The first three components (R, G, B) define both the color and intensity of the directional light.
 		// The fourth component typically isn't used in lighting calculations, so it should remain consistent (usually 1.0f).
 		// object.ConstantBuffer.LightColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);		// No light color (dark).
 		// object.ConstantBuffer.LightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);		// Full-intensity white light color (standard).
@@ -1413,7 +1414,7 @@ int RenderFrame(void)
 		//
 		// Sample alternative ambient light color/intensity values:
 		// Ambient light provides base illumination from all directions.
-		// The first three components (RGB) define both the color and intensity of ambient light.
+		// The first three components (R, G, B) define both the color and intensity of ambient light.
 		// The fourth component typically isn't used in lighting calculations, so it should remain consistent (usually 1.0f).
 		// object.ConstantBuffer.AmbientColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);	// No ambient light: pure directional lighting only.
 		// object.ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);	// Minimal ambient light.
