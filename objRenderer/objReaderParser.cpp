@@ -1,8 +1,8 @@
-// objReader
+// objReaderParser
 // Version 3.3
 //
 // Description:
-// This function reads and parses one 3D object's descriptive information from one Wavefront .obj file and uses it to define the variables needed to render the 3D object.
+// The program objReaderParser identifies, reads, and parses one or more Wavefront .obj files to define the variables needed to render the 3D object specified in each file.
 //
 // Authorship:
 // Robert John Tortorelli
@@ -29,6 +29,10 @@ using std::string;
 using std::vector;
 using std::istringstream;
 
+// Function Prototypes.
+int objReader(void);
+int objParser(const std::string& filename);
+
 //***
 // External Variable Definitions.
 //***
@@ -46,6 +50,7 @@ int OurIndicesi = -1;
 //***
 
 // objReader function: Definition
+//   This function identifies and reads one or more Wavefront .obj files, then calls the objParser function to parse each file.
 int objReader(void)
 {
 	// Get the path to the current executable and store it in variable exePath.
@@ -55,31 +60,51 @@ int objReader(void)
 	// The following for statement is a range-based for loop that iterates over each file and directory in the directory specified by exePath.
 	//   The auto keyword tells the compiler to automatically deduce the type of the variable entry from its initializer.
 	//   In the following statement auto deduces the type of variable entry to be a constant reference to a std::filesystem::directory_entry object,
-	//   because directory_iterator yields elements of type std::filesystem::directory_entry.
+	//   because std::filesystem::directory_iterator yields elements of type std::filesystem::directory_entry.
 	//   This allows the code to be more concise and maintainable, especially when dealing with complex or verbose types.
-	//   .is_regular_file(), .path().extension(), and .path().filename().string() are member functions of the entry object.
+	//   .is_regular_file(), .path().extension(), and .path().filename().string() are member functions of the std::filesystem::directory_entry object.
 	for (const auto& entry : std::filesystem::directory_iterator(exePath))
 	{
 		if (entry.is_regular_file() && entry.path().extension() == ".obj")
 		{
-			// The entry is a regular file and its extension is ".obj".
+			// The entry is a regular file and its extension is ".obj": A candidate Wavefront.obj file was found in the current directory.
 
-			// Read and parse one 3D object's descriptive information from one Wavefront .obj file and use it to define the variables needed to render the 3D object.
-			//   Call the objParser function and test whether its return value is nonzero, indicating an error.
-			if (int objParserRC = objParser(entry.path().filename().string()); objParserRC != 0)
+			// Attempt to parse one 3D object's descriptive information from the candidate Wavefront .obj file and use it to define the variables needed to render the 3D object.
+			//   Call the objParser function and test whether its return value is zero, indicating success.
+			if (int objParserRC = objParser(entry.path().filename().string()); objParserRC == 0)
 			{
-				// The objParser function terminated abnormally.
+				// The objParser function successfully parsed one Wavefront .obj file.
+				// Examine the next file in the current directory.
+			}
+			else
+			{
+				// The objParser function unsuccessfully parsed one Wavefront .obj file.
+				// Terminate the objReader function and return to the calling function with a return value indicating an error.
 				return objParserRC;
 			}
-			// The objParser function terminated normally.
 		}
 	}
+	// End of the for loop. At least one Wavefront .obj file was found and parsed successfully or none were found.
 
-	// Return to the calling program with a return code indicating success.
-	return 0;
+	// Test whether at least one Wavefront .obj file was found.
+	if (!OurObjects.empty())
+	{
+		// At least one Wavefront .obj file was found.
+		// Terminate the objReader function and return to the calling function with a return value indicating success.
+		return 0;
+	}
+	else
+	{
+		// No Wavefront .obj file was found.
+		// Terminate the objReader function and return to the calling function with a return value indicating an error.
+		return 3;
+	}
+
+	// End: objReader function
 }
 
 // objParser function: Definition
+//   This function parses one or more Wavefront .obj files to define the variables needed to render the 3D object specified in each file.
 int objParser(const std::string& filename)
 {
 	// Declare variables used to parse the Wavefront .obj file.
@@ -129,7 +154,7 @@ int objParser(const std::string& filename)
 	{
 		// Cannot open the Wavefront .obj file.
 
-		// Terminate this function with a return code indicating an error.
+		// Terminate the objParser function and return to the calling function with a return value indicating an error.
 		return 1;
 	}
 	// The Wavefront .obj file opened successfully.
@@ -168,7 +193,7 @@ int objParser(const std::string& filename)
 			lineStream >> vn[vni].x >> vn[vni].y >> vn[vni].z;	// The >> operator extracts the next three values from the lineStream input stream object and stores them in the intermediate array variables vn[vni].x, then vn[vni].y, then vn[vni].z.
 		} else if (type == "f")
 		{
-			// The statement read is a face element statement, therefore all vertex attribute statements in the Wavefront .obj file have previously been read, parsed, and stored in the array variables v, vt, and vn.
+			// The statement read is a face element statement, therefore all vertex attribute statements in the Wavefront .obj file have previously been parsed and stored in the array variables v, vt, and vn.
 			// Now parse the face element statement: f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3
 			//   Each of the three triplets (e.g., v1/vt1/vn1) in the face element statement consists of three positive numbers referring to three vertex attribute statements specifying one triangle vertex, which together comprise one set of vertex attributes. This new set of vertex attributes, if unique, is stored in the next sequential element of the array variable OurVertices, which is pointed to by array variable OurIndices.
 			//   This results in storing sets of vertex attributes in array variable OurVertices in the order that the face element statements appear in the Wavefront .obj file, which is the order in which the triangles must be drawn.
@@ -180,9 +205,10 @@ int objParser(const std::string& filename)
 			{
 				// Cannot process the Wavefront .obj file.
 
-				// Terminate this function with a return code indicating an error.
+				// Terminate the objParser function and return to the calling function with a return value indicating an error.
 				return 2;
 			}
+			// The Wavefront .obj file does contain the required vertex attribute statements.
 
 			// Parse each of the three triplets in the face element statement.
 			OurIndicesFaceTripleti = -1;					// Reset the index variable OurIndicesFaceTripleti of intermediate array variable OurIndicesFaceTriplet[OurIndicesFaceTripleti] to -1 for each new face element statement.
@@ -281,7 +307,7 @@ int objParser(const std::string& filename)
 			OurObjects[OurObjectsi].OurIndices[OurIndicesi]     = OurIndicesFaceTriplet[1];								// OurIndicesi     corresponds to the index of the second element of the three element intermediate array variable OurIndicesFaceTriplet.
 		} else continue;									// The statement read is not a geometric vertex, vertex texture coordinate, vertex normal vector, or face element statement. Ignore it and continue.
 	}
-	// End of the while loop. The entire Wavefront .obj file has been read and parsed.
+	// End of the while loop. The entire Wavefront .obj file has been parsed.
 
 	// Close the Wavefront .obj file.
 	obj.close();
@@ -291,6 +317,8 @@ int objParser(const std::string& filename)
 	// Assign the total number of array elements in array variable OurIndices  to the variable IndicesTotal.
 	OurObjects[OurObjectsi].IndicesTotal =			   static_cast<int>(OurObjects[OurObjectsi].OurIndices.size());
 
-	// Return to the calling program with a return code indicating success.
+	// Terminate the objParser function and return to the calling function with a return value indicating success.
 	return 0;
+
+	// End: objParser function
 }

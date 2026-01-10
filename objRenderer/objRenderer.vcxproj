@@ -134,7 +134,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="objReader.cpp" />
+    <ClCompile Include="objReaderParser.cpp" />
     <ClCompile Include="objRenderer.cpp">
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp23</LanguageStandard>
     </ClCompile>

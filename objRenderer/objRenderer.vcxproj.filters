@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="objReader.cpp">
+    <ClCompile Include="objReaderParser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="objRenderer.cpp">

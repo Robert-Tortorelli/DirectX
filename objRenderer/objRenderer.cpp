@@ -3,7 +3,7 @@
 //
 // Description:
 // The project objRenderer parses one or more 3D object's descriptions from one or more Wavefront .obj files, and renders those objects.
-// This program, objRenderer, renders the objects.
+// This program, objRenderer, is the WinMain function and renders those objects.
 // This program is a C++ Windows Desktop program using the Windows (Win32) API and the DirectX 11 API.
 // All variables and functions coded in HLSL (.hlsl files) are stored in GPU memory.
 // All variables and functions coded in C++ (.cpp files) are stored in CPU memory.
@@ -22,6 +22,7 @@
 //	 RC 0:					(all functions)			Normal termination.
 //	 RC 1:					objReader function:		Error opening the Wavefront .obj file.
 //	 RC 2:					objReader function:		Error in	  the Wavefront .obj file: Required vertex attributes are missing.
+//	 RC 3:					objReader function:		Error finding any Wavefront .obj file.
 //   RC DefWindowProc():	WindowProc function:	Default window message processing.
 //   RC msg.wParam:			WinMain function:		Exit value returned to the operating system.
 //
@@ -599,7 +600,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd,						// The HWND handle for the window.
 //     6. Initialize the graphics pipeline.
 //
 //     7. Load and initialize all graphics data.
-//        The return value of the InitGraphics function is checked for failure and returned to the caller if it failed.
+//        The return value of the InitGraphics function is checked for an error and returned to the caller if it failed.
 int InitD3D(HWND hWnd)										// The HWND handle for the window.
 {
 	//***
