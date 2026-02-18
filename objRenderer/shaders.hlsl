@@ -1,25 +1,15 @@
-// Shader Functions
-// Version 3.2
+// objRenderer/shader.hlsl
+// Version 3.3
 //
-// Description
-// Shader functions are small, low-level, programs that are compiled by the CPU and then run by the GPU at specific stages in the graphics pipeline. They automatically receive data from shader functions in previous stages, and return data to shader functions in successive stages, of the graphics pipeline.
-// Shader functions execute when the ID3D11DeviceContext::DrawIndexed member function, or a similar member function, is called from a DirectX application.
+// Description:
+// Shader functions.
 //
-// A semantic is an all caps string attached to a shader function's input or output that conveys information about the intended use of a parameter on the GPU. Semantics are required on all variables passed between shader stages.
-//   A semantic specified after a shader function's parameter list is used to convey information about the intended use of the shader function's return value, e.g., 
-//     In "float4 VShader(float4 position3D : POSITION, float4 normal : NORMAL, float2 texcoord : TEXCOORD) : SV_POSITION" the semantic SV_POSITION applies to the simple float4 return value.
-//   For a shader function to return multiple variables, it returns a struct containing multiple members, just as in a C++ program. Each structure member must specify its associated semantic.
-//     In such a case the shader function no longer specifies its own semantic, i.e., SV_POSITION is removed, and the simple return type is replaced by the struct name, e.g., 
-//     "float4 VShader(float4 position3D : POSITION, float4 normal : NORMAL, float2 texcoord : TEXCOORD) : SV_POSITION"
-//      becomes:
-//     "VOut   VShader(float4 position3D : POSITION, float4 normal : NORMAL, float2 texcoord : TEXCOORD)"
-// Semantics used in the shader functions defined here are described below.
-//
-// Authorship
-// This program, except for the objReader function that parses the Wavefront.obj file, is based on "DirectX 11 Win32 Desktop: Direct3D: Moving to 3D: Lesson 3: Simple Modeling" and earlier lessons by Chris Hanson (http://DirectXTutorial.com).
-// All defects in this program are solely the responsibility of Robert John Tortorelli.
+// Authorship:
+// Robert John Tortorelli
 
-// Declarations: Start
+//***
+// Declarations.
+//***
 
 // All variables and functions coded in HLSL (.hlsl files) are processed in GPU memory.
 //   In HLSL, the value of a local variable does not persist between shader function calls, unless it is declared type static, just as in a C++ program.
@@ -74,7 +64,24 @@ Texture2D Texture;											// A 2D texture object.
 // Declare the sampler type, a set of properties that define how to sample the texture object.
 SamplerState ss;											// A SamplerState sampler type.
 
-// Declarations: End
+// End: Declarations.
+
+//***
+// Function Definitions.
+//***
+
+// Shader functions are small, low-level, programs that are compiled by the CPU and then run by the GPU at specific stages in the graphics pipeline. They automatically receive data from shader functions in previous stages, and return data to shader functions in successive stages, of the graphics pipeline.
+// Shader functions execute when the ID3D11DeviceContext::DrawIndexed member function, or a similar member function, is called from a DirectX application.
+//
+// A semantic is an all caps string attached to a shader function's input or output that conveys information about the intended use of a parameter on the GPU. Semantics are required on all variables passed between shader stages.
+//   A semantic specified after a shader function's parameter list is used to convey information about the intended use of the shader function's return value, e.g., 
+//     In "float4 VShader(float4 position3D : POSITION, float4 normal : NORMAL, float2 texcoord : TEXCOORD) : SV_POSITION" the semantic SV_POSITION applies to the simple float4 return value.
+//   For a shader function to return multiple variables, it returns a struct containing multiple members, just as in a C++ program. Each structure member must specify its associated semantic.
+//     In such a case the shader function no longer specifies its own semantic, i.e., SV_POSITION is removed, and the simple return type is replaced by the struct name, e.g., 
+//     "float4 VShader(float4 position3D : POSITION, float4 normal : NORMAL, float2 texcoord : TEXCOORD) : SV_POSITION"
+//      becomes:
+//     "VOut   VShader(float4 position3D : POSITION, float4 normal : NORMAL, float2 texcoord : TEXCOORD)"
+// Semantics used in the shader functions defined here are described below.
 
 // VShader function: Definition
 // This function is the vertex shader function.

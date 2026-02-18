@@ -15,18 +15,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="objReaderParser.cpp">
+    <ClCompile Include="objRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="objRenderer.cpp">
+    <ClCompile Include="objFileProcessor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="objRenderer.h">
+    <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
+    <ClInclude Include="objRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -39,6 +39,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="Wood.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="150-IMG-20251030-WA0001.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

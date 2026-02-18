@@ -134,7 +134,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="objReaderParser.cpp" />
+    <ClCompile Include="objFileProcessor.cpp" />
     <ClCompile Include="objRenderer.cpp">
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp23</LanguageStandard>
     </ClCompile>
@@ -144,6 +144,7 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="150-IMG-20251030-WA0001.png" />
     <Image Include="Wood.png" />
   </ItemGroup>
   <ItemGroup>

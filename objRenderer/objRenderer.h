@@ -1,8 +1,7 @@
-// objRenderer Header File
+// objRenderer/objRenderer.h
 // Version 3.3
 //
 // Description:
-// objRenderer Header File for Wavefront .obj file I/O.
 // This header file contains all declarations shared by multiple source files in this project.
 // Header files should not contain "using declarations" (such as using std::string;) or  "using directives" (such as using namespace std;).
 //
@@ -29,7 +28,6 @@
 
 // Function Prototypes.
 int objReader(void);
-int objParser(const std::string& filename = "Text.obj");
 
 //***
 // Structure Declarations.
@@ -84,9 +82,15 @@ struct VERTEX {												// Vertex attributes.
 // Ambient light is a type of light that illuminates all objects in a scene equally, regardless of their distance from the light source.
 // It is used to add a basic level of illumination to a scene and can be used to simulate global illumination effects.
 struct OBJECT {
-	// CPU-side buffer data.
+	// CPU-side data.
 	std::string OurName;									// The name of the object.
 
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pTextureView; // Smart pointer to a shader resource view interface. A shader resource view interface specifies the subresource a shader can access during rendering. In this case the texture image.
+
+	// CPU-side buffer data.
+	//   OurVertices:	 Holds the data used to initialize the GPU-side vertex   buffer via pVBuffer, the pointer to the vertex   buffer interface.
+	//   OurIndices:	 Holds the data used to initialize the GPU-side index    buffer via pIBuffer, the pointer to the index    buffer interface.
+	//   ConstantBuffer: Holds the data used to initialize the GPU-side constant buffer via pCBuffer, the pointer to the constant buffer interface.
 	std::vector<VERTEX> OurVertices;						// The dynamically allocated array of VERTEX structures, where each array element (VERTEX structure) represents a unique set of vertex attributes. Each array element (VERTEX structure) may describe one or more triangle vertices and is referenced via the indices in array variable OurIndices.
 	int VertexAttributeSetsTotal = 0;						// The total number of array elements in array variable OurVertices (OurVertices.size()), e.g., 24 array elements specify a cube. Manually initialized as type int does not have a default constructor.
 

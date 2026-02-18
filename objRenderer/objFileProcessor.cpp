@@ -1,8 +1,8 @@
-// objReaderParser
+// objRenderer/objFileProcessor.cpp
 // Version 3.3
 //
 // Description:
-// The program objReaderParser identifies, reads, and parses one or more Wavefront .obj files to define the variables needed to render the 3D object specified in each file.
+// This source file reads and parses one or more Wavefront .obj files to define the variables specifying the single 3D object in each file.
 //
 // Authorship:
 // Robert John Tortorelli
@@ -30,8 +30,7 @@ using std::vector;
 using std::istringstream;
 
 // Function Prototypes.
-int objReader(void);
-int objParser(const std::string& filename);
+static int objParser(const std::string& filename);
 
 //***
 // External Variable Definitions.
@@ -51,6 +50,7 @@ int OurIndicesi = -1;
 
 // objReader function: Definition
 //   This function identifies and reads one or more Wavefront .obj files, then calls the objParser function to parse each file.
+//   It is called by the WinMain function, and runs one time.
 int objReader(void)
 {
 	// Get the path to the current executable and store it in variable exePath.
@@ -105,7 +105,8 @@ int objReader(void)
 
 // objParser function: Definition
 //   This function parses one or more Wavefront .obj files to define the variables needed to render the 3D object specified in each file.
-int objParser(const std::string& filename)
+//   It is called by the objReader function, and runs one time for each Wavefront .obj file read by the objReader function.
+static int objParser(const std::string& filename)
 {
 	// Declare variables used to parse the Wavefront .obj file.
 	// Intermediate arrays to temporarily store all vertex attributes before they are copied to the array variable OurVertices:
