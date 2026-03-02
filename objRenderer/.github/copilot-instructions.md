@@ -1,98 +1,177 @@
-# Copilot Instructions for objRenderer
+# objRenderer - Copilot Instructions
 
 ## Project Overview
 
-objRenderer is a DirectX 11 Win32 Desktop application (Version 3.3) that parses Wavefront `.obj` files and renders 3D objects with lighting and texturing. It integrates Direct3D 11, Direct2D, and DirectWrite APIs.
+**objRenderer** is a DirectX 11 desktop application for Windows that renders 3D OBJ models with real-time lighting, texture mapping, and camera controls. It is built using C++23, Win32 API, and Direct3D 11 with HLSL shaders compiled at runtime using D3DCompile.
 
 ## Architecture
 
+### Solution & Project Structure
+
+```
+objRenderer/
+├── .github/
+│   └── copilot-instructions.md       # This file
+├── objRenderer/
+│   ├── objRenderer.vcxproj           # Visual Studio project file
+│   ├── objRenderer.vcxproj.filters   # VS project filters
+│   ├── objRenderer.cpp               # Entry point (WinMain), message loop, window creation, Core Direct3D 11 rendering engine, First-person camera with keyboard input
+│   ├── objFileProcessor              # Wavefront OBJ file parser
+│   ├── resource.h                    # Resource identifiers
+│   ├── resource.rc                   # Resource script (menus, dialogs, icons)
+│   ├── shaders.hlsl                  # vertex shader, pixel shader
+├── .\DirectX.sln                     # Visual Studio solution file
+├── .\LICENSE
+└── .\README.md
+```
+
 ### Core Components
 
-- **[objRenderer.cpp](../objRenderer.cpp)** - Main entry point (`WinMain`), window management, DirectX initialization, and render loop
-- **[objReaderParser.cpp](../objReaderParser.cpp)** - Wavefront `.obj` file parser (`objReader` + `objParser` functions)
-- **[objRenderer.h](../objRenderer.h)** - Shared declarations: `VERTEX` struct (vertex attributes), `OBJECT` struct (per-object data including GPU buffers)
-- **[shaders.hlsl](../shaders.hlsl)** - HLSL vertex/pixel shaders with Lambertian lighting model
+#### 1. objRenderer.cpp — Application Entry Point, Direct3D 11 Rendering Engine
+- Contains `WinMain` and the Win32 message pump.
+- Creates the application window using Win32 `RegisterClassEx` / `CreateWindowEx`.
+- Processes Win32 messages.
+- Manages the main render loop: processes input → updates camera → calls RenderFrame.
+- Uses `WM_COMMAND` with resource IDs defined in `resource.h` for menu handling.
+- Manages the entire Direct3D 11 pipeline lifecycle:
+  - Device, device context, and swap chain creation (`D3D11CreateDeviceAndSwapChain`).
+  - Render target view and depth-stencil view creation.
+  - Viewport configuration.
+  - Vertex and pixel shader compilation from HLSL files at runtime using `D3DCompileFromFile`.
+  - Input layout creation matching the `VERTEX` struct.
+  - Constant buffer management for per-frame data (matrices, lighting parameters).
+  - Texture (shader resource view) management.
+- Uses `ComPtr<T>` (`Microsoft::WRL::ComPtr`) for COM resource management.
+- Constant buffer structure (`ConstantBuffer`) contains:
+  - World, View, Projection matrices (`XMMATRIX`).
+  - Light direction, light color, ambient color (`XMFLOAT4`).
+  - Camera position, lighting mode.
+- Uses left-handed coordinate system consistent with DirectX conventions.
 
-### Data Flow
+#### 2. objFileProcessor.cpp — Wavefront OBJ Parser
+- Parses `.obj` files supporting:
+  - Vertex positions (`v`), texture coordinates (`vt`), normals (`vn`).
+  - Faces (`f`) with format `v/vt/vn` (triangulated)
+- Outputs a `std::vector<VERTEX>` (vertex buffer) and `std::vector<DWORD>` (index buffer).
+- The `VERTEX` struct is defined as:
+  ```cpp
+  struct VERTEX {												       // Vertex attributes.
+	  DirectX::XMFLOAT3 GeometricVertex;				 // Geometric vertex attribute:			.x, .y, .z	("v " element in the Wavefront .obj file)
+	  DirectX::XMFLOAT2 VertexTextureCoordinate; // Vertex texture coordinate attribute:	.x, .y		("vt" element in the Wavefront .obj file)
+	  DirectX::XMFLOAT3 VertexNormalVector;			 // Vertex normal vector attribute:		.x, .y, .z	("vn" element in the Wavefront .obj file)
+  };
+  ```
+- Loads a Windows Imaging Component (WIC)-supported bitmap file from disk, creates a Direct3D 11 resource from it, and a Direct3D 11 shader resource view.
+- Converts pixel data to `DXGI_FORMAT_R8G8B8A8_UNORM` format.
 
-1. `objReader()` scans current directory for `.obj` files
-2. `objParser()` extracts vertices (`v`), texture coords (`vt`), normals (`vn`), and faces (`f`)
-3. Data stored in `OurObjects` vector (each `OBJECT` has `OurVertices`, `OurIndices`, GPU buffers)
-4. `InitGraphics()` uploads to GPU via vertex/index buffers
-5. `RenderFrame()` transforms and renders each object per frame
+#### 3. shaders.hlsl — HLSL Vertex and Pixel Shaders
 
-### Coordinate System Conversions
+## Key Patterns & Conventions
 
-**Critical**: Wavefront `.obj` uses different conventions than DirectX:
-- Z-coordinates: Inverted (`z * -1.0f`)
-- Texture V-coordinate: Inverted (`1.0f - v`)
-- Winding order: Counter-clockwise → Clockwise (swap indices 1 and 2)
+### COM Resource Management
+- All Direct3D COM interfaces are managed with `Microsoft::WRL::ComPtr<T>`.
+- Raw `Release()` calls are avoided where possible; relying instead on `ComPtr`'s automatic reference counting.
 
-## Build & Run
+### Coordinate System
+- **Left-handed** coordinate system (DirectX standard).
+- Matrices use `DirectX::XM*` math library functions (`XMMatrixLookAtLH`, `XMMatrixPerspectiveFovLH`).
 
-- **IDE**: Visual Studio 2022 (C++ Desktop Development workload)
-- **Dependencies**: DirectX 11 SDK, DirectXTK (`wictextureloader.h`)
-- **Build**: Open `objRenderer.vcxproj`, build Debug/Release x64
-- **Run**: Place `.obj` files + `Wood.png` texture in same directory as executable
+### Shader Compilation
+- Shaders are compiled at runtime from `.hlsl` files using `D3DCompileFromFile`.
+- Shader files are located in `objRenderer\`.
 
-## Key Patterns
+### Constant Buffer Layout
+- A single constant buffer is used, updated per-frame via `Map`/`Unmap` with `D3D11_MAP_WRITE_DISCARD`.
+- The C++ struct and HLSL `cbuffer` must be kept in **exact layout parity** (field order, sizes, and 16-byte alignment padding with `XMMATRIX` and `XMFLOAT4`).
+- When modifying the constant buffer, **always update both** `objRenderer.h` (C++ struct) and 'shader.hlsl' (HLSL shader file).
 
-### ComPtr Smart Pointers
+### Error Handling
+- File loading failures (.obj files) are reported via function return values.
 
-All DirectX COM objects use `Microsoft::WRL::ComPtr<>`:
-```cpp
-ComPtr<ID3D11Device> dev;
-dev->CreateBuffer(...);           // Use -> for method calls
-dev.GetAddressOf()                // Use for **ppOut parameters
-dev.Get()                         // Use for *pIn parameters
+<!--
+Correct and uncomment the following lines. (RJT)
+### Naming Conventions
+- **Classes**: PascalCase (`Renderer`, `ObjLoader`, `Camera`, `InputManager`).
+- **Methods**: PascalCase (`Initialize`, `LoadModel`, `GetViewMatrix`).
+- **Member variables**: `m_` prefix with camelCase (`m_device`, `m_swapChain`, `m_vertexBuffer`).
+- **Local variables**: camelCase (`viewMatrix`, `deltaTime`).
+- **Constants/Defines**: ALL_CAPS for preprocessor defines and resource IDs (`IDM_FILE_OPEN`, `ID_TOGGLE_WIREFRAME`).
+- **Shaders**: PascalCase filenames (`VertexShader.hlsl`, `PixelShader.hlsl`).
+- **Structs**: PascalCase (`Vertex`, `ConstantBuffer`, `Material`).
+-->
+
+### File Organization
+- Headers use `#pragma once` for include guards.
+- System/library headers are included after project headers.
+- DirectX headers: `<d3d11.h>`, `directxmath.h`, `<d3dcompiler.h>`, `wictextureloader.h`, `d2d1.h`, `dwrite.h`, `<wrl/client.h>`.
+
+<!--
+Correct and uncomment the following lines. (RJT)
+None of these statements are correct. (RJT)
+### Memory & Resource Lifecycle
+- D3D11 resources (buffers, textures, views) are created once and reused until the model/texture changes.
+- On model reload, old vertex/index buffers are released before creating new ones.
+- On window resize, back buffer and depth-stencil are recreated.
+-->
+
+## Build Instructions
+
+### Prerequisites
+- **Visual Studio 2022** (or later) with the "Game Development with C++" workload.
+- **Windows SDK** (11.0 or later) — includes DirectX 11 headers and libraries.
+- **C++23** standard or later.
+
+### Building with Visual Studio
+1. Open `objRenderer.sln` in Visual Studio.
+2. Select the desired configuration (`Debug` or `Release`) and platform (`x64`).
+3. Build the solution (`Ctrl+Shift+B` or Build → Build Solution).
+4. The output executable will be in `objRenderer/<Configuration>/` (e.g., `objRenderer/x64/Debug/objRenderer.exe`).
+
+### Building with CMake
+```bash
+cd d:\Users\rober\OneDrive\source\repos\DirectX\objRenderer
+mkdir build
+cd build
+cmake .. -G "Visual Studio 17 2022" -A x64
+cmake --build . --config Release
 ```
 
-### Graphics Pipeline Flow
+### Running
+- Set the working directory to the project folder (`objRenderer/objRenderer/`) so that shader files and sample assets are found at their relative paths.
+- In Visual Studio, this is configured in Project Properties → Debugging → Working Directory (set to `$(ProjectDir)`).
+- The application opens a window and renders a default scene.
 
-Initialization order in `InitD3D()`:
-1. Device/SwapChain creation → 2. Depth buffer → 3. Render target → 4. Viewport → 5. Pipeline (`InitPipeline`) → 6. Graphics data (`InitGraphics`)
+### Linked Libraries
+The project links against:
+- `d3d11.lib` — Direct3D 11 runtime.
+- `d3dcompiler.lib` — Runtime shader compilation.
+<!-- - `dxgi.lib` — DXGI (swap chain support). Not found in .cpp files (RJT) -->
+- Standard Win32 libraries (`user32.lib`, `gdi32.lib`, etc., linked automatically).
 
-### Constant Buffer Pattern
+## Controls
 
-CPU-side struct in `OBJECT::ConstantBuffer` mirrors HLSL `cbuffer`:
-```cpp
-// C++ (objRenderer.h)              // HLSL (shaders.hlsl)
-struct { XMMATRIX matFinal; ... }   cbuffer ConstantBuffer { float4x4 matFinal; ... }
-```
-Update via `UpdateSubresource()` before each draw call.
+| Input | Action |
+|-------|--------|
+| I | Move the camera +z |
+| K | Move the camera -z |
+| W | Move the object +x |
+| S | Move the object -x |
+| A | Move the object +y |
+| D | Move the object -y |
+| Menu → File → Exit | Terminate the application |
+| Menu → File → Enter Text | Prompt the user for input and display it |
+| Menu → Help → About | Display diagnostic information about the application |
 
-### Return Codes
-
-| RC | Source | Meaning |
-|----|--------|---------|
-| 0 | All | Success |
-| 1 | `objParser` | Cannot open `.obj` file |
-| 2 | `objParser` | Missing required vertex attributes (v, vt, or vn) |
-| 3 | `objReader` | No `.obj` files found |
-
-## Wavefront .obj Requirements
-
-Files must contain ALL of:
-- Geometric vertices: `v x y z`
-- Texture coordinates: `vt u v`
-- Vertex normals: `vn x y z`
-- Triangulated faces: `f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3`
-
-**Not supported**: Multiple objects per file, line continuations (`\`), spaces around `/`
-
-## Runtime Controls
-
-- **W/S**: Move object +/- X axis
-- **A/D**: Move object +/- Y axis
-- **I/K**: Move camera +/- Z axis
-- **Menu**: File > Exit, File > Enter Text, Help > About (displays diagnostics)
-
-## Common Modifications
-
-### Adding vertex attributes
-1. Update `VERTEX` struct in [objRenderer.h](../objRenderer.h)
-2. Update input element description array in `InitPipeline()`
-3. Update HLSL `VShader` parameters in [shaders.hlsl](../shaders.hlsl)
-
-### Adding new objects
-Place `.obj` files in `Wavefront .obj file repository/` or executable directory. Parser auto-discovers all `.obj` files.
+<!--
+Correct and uncomment the following lines. (RJT)
+Only 8 is correct. 1 - 7 are incorrect. (RJT)
+## Guidelines for AI-Assisted Development
+1. **Shader changes**: When modifying the constant buffer, update the C++ `ConstantBuffer` struct in `Renderer.h` AND the `cbuffer` in both `VertexShader.hlsl` and `PixelShader.hlsl` to maintain layout parity. Respect 16-byte alignment rules.
+2. **COM objects**: Always use `ComPtr<T>`. Never use raw `new`/`delete` for COM objects.
+3. **DirectX Math**: Use `DirectX::XMFLOAT3`, `DirectX::XMMATRIX`, etc. Load/store with `XMLoadFloat3`/`XMStoreFloat3` as DirectX math requires aligned types for SIMD operations.
+4. **Error checking**: All `HRESULT`-returning functions must be checked with `FAILED(hr)` and handled appropriately.
+5. **Resource creation**: D3D11 resources should follow the create-once, bind-many pattern. Avoid creating resources per-frame.
+6. **Window messages**: New input or UI features should be handled in the `WndProc` in `Main.cpp` and dispatched to the appropriate manager class.
+7. **New file additions**: Follow the existing pattern of `.h`/`.cpp` pairs, `#pragma once`, PascalCase class names, `m_` prefixed members.
+8. **Platform**: Target Windows x64. Use Win32 API for windowing. Do not introduce cross-platform abstractions unless specifically requested.
+-->
