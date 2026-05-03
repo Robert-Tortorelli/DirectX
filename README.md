@@ -7,7 +7,7 @@ The first object is initially drawn at the origin of world space (0, 0, 0). The 
 
 Incrementing the z coordinate of the camera's position moves the camera deeper into the physical screen, such that world objects appear further away from the end-user.
 The camera always looks at the second instance of the object, following it when it is moved. Therefore the second instance of the object always appears stationary, while the first instance of the object (which is stationary) appears to move in the direction opposite to how the second instance of the object moves.
-The W, A, S, D keys move the second object as follows. However, as the camera follows the second object, the W key makes the first object appear to move in the -x direction.
+The W, A, S, D keys move the second object. Because the camera follows the second object, the W key makes the first object appear to move in the -x direction. Similarly for the other keys.
   W moves the object +x
   S moves the object -x
   A moves the object +y
