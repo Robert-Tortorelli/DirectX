@@ -26,3 +26,6 @@ The I, K keys move the camera.
 The program uses the Windows API (Win32 API).
 DirectX 11 is used to render 3D objects and 2D text.
 DirectXTK is used to texture 3D objects.
+
+Microsoft recommends Visual Studio for DirectX development, especially for its debugging capabilities, and this project was primarily developed using it. It makes setting up the build very easy too.
+Visual Studio Code can also be used for the build, albeit with a more manual set up.
