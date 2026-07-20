@@ -352,3 +352,18 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+/objRenderer/.editorconfig
+/objRenderer/packages.config
+/objRenderer/.github/Archive/copilot-instructions.2026-01-14.original.md
+/objRenderer/.github/Archive/copilot-instructions.2026-02-24.original.md
+/objRenderer/.github/copilot-instructions.md
+/objRenderer/resource.res
+/objRenderer/Wavefront .obj file repository/#read-only set on all files.txt
+/objRenderer/Wavefront .obj file repository/Text.Blender-Cube.obj
+/objRenderer/Wavefront .obj file repository/Text.Blender-Pyramid.obj
+/objRenderer/Wavefront .obj file repository/Text.Blender-Suzanne.obj
+/objRenderer/Wavefront .obj file repository/Text.Gemini-Valley and Mountain Scene (normalized).obj
+/objRenderer/Wavefront .obj file repository/Text.Gemini-Valley and Mountain Scene.obj
+/objRenderer/Wavefront .obj file repository/Text.obj
+/objRenderer/Intro to objRenderer.docx
+/objRenderer/objFileProcessor original.cpp
