@@ -32,10 +32,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders.hlsl" />
-    <None Include="packages.config" />
-    <None Include=".editorconfig" />
     <None Include="Text.Blender-Cube.obj" />
-    <None Include="Text.Gemini-Valley and Mountain Scene (normalized).obj" />
+    <None Include="Text.Gemini-Valley and Mountain Scene %28normalized%29.obj.DISABLED" />
+    <None Include="Wavefront .obj file repository\Text.Blender-Cube.obj" />
+    <None Include="Wavefront .obj file repository\Text.Blender-Pyramid.obj" />
+    <None Include="Wavefront .obj file repository\Text.Blender-Suzanne.obj" />
+    <None Include="Wavefront .obj file repository\Text.Gemini-Valley and Mountain Scene (normalized).obj" />
+    <None Include="Wavefront .obj file repository\Text.Gemini-Valley and Mountain Scene.obj" />
+    <None Include="Wavefront .obj file repository\Text.obj" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Wood.png">
@@ -49,5 +53,8 @@
     <ResourceCompile Include="resource.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Wavefront .obj file repository\#read-only set on all files.txt" />
   </ItemGroup>
 </Project>

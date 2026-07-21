@@ -44,8 +44,15 @@ struct VERTEX {												// Vertex attributes.
 	DirectX::XMFLOAT3 VertexNormalVector;					// Vertex normal vector attribute:		.x, .y, .z	("vn" element in the Wavefront .obj file)
 };
 
+// SUBMESH and OBJECT 'named structure' data types.
+//
+// SUBMESH 'named structure' data type.
+// The set of attributes of one submesh within one object.
+// SUBMESH contains a dynamically allocated array of faces (triangles) that share the same material, e.g., the same texture image. A 3D object is comprised of one or more submeshes, each with its own texture image and vertex and index data.
+//
 // OBJECT 'named structure' data type.
 // The set of attributes of one object.
+// OBJECT contains a dynamically allocated array of SUBMESH structures.
 //
 // OurVertices and OurIndices.
 // OurVertices (used to initialize the DirectX vertex buffer), a variable containing values formatted for DirectX, is the array of unique sets of vertex attributes of a single 3D object.
@@ -81,21 +88,31 @@ struct VERTEX {												// Vertex attributes.
 // The AmbientColor member is a 4D vector that represents the color and brightness of the ambient light in the scene.
 // Ambient light is a type of light that illuminates all objects in a scene equally, regardless of their distance from the light source.
 // It is used to add a basic level of illumination to a scene and can be used to simulate global illumination effects.
-struct OBJECT {
+struct SUBMESH {
 	// CPU-side data.
-	std::string OurName;									// The name of the object.
-
+	std::string OurMaterialName;							// The material name of the submesh. In this case the material name of the description of the texture image. It is not used in rendering but for informational purposes only.
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pTextureView; // Smart pointer to a shader resource view interface. A shader resource view interface specifies the subresource a shader can access during rendering. In this case the texture image.
 
 	// CPU-side buffer data.
 	//   OurVertices:	 Holds the data used to initialize the GPU-side vertex   buffer via pVBuffer, the pointer to the vertex   buffer interface.
 	//   OurIndices:	 Holds the data used to initialize the GPU-side index    buffer via pIBuffer, the pointer to the index    buffer interface.
-	//   ConstantBuffer: Holds the data used to initialize the GPU-side constant buffer via pCBuffer, the pointer to the constant buffer interface.
-	std::vector<VERTEX> OurVertices;						// The dynamically allocated array of VERTEX structures, where each array element (VERTEX structure) represents a unique set of vertex attributes. Each array element (VERTEX structure) may describe one or more triangle vertices and is referenced via the indices in array variable OurIndices.
+	std::vector<VERTEX> OurVertices;						// The dynamically allocated array of VERTEX structures, where each array element represents a unique set of vertex attributes describing one or more triangle vertices.
 	int VertexAttributeSetsTotal = 0;						// The total number of array elements in array variable OurVertices (OurVertices.size()), e.g., 24 array elements specify a cube. Manually initialized as type int does not have a default constructor.
 
-	std::vector<DWORD> OurIndices;							// The dynamically allocated array of DWORD indices, with each array element (index) pointing to the corresponding unique set of vertex attributes (for one of the three vertices of a triangle) in an OurVertices array element (VERTEX structure). Multiple array elements (indices) can point to the same OurVertices array element.
+	std::vector<DWORD> OurIndices;							// The dynamically allocated array of DWORD indices,     where each array element points to  a unique set of vertex attributes in an OurVertices array element. Multiple array elements will point to the same OurVertices array element.
 	int IndicesTotal = 0;									// The total number of array elements in array variable OurIndices	(OurIndices.size()),  e.g., 36 array elements specify a cube. Manually initialized as type int does not have a default constructor.
+
+	// GPU-side buffer data.
+	Microsoft::WRL::ComPtr<ID3D11Buffer> pVBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the vertex buffer.
+
+	Microsoft::WRL::ComPtr<ID3D11Buffer> pIBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the index buffer.
+};
+
+struct OBJECT {
+	// CPU-side data.
+	std::string OurObjectName;								// The name of the object. It is optional, and not used in rendering but for informational purposes only.
+
+	std::vector<SUBMESH> OurSubMeshes;						// The dynamically allocated array of SUBMESH structures. Each submesh groups faces sharing the same material. Each array element (SUBMESH structure) contains the set of attributes of one submesh, including the texture image and the vertex and index data for that submesh.
 
 	struct {
 		DirectX::XMMATRIX matFinal;							// The final transformation matrix.
@@ -106,10 +123,6 @@ struct OBJECT {
 	} ConstantBuffer;
 
 	// GPU-side buffer data.
-	Microsoft::WRL::ComPtr<ID3D11Buffer> pVBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the vertex buffer.
-
-	Microsoft::WRL::ComPtr<ID3D11Buffer> pIBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the index buffer.
-
 	Microsoft::WRL::ComPtr<ID3D11Buffer> pCBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the constant buffer.
 };
 
@@ -123,13 +136,5 @@ struct OBJECT {
 
 // OurObjects.
 extern std::vector<OBJECT> OurObjects;						// The dynamically allocated array of OBJECT structures, with each array element containing the set of attributes of one named object.
-// OurObjects Supplemental Variables.
-extern int OurObjectsi;										// The index variable OurObjectsi of array variable OurObjects[OurObjectsi].
-
-// OurVertices Supplemental Variables.
-extern int OurVerticesi;									// The index variable OurVerticesi of array variable OurVertices[OurVerticesi].
-
-// OurIndices Supplemental Variables.
-extern int OurIndicesi;										// The index variable OurIndicesi of array variable OurIndices[OurIndicesi].
 
 // End: External Variable Declarations.

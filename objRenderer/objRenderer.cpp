@@ -131,8 +131,8 @@ ComPtr<IDWriteTextFormat> pTextFormat;						// Smart pointer to a text format in
 // The client rectangle size determines the window rectangle size.
 // The client rectangle is within the window rectangle.
 //   Setting the client rectangle size to the current screen resolution will set the window rectangle size to the current screen resolution.
-int ClientRectangleWidth = 800;
-int ClientRectangleHeight = 600;
+int ClientRectangleWidth = 800;								// The width  of the client rectangle in pixels. The client rectangle is the area within the window rectangle where the graphics are rendered. The window rectangle includes the client rectangle and the non-client area (e.g., title bar, borders).
+int ClientRectangleHeight = 600;							// The height of the client rectangle in pixels. The client rectangle is the area within the window rectangle where the graphics are rendered. The window rectangle includes the client rectangle and the non-client area (e.g., title bar, borders).
 
 static float zCamera = 0.0f;								// A modifier to the z-coordinate of the camera's position in 3D space. Incrementing the value of z (zCamera) moves the camera's new position (EyePosition) deeper into the physical screen, such that world objects appear further away from the end-user.
 
@@ -1030,7 +1030,7 @@ static void InitPipeline(void)
 	// End: 2. Create the input-layout object and set it to the input-assembler stage of the graphics pipeline.
 
 	// For all objects in the array variable OurObjects:
-	for (auto& object : OurObjects) {
+	for (auto& object : OurObjects) {						// Process all objects in OurObjects.
 		//***
 		// 3. Create the next pointer to the constant buffer interface (variable pCBuffer) and set it to the vertex shader stage of the graphics pipeline.
 		//		Multiple constant buffers can be created (see below) and each can be set to the vertex shader and/or pixel shader stage of the graphics pipeline, depending on how it will be used.
@@ -1124,107 +1124,109 @@ static int InitGraphics(void)
 	// End: 1. Create the structures used to define vertex buffers, and index buffers.
 
 	// For all objects in the array variable OurObjects:
-	for (auto& object : OurObjects) {
-		//***
-		// 2. Create the next pointer to the vertex buffer interface (variable pVBuffer) and assign values to it from the array variable OurVertices.
-		//***
+	for (auto& object : OurObjects) {						// Process all objects in OurObjects.
+		for (auto& submesh : object.OurSubMeshes) {			// Process all submeshes in the current object.
+			//***
+			// 2. Create the next pointer to the vertex buffer interface (variable pVBuffer) and assign values to it from the array variable OurVertices.
+			//***
 
-		// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-		bdBufferVertex.ByteWidth = sizeof(VERTEX) * object.VertexAttributeSetsTotal;// Assigned a value specifying the size of the vertex buffer in bytes. The vertex buffer resource's size is the size of the VERTEX structure * the total number of elements in array variable OurVertices (VertexAttributeSetsTotal).
-		bdBufferVertex.Usage = D3D11_USAGE_DYNAMIC;									// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	  A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
-		bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER;						// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.			A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_VERTEX_BUFFER: Bind a buffer as a vertex buffer to the input-assembler stage of the graphics pipeline.
-		bdBufferVertex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;						// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.			A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	  The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
+			// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
+			bdBufferVertex.ByteWidth = sizeof(VERTEX) * submesh.VertexAttributeSetsTotal; // Assigned a value specifying the size of the vertex buffer in bytes. The vertex buffer resource's size is the size of the VERTEX structure * the total number of elements in array variable OurVertices (VertexAttributeSetsTotal).
+			bdBufferVertex.Usage = D3D11_USAGE_DYNAMIC;									  // Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	  A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
+			bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER;						  // Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.			A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_VERTEX_BUFFER: Bind a buffer as a vertex buffer to the input-assembler stage of the graphics pipeline.
+			bdBufferVertex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;						  // Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.			A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	  The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
 
-		// ID3D11Device::CreateBuffer member function:
-		//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the vertex buffer object.
-		dev->CreateBuffer(&bdBufferVertex,					// A pointer to a buffer resource description structure that describes the buffer, in this case the vertex buffer, as per bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER.
-			NULL,											// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferVertex.Usage is D3D11_USAGE_IMMUTABLE).
-			object.pVBuffer.GetAddressOf());				// The newly created vertex buffer object. &pVBuffer is the address of a pointer, pVBuffer, to the buffer interface that represents this object.
+			// ID3D11Device::CreateBuffer member function:
+			//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the vertex buffer object.
+			dev->CreateBuffer(&bdBufferVertex,				// A pointer to a buffer resource description structure that describes the buffer, in this case the vertex buffer, as per bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER.
+				NULL,										// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferVertex.Usage is D3D11_USAGE_IMMUTABLE).
+				submesh.pVBuffer.GetAddressOf());			// The newly created vertex buffer object. &pVBuffer is the address of a pointer, pVBuffer, to the buffer interface that represents this object.
 
-		// Assign the vertex attributes by copying them from array variable OurVertices to the vertex buffer interface (variable pVBuffer).
-		// ID3D11DeviceContext::Map member function:
-		//   Mapping a buffer allows us to access it.
-		//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
-		//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
-		devcon->Map(object.pVBuffer.Get(),					// A pointer to the vertex buffer interface.
-			NULL,											// Index number of the subresource.
-			D3D11_MAP_WRITE_DISCARD,						// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
-			NULL,											// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
-			&msBufferVertex);								// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
-		// Copy all the vertex attributes from array variable OurVertices to the vertex buffer interface (variable pVBuffer).
-		// memcpy function:
-		//   Copy a block of memory.
-		memcpy(msBufferVertex.pData,						// Pointer to the destination memory block, in this case the vertex buffer's memory block.
-			&object.OurVertices[0],							// Pointer to the source memory block, in this case the array variable OurVertices's memory block. .OurVertices[0] is specified to get a pointer to the start of the vertex data array, so the entire array can be copied efficiently into the vertex buffer.
-			bdBufferVertex.ByteWidth);						// Number of bytes to copy, in this case the size of the vertex buffer in bytes.
-		// D3D11DeviceContext::Unmap member function:
-		//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
-		devcon->Unmap(object.pVBuffer.Get(),				// A pointer to the vertex buffer interface.
-			NULL);											// A subresource to be unmapped.
+			// Assign the vertex information by mapping the vertex buffer interface (variable pVBuffer) to a mapped subresource (variable msBufferVertex), and copying the vertex information from array variable OurVertices to the GPU's vertex buffer memory via a pointer to the mapped subresource (variable msBufferVertex.pData).
+			//
+			// ID3D11DeviceContext::Map member function:
+			//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
+			//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
+			devcon->Map(submesh.pVBuffer.Get(),				// A pointer to the vertex buffer interface.
+				NULL,										// Index number of the subresource.
+				D3D11_MAP_WRITE_DISCARD,					// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
+				NULL,										// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
+				&msBufferVertex);							// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
+			// Copy all the vertex attributes from array variable OurVertices to the vertex buffer interface (variable pVBuffer).
+			// memcpy function:
+			//   Copy a block of memory.
+			memcpy(msBufferVertex.pData,					// Pointer to the destination memory block, in this case the vertex buffer's memory block.
+				&submesh.OurVertices[0],					// Pointer to the source memory block, in this case the array variable OurVertices's memory block. .OurVertices[0] is specified to get a pointer to the start of the vertex data array, so the entire array can be copied efficiently into the vertex buffer.
+				bdBufferVertex.ByteWidth);					// Number of bytes to copy, in this case the size of the vertex buffer in bytes.
+			// D3D11DeviceContext::Unmap member function:
+			//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
+			devcon->Unmap(submesh.pVBuffer.Get(),			// A pointer to the vertex buffer interface.
+				NULL);										// A subresource to be unmapped.
 
-		// End: 2. Create the next pointer to the vertex buffer interface (variable pVBuffer) and assign values to it from the array variable OurVertices.
+			// End: 2. Create the next pointer to the vertex buffer interface (variable pVBuffer) and assign values to it from the array variable OurVertices.
 
-		//***
-		// 3. Create the next pointer to the index buffer interface (variable pIBuffer) and assign values to it from the array variable OurIndices.
-		//***
+			//***
+			// 3. Create the next pointer to the index buffer interface (variable pIBuffer) and assign values to it from the array variable OurIndices.
+			//***
 
-		// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-		bdBufferIndex.ByteWidth = sizeof(DWORD) * object.IndicesTotal;				// Assigned a value specifying the size of the index buffer in bytes. Three indices in the index buffer, each pointing to one set of vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of triangles comprising the object. Therefore IndicesTotal * 3.
-		bdBufferIndex.Usage = D3D11_USAGE_DYNAMIC;									// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	 A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
-		bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER;							// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_INDEX_BUFFER: Bind a buffer as an index buffer to the input-assembler stage of the graphics pipeline.
-		bdBufferIndex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;						// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	 The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
+			// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
+			bdBufferIndex.ByteWidth = sizeof(DWORD) * submesh.IndicesTotal;				  // Assigned a value specifying the size of the index buffer in bytes. Three indices in the index buffer, each pointing to one set of vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of triangles comprising the object. Therefore IndicesTotal * 3.
+			bdBufferIndex.Usage = D3D11_USAGE_DYNAMIC;									  // Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	 A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
+			bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER;							  // Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_INDEX_BUFFER: Bind a buffer as an index buffer to the input-assembler stage of the graphics pipeline.
+			bdBufferIndex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;						  // Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	 The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
 
-		// ID3D11Device::CreateBuffer member function:
-		//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the index buffer object.
-		dev->CreateBuffer(&bdBufferIndex,					// A pointer to a buffer resource description structure that describes the buffer, in this case an index buffer, as per bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER.
-			NULL,											// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferIndex.Usage is D3D11_USAGE_IMMUTABLE).
-			object.pIBuffer.GetAddressOf());				// The newly created index buffer object. &pIBuffer is the address of a pointer, pIBuffer, to the buffer interface that represents this object.
+			// ID3D11Device::CreateBuffer member function:
+			//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the index buffer object.
+			dev->CreateBuffer(&bdBufferIndex,				// A pointer to a buffer resource description structure that describes the buffer, in this case an index buffer, as per bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER.
+				NULL,										// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferIndex.Usage is D3D11_USAGE_IMMUTABLE).
+				submesh.pIBuffer.GetAddressOf());			// The newly created index buffer object. &pIBuffer is the address of a pointer, pIBuffer, to the buffer interface that represents this object.
 
-		// Assign the index information by copying it from array variable OurIndices to the index buffer interface (variable pIBuffer).
-		// ID3D11DeviceContext::Map member function:
-		//   Mapping a buffer allows us to access it.
-		//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
-		//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
-		devcon->Map(object.pIBuffer.Get(),					// A pointer to the index buffer interface.
-			NULL,											// Index number of the subresource.
-			D3D11_MAP_WRITE_DISCARD,						// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
-			NULL,											// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
-			&msBufferIndex);								// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
-		// Copy all the index information from array variable OurIndices to the index buffer interface (variable pIBuffer).
-		// memcpy function:
-		//   Copy a block of memory.
-		memcpy(msBufferIndex.pData,							// Pointer to the destination memory block, in this case the index buffer's memory block.
-			&object.OurIndices[0],							// Pointer to the source memory block, in this case the array variable OurIndices's memory block. .OurIndices[0] is specified to get a pointer to the start of the index data array, so the entire array can be copied efficiently into the index buffer.
-			bdBufferIndex.ByteWidth);						// Number of bytes to copy, in this case the size of the index buffer in bytes.
-		// D3D11DeviceContext::Unmap member function:
-		//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
-		devcon->Unmap(object.pIBuffer.Get(),				// A pointer to the index buffer interface.
-			NULL);											// A subresource to be unmapped.
+			// Assign the index information by mapping the index buffer interface (variable pIBuffer) to a mapped subresource (variable msBufferIndex), and copying the index information from array variable OurIndices to the GPU's index buffer memory via a pointer to the mapped subresource (variable msBufferIndex.pData).
+			//
+			// ID3D11DeviceContext::Map member function:
+			//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
+			//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
+			devcon->Map(submesh.pIBuffer.Get(),				// A pointer to the index buffer interface.
+				NULL,										// Index number of the subresource.
+				D3D11_MAP_WRITE_DISCARD,					// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
+				NULL,										// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
+				&msBufferIndex);							// A pointer to the mapped subresource D3D11_MAPPED_SUBRESOURCE structure for the mapped subresource. The Map member function initializes this structure with necessary information.
+			// Copy all the index information from array variable OurIndices to the index buffer interface (variable pIBuffer).
+			// memcpy function:
+			//   Copy a block of memory.
+			memcpy(msBufferIndex.pData,						// Pointer to the destination memory block, in this case the index buffer's memory block.
+				&submesh.OurIndices[0],						// Pointer to the source memory block, in this case the array variable OurIndices's memory block. .OurIndices[0] is specified to get a pointer to the start of the index data array, so the entire array can be copied efficiently into the index buffer.
+				bdBufferIndex.ByteWidth);					// Number of bytes to copy, in this case the size of the index buffer in bytes.
+			// D3D11DeviceContext::Unmap member function:
+			//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
+			devcon->Unmap(submesh.pIBuffer.Get(),			// A pointer to the index buffer interface.
+				NULL);										// A subresource to be unmapped.
 
-		// End: 3. Create the next pointer to the index buffer interface (variable pIBuffer) and assign values to it from the array variable OurIndices.
+			// End: 3. Create the next pointer to the index buffer interface (variable pIBuffer) and assign values to it from the array variable OurIndices.
 
-		//***
-		// 4. Create the next pointer to the shader resource view interface for a texture image (variable pTextureView) and assign values to the texture image from an image file.
-		//***
+			//***
+			// 4. Create the next pointer to the shader resource view interface for a texture image (variable pTextureView) and assign values to the texture image from an image file.
+			//***
 
-		// DirectX::CreateWICTextureFromFile function:
-		//   Loads a Windows Imaging Component (WIC)-supported bitmap file from disk, creates a Direct3D 11 resource from it, and optionally a Direct3D 11 shader resource view.
-		const wchar_t* textureImageFilename;
-		if (textureImageSwitch)
-		{
-			textureImageFilename = L"Wood.png";
-			textureImageSwitch = false;
+			// DirectX::CreateWICTextureFromFile function:
+			//   Loads a Windows Imaging Component (WIC)-supported bitmap file from disk, creates a Direct3D 11 resource from it, and optionally a Direct3D 11 shader resource view.
+			const wchar_t* textureImageFilename;
+			if (textureImageSwitch)
+			{
+				textureImageFilename = L"Wood.png";
+				textureImageSwitch = false;
+			}
+			else
+				textureImageFilename = L"150-IMG-20251030-WA0001.png";
+			CreateWICTextureFromFile(dev.Get(),				// A pointer to the device interface.
+				textureImageFilename,						// The filename of the texture image file.
+				NULL,										// NULL, as in most use cases for rendering you only need the shader resource view interface (the parameter below).
+				// Otherwise, you would specify &pTexture:
+															// &pTexture	 is the address of a pointer, pTexture,		to the resource				interface for the resource	  created, in this case a texture image.
+				submesh.pTextureView.GetAddressOf());		// &pTextureView is the address of a pointer, pTextureView, to the shader resource view interface for the subresource created, in this case a texture image.
+
+			// End: 4. Create the next pointer to the shader resource view interface for a texture image (variable pTextureView) and assign values to the texture image from an image file.
 		}
-		else
-			textureImageFilename = L"150-IMG-20251030-WA0001.png";
-		CreateWICTextureFromFile(dev.Get(),						// A pointer to the device interface.
-			textureImageFilename,								// The filename of the texture image file.
-			NULL,												// NULL, as in most use cases for rendering you only need the shader resource view interface (the parameter below).
-																// Otherwise, you would specify &pTexture:
-																// &pTexture	 is the address of a pointer, pTexture,		to the resource				interface for the resource	  created, in this case a texture image.
-			object.pTextureView.GetAddressOf());				// &pTextureView is the address of a pointer, pTextureView, to the shader resource view interface for the subresource created, in this case a texture image.
-
-		// End: 4. Create the next pointer to the shader resource view interface for a texture image (variable pTextureView) and assign values to the texture image from an image file.
 	}
 
 	return 0;
@@ -1424,272 +1426,276 @@ static int RenderFrame(void)
 
 	// For all objects in the array variable OurObjects:
 	for (auto& object : OurObjects) {						// Process all objects in OurObjects.
-		// This for loop performs these tasks:
-		//   3. Define the final transformation matrix, matFinal.
-		//   4. Assign values that determine the attributes of light.
-		//   5. Specify the next pointer to the vertex buffer interface (variable pVBuffer), the next pointer to the index buffer interface (variable pIBuffer), the primitive type, and the next pointer to the shader resource view interface for a texture image (variable pTextureView), to the graphics pipeline.
-		//   6. Render the objects.
+		for (auto& submesh : object.OurSubMeshes) {			// Process all submeshes in the current object.
+			// This for loop performs these tasks:
+			//   3. Define the final transformation matrix, matFinal.
+			//   4. Assign values that determine the attributes of light.
+			//   5. Specify the next pointer to the vertex buffer interface (variable pVBuffer), the next pointer to the index buffer interface (variable pIBuffer), the primitive type, and the next pointer to the shader resource view interface for a texture image (variable pTextureView), to the graphics pipeline.
+			//   6. Render the objects.
 
-		//***
-		// 3. Define the final transformation matrix, matFinal.
-		//    The final transformation matrix contains all the information necessary to transform each vertex of the object being rendered.
-		//
-		//   i.	Define the world matrix, matWorld.
-		//
-		//  ii.	Define the view matrix, matView.
-		//
-		// iii. Define the projection matrix, matProjection.
-		//
-		//  iv.	Define the final transformation matrix, matFinal.
-		//		Each geometric vertex is multiplied by the final transformation matrix.
-		//		The final transformation matrix is one member of the C++ constant buffer structure that matches the HLSL constant buffer structure.
-		//		The C++ constant buffer structure will be copied to the HLSL constant buffer structure (they are, but do not have to be, named the same).
-		//		Using the HLSL constant buffer is efficient, as multiplication and other common operations can be performed on its members by the GPU's vertex shader.
-		//***
+			//***
+			// 3. Define the final transformation matrix, matFinal.
+			//    The final transformation matrix contains all the information necessary to transform each vertex of the object being rendered.
+			//
+			//   i.	Define the world matrix, matWorld.
+			//
+			//  ii.	Define the view matrix, matView.
+			//
+			// iii. Define the projection matrix, matProjection.
+			//
+			//  iv.	Define the final transformation matrix, matFinal.
+			//		Each geometric vertex is multiplied by the final transformation matrix.
+			//		The final transformation matrix is one member of the C++ constant buffer structure that matches the HLSL constant buffer structure.
+			//		The C++ constant buffer structure will be copied to the HLSL constant buffer structure (they are, but do not have to be, named the same).
+			//		Using the HLSL constant buffer is efficient, as multiplication and other common operations can be performed on its members by the GPU's vertex shader.
+			//***
 
-		// Declare transformation matrices that are not members of the C++ constant buffer structure.
-		XMMATRIX matRotateY, matWorld, matView, matProjection, matTranslate;
+			// Declare transformation matrices that are not members of the C++ constant buffer structure.
+			XMMATRIX matRotateY, matWorld, matView, matProjection, matTranslate;
 
-		// To support incremental changes to affected rendered objects, the following variables must be declared static to preserve their values though multiple calls to the RenderFrame function.
-		static float Angle = 0.0f;							// The angle in radians (0 radians = 0 degrees).
-		static float Angle2 = 0.0f;							// The angle in radians (0 radians = 0 degrees).
+			// To support incremental changes to affected rendered objects, the following variables must be declared static to preserve their values though multiple calls to the RenderFrame function.
+			static float Angle = 0.0f;							// The angle in radians (0 radians = 0 degrees).
+			static float Angle2 = 0.0f;							// The angle in radians (0 radians = 0 degrees).
 
-		// Define the world matrix, matWorld.
-		// XMMatrixRotationY function:
-		//   Builds a matrix that rotates around the y axis.
-		// This matrix is updated each frame, causing the object to rotate clockwise.
-		Angle = fmod(Angle + 0.0008727f, 6.283185f);		// Increment Angle by 5% of 1 degree (5% of 0.0174532 radians = 0.0008727f) and then apply mod 360 degrees (mod 6.283185f radians). This generates angles from 0 - 359 degrees then back to 0 degrees.
-		matRotateY = XMMatrixRotationY(Angle);				// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
-		object.ConstantBuffer.matRotate = matRotateY;		// The final rotation matrix is the product of all defined rotation matrices.				Here, only matRotateY is defined.
-		// The world transformation is a function of scaling, rotation, and translation (movement).														Here, only rotation   is defined.
-		matWorld = object.ConstantBuffer.matRotate;			
+			// Define the world matrix, matWorld.
+			// XMMatrixRotationY function:
+			//   Builds a matrix that rotates around the y axis.
+			// This matrix is updated each frame, causing the object to rotate clockwise.
+			Angle = fmod(Angle + 0.0008727f, 6.283185f);		// Increment Angle by 5% of 1 degree (5% of 0.0174532 radians = 0.0008727f) and then apply mod 360 degrees (mod 6.283185f radians). This generates angles from 0 - 359 degrees then back to 0 degrees.
+			matRotateY = XMMatrixRotationY(Angle);				// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
+			object.ConstantBuffer.matRotate = matRotateY;		// The final rotation matrix is the product of all defined rotation matrices.				Here, only matRotateY is defined.
+			// The world transformation is a function of scaling, rotation, and translation (movement).														Here, only rotation   is defined.
+			matWorld = object.ConstantBuffer.matRotate;
 
-		// Define the view matrix, matView.
-		// XMMatrixLookAtLH function:
-		//   Builds a view matrix for a left-handed coordinate system using a camera position, a focal point position (a position the camera is pointed at), and the up direction of the camera.
-		//   Returns a view matrix that transforms a point from world space into view space.
-		//   After the view transformation is applied to the 3D scene, the camera can be assumed to be positioned at the origin (with the top of the camera pointed in the direction of positive y) and pointed in the positive z direction (for a left-hand system).
-		//   This orientation allows the projection transformation to be much simpler than it would be otherwise.
-		//
-		// XMVectorSet function:
-		//   Creates a vector using four floating-point values.
-		//   Returns an instance of XMVECTOR each of whose four components (x, y, z, and w) is a floating-point number with the same value as the corresponding input argument to XMVectorSet.
-		//     XMVECTOR is a portable type used to represent a vector of four 32-bit floating-point or integer components, each aligned optimally and mapped to a hardware vector register.
-		//
-		// Variable EyePosition: The camera position vector.
-		// The camera position's x- and y-coordinates			   equal		those of the second object, even as it moves.
-		// The camera position's					  z-coordinate differs from those of the second object, and can be manually adjusted by keyboard keys.
-		XMVECTOR EyePosition = XMVectorSet(x,				// The x component of the vector to return.
-			y,												// The y component of the vector to return.
-			zCamera + 5.0f,									// The z component of the vector to return.
-			0.0f);
-		CameraEyePosition = EyePosition;					// Save the camera position to a global variable so it can be included in program diagnostics.
-		//
-		// Variable FocusPosition: The focal point position vector.
-		// The camera points at the second occurrence of the current object even as this second occurrence of the current object moves. Thus the second occurrence of the current object *appears* stationary, while the first occurrence of the current object (which is stationary) *appears* to move in the direction opposite to how the second occurrence of the current object moves.
-		XMVECTOR FocusPosition = XMVectorSet(x, y, z, 0.0f);		// x, y, z, w
-		//
-		// Variable UpDirection: The up direction vector.
-		// The up direction vector is a unit vector that points in the positive y direction, which is the top of the camera.
-		XMVECTOR UpDirection = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);	// x, y, z, w
-		//
-		// Test whether EyePosition and FocusPosition are equal, and adjust if necessary.
-		// If EyePosition and FocusPosition become equal this is an error condition. Therefore if this occurs EyePosition is slightly adjusted to keep them unequal as required.
-		if (XMVector3Equal(EyePosition, FocusPosition))
-		{
-			// EyePosition and FocusPosition are equal.
-			// Make them unequal: Increment the camera position's z-coordinate a trivial amount.
-			EyePosition = XMVectorSet(x,					// The x component of the vector to return.
-				y,											// The y component of the vector to return.
-				zCamera + 5.001f,							// The z component of the vector to return.
+			// Define the view matrix, matView.
+			// XMMatrixLookAtLH function:
+			//   Builds a view matrix for a left-handed coordinate system using a camera position, a focal point position (a position the camera is pointed at), and the up direction of the camera.
+			//   Returns a view matrix that transforms a point from world space into view space.
+			//   After the view transformation is applied to the 3D scene, the camera can be assumed to be positioned at the origin (with the top of the camera pointed in the direction of positive y) and pointed in the positive z direction (for a left-hand system).
+			//   This orientation allows the projection transformation to be much simpler than it would be otherwise.
+			//
+			// XMVectorSet function:
+			//   Creates a vector using four floating-point values.
+			//   Returns an instance of XMVECTOR each of whose four components (x, y, z, and w) is a floating-point number with the same value as the corresponding input argument to XMVectorSet.
+			//     XMVECTOR is a portable type used to represent a vector of four 32-bit floating-point or integer components, each aligned optimally and mapped to a hardware vector register.
+			//
+			// Variable EyePosition: The camera position vector.
+			// The camera position's x- and y-coordinates			   equal		those of the second object, even as it moves.
+			// The camera position's					  z-coordinate differs from those of the second object, and can be manually adjusted by keyboard keys.
+			XMVECTOR EyePosition = XMVectorSet(x,				// The x component of the vector to return.
+				y,												// The y component of the vector to return.
+				zCamera + 5.0f,									// The z component of the vector to return.
 				0.0f);
+			CameraEyePosition = EyePosition;					// Save the camera position to a global variable so it can be included in program diagnostics.
+			//
+			// Variable FocusPosition: The focal point position vector.
+			// The camera points at the second occurrence of the current object even as this second occurrence of the current object moves. Thus the second occurrence of the current object *appears* stationary, while the first occurrence of the current object (which is stationary) *appears* to move in the direction opposite to how the second occurrence of the current object moves.
+			XMVECTOR FocusPosition = XMVectorSet(x, y, z, 0.0f);		// x, y, z, w
+			//
+			// Variable UpDirection: The up direction vector.
+			// The up direction vector is a unit vector that points in the positive y direction, which is the top of the camera.
+			XMVECTOR UpDirection = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);	// x, y, z, w
+			//
+			// Test whether EyePosition and FocusPosition are equal, and adjust if necessary.
+			// If EyePosition and FocusPosition become equal this is an error condition. Therefore if this occurs EyePosition is slightly adjusted to keep them unequal as required.
+			if (XMVector3Equal(EyePosition, FocusPosition))
+			{
+				// EyePosition and FocusPosition are equal.
+				// Make them unequal: Increment the camera position's z-coordinate a trivial amount.
+				EyePosition = XMVectorSet(x,					// The x component of the vector to return.
+					y,											// The y component of the vector to return.
+					zCamera + 5.001f,							// The z component of the vector to return.
+					0.0f);
+			}
+			//
+			// Compute the view matrix, matView, using the camera position, focal point position, and up direction.
+			matView = XMMatrixLookAtLH(EyePosition,				// Position of the camera.
+				FocusPosition,									// Position of the focal point (a position the camera is pointed at).
+				UpDirection);
+
+			// Define the projection matrix, matProjection.
+			// XMMatrixPerspectiveFovLH function:
+			//   Builds a left-handed perspective projection matrix based on a field of view.
+			//   Using left-hand coordinates means the camera is pointed in the direction of the positive z axis.
+			//   The projection matrix is based on a camera located at the origin and pointing along the z axis.
+			//     This is possible because the view matrix accounts for any possible translation and rotation of the camera.
+			float FovAngleY = XMConvertToRadians(45);
+			float AspectRatio = static_cast<FLOAT>(ClientRectangleWidth) / static_cast<FLOAT>(ClientRectangleHeight);
+			float NearZ = 1.0f;
+			float FarZ = 100.0f;
+			matProjection = XMMatrixPerspectiveFovLH(FovAngleY,	// Top-down field-of-view angle in radians.
+				AspectRatio,									// Aspect ratio of view-space x:y.
+				NearZ,											// Distance to the near clipping plane. Must be greater than zero. It is converted to a normalized z-coordinate of 0.
+				FarZ);											// Distance to the far  clipping plane. Must be greater than zero. It is converted to a normalized z-coordinate of 1.
+
+			// Define the final transformation matrix, matFinal.
+			object.ConstantBuffer.matFinal = matWorld * matView * matProjection;
+
+			// End: 3. Define the final transformation matrix, matFinal.
+
+			//***
+			// 4. Assign values that determine the attributes of light.
+			//***
+
+			object.ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);		// Diagonal light direction.
+			object.ConstantBuffer.LightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);		// Full-intensity white light color (standard).
+			object.ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);		// Minimal ambient light (dark).
+
+			// Sample alternative light direction values and their effects:
+			// Light direction is specified as a vector pointing in the direction that the light is traveling (from the light source toward the object).
+			// If variable LightVector is not normalized, the diffuse lighting will be too bright. It is normalized by this program's vertex shader function.
+			// The first three components (x, y, z) define the direction of the directional light.
+			// The fourth component typically isn't used in lighting calculations, so it should remain consistent (usually 0.0f).
+			// object.ConstantBuffer.LightVector = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);	// No directional light.
+			// object.ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);	// Diagonal light direction.
+			// object.ConstantBuffer.LightVector = XMFLOAT4(2.0f, 2.0f, 2.0f, 0.0f);	// Stronger diagonal light direction.
+			//
+			// Sample alternative light color/intensity values and their effects:
+			// Light color provides both the color and intensity of the directional light.
+			// The first three components (R, G, B) define both the color and intensity of the directional light.
+			// The fourth component typically isn't used in lighting calculations, so it should remain consistent (usually 1.0f).
+			// object.ConstantBuffer.LightColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);		// No light color (dark).
+			// object.ConstantBuffer.LightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);		// Full-intensity white light color (standard).
+			// object.ConstantBuffer.LightColor = XMFLOAT4(2.0f, 2.0f, 2.0f, 1.0f);		// Over-bright white light color (HDR-style).
+			//
+			// Sample alternative ambient light color/intensity values:
+			// Ambient light provides base illumination from all directions.
+			// The first three components (R, G, B) define both the color and intensity of ambient light.
+			// The fourth component typically isn't used in lighting calculations, so it should remain consistent (usually 1.0f).
+			// object.ConstantBuffer.AmbientColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);	// No ambient light: pure directional lighting only.
+			// object.ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);	// Minimal ambient light.
+			// object.ConstantBuffer.AmbientColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);	// Full-intensity white ambient light.
+			// object.ConstantBuffer.AmbientColor = XMFLOAT4(2.0f, 2.0f, 2.0f, 1.0f);	// Over-bright white ambient light: may wash out details.
+
+			// End: 4. Assign values that determine the attributes of light.
+
+			//***
+			// 5. Specify the next pointer to the vertex buffer interface (variable pVBuffer), the next pointer to the index buffer interface (variable pIBuffer), the primitive type, and the next pointer to the shader resource view interface for a texture image (variable pTextureView), to the graphics pipeline.
+			//***
+
+			// Specify the vertex buffers to draw.
+			//   This program uses only one vertex buffer per object.
+			UINT stride = sizeof(VERTEX);						// A "stride" is the size (in bytes) of the elements that are to be used from a vertex buffer.								  Define an array of strides when multiple vertex buffers are used.
+			UINT offset = 0;									// An "offset" is the number of bytes between the first element of the vertex buffer and the first element that will be used. Define an array of offsets when multiple vertex buffers are used.
+			// ID3D11DeviceContext::IASetVertexBuffers member function:
+			//   Set the array of (in this case an array of one) vertex buffers to the input-assembler stage of the graphics pipeline.
+			//   For drawing multiple objects you bind one vertex buffer at a time per object before drawing that object.
+			//   This is done in this program.
+			//
+			//   You can set an array of multiple buffers, strides, and offsets when using advanced vertex layouts, e.g., separate position and normal buffers, and bind these multiple buffers at once for a single draw call (interleaved or parallel vertex data), not for drawing multiple objects in one call.
+			//     Interleaved vertex data: All attributes for a vertex (position, normal, color, etc.) are stored together in a single buffer, one after another:
+			//       [pos0, norm0, col0][pos1, norm1, col1][pos2, norm2, col2]...
+			//     Parallel (non-interleaved) vertex data: Each attribute is stored in a separate buffer:
+			//       positions:	[pos0][pos1][pos2]...
+			//       normals:	[norm0] [norm1] [norm2] ...
+			//       colors :	[col0] [col1] [col2] ...
+			devcon->IASetVertexBuffers(0,									// The first input slot for binding. The first vertex buffer is explicitly bound to the start slot; this causes each additional vertex buffer in the array to be implicitly bound to each subsequent input slot.
+				1,															// The number of vertex buffers in the array.
+				submesh.pVBuffer.GetAddressOf(),	// &pVBuffer is the address of a pointer, pVBuffer, to an array of (in this case an array of one) vertex buffer interfaces.
+				&stride,													// &stride is the address of stride, and therefore a pointer to the array of (in this case an array of one) stride values (one stride value for each buffer in the vertex buffer array).
+				&offset);													// &offset is the address of offset, and therefore a pointer to the array of (in this case an array of one) offset values (one offset value for each buffer in the vertex buffer array).
+
+			// Specify the index buffers to use when drawing.
+			// ID3D11DeviceContext::IASetIndexBuffer member function:
+			//   Set the index buffer to the input-assembler stage of the graphics pipeline.
+			devcon->IASetIndexBuffer(submesh.pIBuffer.Get(),	// A pointer, pIBuffer, to the index buffer interface.
+				DXGI_FORMAT_R32_UINT,													// A value of the DXGI_FORMAT enumerated type, i.e., DXGI_FORMAT_R32_UINT: A single-component, 32-bit unsigned-integer format that supports 32 bits for the red channel.
+				0);																		// The offset (in bytes) from the start of the index buffer to the first index to use.
+
+			// Specify the primitive type used, i.e., the triangle primitive.
+			// ID3D11DeviceContext::IASetPrimitiveTopology member function:
+			//   Set information about the primitive type, and data order that describes input data for the input-assembler stage of the graphics pipeline.
+			devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);	// A value of the  D3D11_PRIMITIVE_TOPOLOGY enumerated type, i.e., D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST: Interpret the vertex data as a list of triangles.
+
+			// Specify the shader resource view interface for the texture image to use when drawing.
+			// ID3D11DeviceContext::PSSetShaderResources member function:
+			//   Bind an array of shader resources to the pixel shader stage of the graphics pipeline.
+			devcon->PSSetShaderResources(0,										// Index into the device's zero-based array (in this case an array of one) to begin setting shader resources to.
+				1,																// Number of shader resources to set.
+				submesh.pTextureView.GetAddressOf());// &pTextureView is the address of a pointer, pTextureView, to the array of (in this case an array of one) shader resource view interfaces for the subresources created, in this case a texture image.
+
+			// End: 5. Specify the next pointer to the vertex buffer interface (variable pVBuffer), the next pointer to the index buffer interface (variable pIBuffer), the primitive type, and the next pointer to the shader resource view interface for a texture image (variable pTextureView), to the graphics pipeline.
+
+			//***
+			// 6. Render the objects.
+			//    The index buffer is used to determine the order in which vertices from the vertex buffer are accessed and assembled into primitives (such as triangles).
+			//    The indices in the index buffer reference specific vertices in the vertex buffer, allowing for efficient reuse of vertex data and control over the drawing order.
+			//   i. Draw the first occurrence of the current object to the scene.
+			//  ii. Draw the second occurrence of the current object to the scene, offset from the first occurrence of the current object, using different transformations than those used by the first occurrence of the current object.
+			//***
+
+			// Draw the first occurrence of the current object to the scene.
+			//
+			// Prepare to draw the first occurrence of the current object using the current constant buffer.
+			// The first occurrence of the current object is drawn at the origin of world space, i.e., at (0, 0, 0).
+			// The first occurrence of the current object rotates clockwise.
+			//
+			// Update the constant buffer used to draw the first occurrence of the current object.
+			// ID3D11DeviceContext::VSSetConstantBuffers member function:
+			//   Set the constant buffer to the vertex shader stage of the graphics pipeline.
+			devcon->VSSetConstantBuffers(0,						// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
+				1,												// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
+				object.pCBuffer.GetAddressOf());				// &pCBuffer is the address of a pointer, pCBuffer, to the constant buffer interface.
+			// ID3D11DeviceContext::UpdateSubresource member function:
+			//   The CPU copies data from memory				  to a subresource created in non-mappable memory.
+			//   Specifically:
+			//   The CPU copies data from the C++ constant buffer to the HLSL constant buffer used by the GPU's vertex shader.
+			devcon->UpdateSubresource(object.pCBuffer.Get(),	// A pointer to the destination resource, in this case the constant buffer interface.
+				0,												// A zero-based index that identifies the destination subresource.
+				0,												// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
+				&object.ConstantBuffer,							// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
+				0,												// The size of one row of the source data.
+				0);												// The size of one depth slice of source data.
+			//
+			// Draw the first occurrence of the current object using the updated constant buffer.
+			// ID3D11DeviceContext::DrawIndexed member function:
+			//   Draw indexed, non-instanced primitives.
+			devcon->DrawIndexed(submesh.IndicesTotal,			// Number of indices to draw. Three non-unique indices in the index buffer, each pointing to one set of unique vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of non-unique indices in the index buffer.
+				0,												// The location of the first index read by the GPU from the index buffer.
+				0);												// A value added to each index before reading a vertex from the vertex buffer.
+
+			// Draw the second occurrence of the current object to the scene using different transformations than those used by the first occurrence of the current object.
+			//
+			// Prepare to draw the second occurrence of the current object using an updated constant buffer and updated final matrix.
+			// The second occurrence of the current object rotates counterclockwise.
+			// The second occurrence of the current object is drawn at a different position, i.e., at (x, y, z).
+			//
+			// Update the transformation matrices used to draw the second occurrence of the current object.
+			//   A transformation matrix to rotate	  the second occurrence of the current object counterclockwise:	object.ConstantBuffer.matRotate
+			//   A transformation matrix to translate the second occurrence of the current object above the origin:	object.ConstantBuffer.matFinal
+			// object.ConstantBuffer.matRotate:
+			Angle2 = fmod(Angle2 - 0.0008727f, 6.283185f);      // Decrement Angle2 by 5% of 1 degree (5% of 0.0174532 radians = 0.0008727f) and then apply mod 360 degrees (mod 6.283185f radians). This generates angles from 359 - 0 degrees then back to 359 degrees.
+			matRotateY = XMMatrixRotationY(Angle2);				// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
+			object.ConstantBuffer.matRotate = matRotateY;		// The final rotation matrix is the product of all defined rotation matrices. Here, only matRotateY is defined.
+			// object.ConstantBuffer.matFinal:
+			// XMMatrixTranslation function:
+			//   Builds a translation matrix from the specified offsets.
+			matTranslate = XMMatrixTranslation(x,				// Translation along the x-axis.
+				y,												// Translation along the y-axis.
+				z);												// Translation along the z-axis.
+			// The world transformation is a function of scaling, rotation, and translation (movement). Here, only rotation and translation are used.
+			matWorld = object.ConstantBuffer.matRotate * matTranslate;			 // Apply the rotation matrix first, then the translation matrix. This results in the object rotating in place as it moves, i.e., the object does not orbit as it moves.
+			// Define a final matrix to transform the second occurrence of the current object.
+			object.ConstantBuffer.matFinal = matWorld * matView * matProjection; // Update the final transformation matrix (matFinal) by multiplying the updated world matrix (matWorld) by the original view (matView) and projection (matProjection) matrices.
+			//
+			// Update the constant buffer used to draw the second occurrence of the current object.
+			devcon->VSSetConstantBuffers(0,						// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
+				1,												// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
+				object.pCBuffer.GetAddressOf());				// &pCBuffer is the address of a pointer, pCBuffer, to the constant buffer interface.
+			devcon->UpdateSubresource(object.pCBuffer.Get(),	// A pointer to the destination resource, in this case the constant buffer interface.
+				0,												// A zero-based index that identifies the destination subresource.
+				0,												// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
+				&object.ConstantBuffer,							// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
+				0,												// The size of one row of the source data.
+				0);												// The size of one depth slice of source data.
+			//
+			// Draw the second occurrence of the current object using the updated constant buffer.
+			devcon->DrawIndexed(submesh.IndicesTotal,			// Number of indices to draw. Three non-unique indices in the index buffer, each pointing to one set of unique vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of non-unique indices in the index buffer.
+				0,												// The location of the first index read by the GPU from the index buffer.
+				0);												// A value added to each index before reading a vertex from the vertex buffer.
+
+			// End: 6. Render the objects.
 		}
-		//
-		// Compute the view matrix, matView, using the camera position, focal point position, and up direction.
-		matView = XMMatrixLookAtLH(EyePosition,				// Position of the camera.
-			FocusPosition,									// Position of the focal point (a position the camera is pointed at).
-			UpDirection);
-
-		// Define the projection matrix, matProjection.
-		// XMMatrixPerspectiveFovLH function:
-		//   Builds a left-handed perspective projection matrix based on a field of view.
-		//   Using left-hand coordinates means the camera is pointed in the direction of the positive z axis.
-		//   The projection matrix is based on a camera located at the origin and pointing along the z axis.
-		//     This is possible because the view matrix accounts for any possible translation and rotation of the camera.
-		float FovAngleY = XMConvertToRadians(45);
-		float AspectRatio = static_cast<FLOAT>(ClientRectangleWidth) / static_cast<FLOAT>(ClientRectangleHeight);
-		float NearZ = 1.0f;
-		float FarZ = 100.0f;
-		matProjection = XMMatrixPerspectiveFovLH(FovAngleY,	// Top-down field-of-view angle in radians.
-			AspectRatio,									// Aspect ratio of view-space x:y.
-			NearZ,											// Distance to the near clipping plane. Must be greater than zero. It is converted to a normalized z-coordinate of 0.
-			FarZ);											// Distance to the far  clipping plane. Must be greater than zero. It is converted to a normalized z-coordinate of 1.
-
-		// Define the final transformation matrix, matFinal.
-		object.ConstantBuffer.matFinal = matWorld * matView * matProjection;
-
-		// End: 3. Define the final transformation matrix, matFinal.
-
-		//***
-		// 4. Assign values that determine the attributes of light.
-		//***
-
-		object.ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);		// Diagonal light direction.
-		object.ConstantBuffer.LightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);		// Full-intensity white light color (standard).
-		object.ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);		// Minimal ambient light (dark).
-
-		// Sample alternative light direction values and their effects:
-		// Light direction is specified as a vector pointing in the direction that the light is traveling (from the light source toward the object).
-		// If variable LightVector is not normalized, the diffuse lighting will be too bright. It is normalized by this program's vertex shader function.
-		// The first three components (x, y, z) define the direction of the directional light.
-		// The fourth component typically isn't used in lighting calculations, so it should remain consistent (usually 0.0f).
-		// object.ConstantBuffer.LightVector = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);	// No directional light.
-		// object.ConstantBuffer.LightVector = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);	// Diagonal light direction.
-		// object.ConstantBuffer.LightVector = XMFLOAT4(2.0f, 2.0f, 2.0f, 0.0f);	// Stronger diagonal light direction.
-		//
-		// Sample alternative light color/intensity values and their effects:
-		// Light color provides both the color and intensity of the directional light.
-		// The first three components (R, G, B) define both the color and intensity of the directional light.
-		// The fourth component typically isn't used in lighting calculations, so it should remain consistent (usually 1.0f).
-		// object.ConstantBuffer.LightColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);		// No light color (dark).
-		// object.ConstantBuffer.LightColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);		// Full-intensity white light color (standard).
-		// object.ConstantBuffer.LightColor = XMFLOAT4(2.0f, 2.0f, 2.0f, 1.0f);		// Over-bright white light color (HDR-style).
-		//
-		// Sample alternative ambient light color/intensity values:
-		// Ambient light provides base illumination from all directions.
-		// The first three components (R, G, B) define both the color and intensity of ambient light.
-		// The fourth component typically isn't used in lighting calculations, so it should remain consistent (usually 1.0f).
-		// object.ConstantBuffer.AmbientColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);	// No ambient light: pure directional lighting only.
-		// object.ConstantBuffer.AmbientColor = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);	// Minimal ambient light.
-		// object.ConstantBuffer.AmbientColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);	// Full-intensity white ambient light.
-		// object.ConstantBuffer.AmbientColor = XMFLOAT4(2.0f, 2.0f, 2.0f, 1.0f);	// Over-bright white ambient light: may wash out details.
-
-		// End: 4. Assign values that determine the attributes of light.
-
-		//***
-		// 5. Specify the next pointer to the vertex buffer interface (variable pVBuffer), the next pointer to the index buffer interface (variable pIBuffer), the primitive type, and the next pointer to the shader resource view interface for a texture image (variable pTextureView), to the graphics pipeline.
-		//***
-
-		// Specify the vertex buffers to draw.
-		//   This program uses only one vertex buffer per object.
-		UINT stride = sizeof(VERTEX);						// A "stride" is the size (in bytes) of the elements that are to be used from a vertex buffer.								  Define an array of strides when multiple vertex buffers are used.
-		UINT offset = 0;									// An "offset" is the number of bytes between the first element of the vertex buffer and the first element that will be used. Define an array of offsets when multiple vertex buffers are used.
-		// ID3D11DeviceContext::IASetVertexBuffers member function:
-		//   Set the array of (in this case an array of one) vertex buffers to the input-assembler stage of the graphics pipeline.
-		//   For drawing multiple objects you bind one vertex buffer at a time per object before drawing that object.
-		//   This is done in this program.
-		//
-		//   You can set an array of multiple buffers, strides, and offsets when using advanced vertex layouts, e.g., separate position and normal buffers, and bind these multiple buffers at once for a single draw call (interleaved or parallel vertex data), not for drawing multiple objects in one call.
-		//     Interleaved vertex data: All attributes for a vertex (position, normal, color, etc.) are stored together in a single buffer, one after another:
-		//       [pos0, norm0, col0][pos1, norm1, col1][pos2, norm2, col2]...
-		//     Parallel (non-interleaved) vertex data: Each attribute is stored in a separate buffer:
-		//       positions:	[pos0][pos1][pos2]...
-		//       normals:	[norm0] [norm1] [norm2] ...
-		//       colors :	[col0] [col1] [col2] ...
-		devcon->IASetVertexBuffers(0,						// The first input slot for binding. The first vertex buffer is explicitly bound to the start slot; this causes each additional vertex buffer in the array to be implicitly bound to each subsequent input slot.
-			1,												// The number of vertex buffers in the array.
-			object.pVBuffer.GetAddressOf(),					// &pVBuffer is the address of a pointer, pVBuffer, to an array of (in this case an array of one) vertex buffer interfaces.
-			&stride,										// &stride is the address of stride, and therefore a pointer to the array of (in this case an array of one) stride values (one stride value for each buffer in the vertex buffer array).
-			&offset);										// &offset is the address of offset, and therefore a pointer to the array of (in this case an array of one) offset values (one offset value for each buffer in the vertex buffer array).
-
-		// Specify the index buffers to use when drawing.
-		// ID3D11DeviceContext::IASetIndexBuffer member function:
-		//   Set the index buffer to the input-assembler stage of the graphics pipeline.
-		devcon->IASetIndexBuffer(object.pIBuffer.Get(),		// A pointer, pIBuffer, to the index buffer interface.
-			DXGI_FORMAT_R32_UINT,							// A value of the DXGI_FORMAT enumerated type, i.e., DXGI_FORMAT_R32_UINT: A single-component, 32-bit unsigned-integer format that supports 32 bits for the red channel.
-			0);												// The offset (in bytes) from the start of the index buffer to the first index to use.
-
-		// Specify the primitive type used, i.e., the triangle primitive.
-		// ID3D11DeviceContext::IASetPrimitiveTopology member function:
-		//   Set information about the primitive type, and data order that describes input data for the input-assembler stage of the graphics pipeline.
-		devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // A value of the  D3D11_PRIMITIVE_TOPOLOGY enumerated type, i.e., D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST: Interpret the vertex data as a list of triangles.
-
-		// Specify the shader resource view interface for the texture image to use when drawing.
-		// ID3D11DeviceContext::PSSetShaderResources member function:
-		//   Bind an array of shader resources to the pixel shader stage of the graphics pipeline.
-		devcon->PSSetShaderResources(0,						// Index into the device's zero-based array (in this case an array of one) to begin setting shader resources to.
-			1,												// Number of shader resources to set.
-			object.pTextureView.GetAddressOf());			// &pTextureView is the address of a pointer, pTextureView, to the array of (in this case an array of one) shader resource view interfaces for the subresources created, in this case a texture image.
-
-		// End: 5. Specify the next pointer to the vertex buffer interface (variable pVBuffer), the next pointer to the index buffer interface (variable pIBuffer), the primitive type, and the next pointer to the shader resource view interface for a texture image (variable pTextureView), to the graphics pipeline.
-
-		//***
-		// 6. Render the objects.
-		//   i. Draw the first occurrence of the current object to the scene.
-		//  ii. Draw the second occurrence of the current object to the scene, offset from the first occurrence of the current object, using different transformations than those used by the first occurrence of the current object.
-		//***
-
-		// Draw the first occurrence of the current object to the scene.
-		//
-		// Prepare to draw the first occurrence of the current object using the current constant buffer.
-		// The first occurrence of the current object is drawn at the origin of world space, i.e., at (0, 0, 0).
-		// The first occurrence of the current object rotates clockwise.
-		//
-		// Update the constant buffer used to draw the first occurrence of the current object.
-		// ID3D11DeviceContext::VSSetConstantBuffers member function:
-		//   Set the constant buffer to the vertex shader stage of the graphics pipeline.
-		devcon->VSSetConstantBuffers(0,						// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
-			1,												// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
-			object.pCBuffer.GetAddressOf());				// &pCBuffer is the address of a pointer, pCBuffer, to the constant buffer interface.
-		// ID3D11DeviceContext::UpdateSubresource member function:
-		//   The CPU copies data from memory				  to a subresource created in non-mappable memory.
-		//   Specifically:
-		//   The CPU copies data from the C++ constant buffer to the HLSL constant buffer used by the GPU's vertex shader.
-		devcon->UpdateSubresource(object.pCBuffer.Get(),	// A pointer to the destination resource, in this case the constant buffer interface.
-			0,												// A zero-based index that identifies the destination subresource.
-			0,												// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
-			&object.ConstantBuffer,							// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
-			0,												// The size of one row of the source data.
-			0);												// The size of one depth slice of source data.
-		//
-		// Draw the first occurrence of the current object using the updated constant buffer.
-		// ID3D11DeviceContext::DrawIndexed member function:
-		//   Draw indexed, non-instanced primitives.
-		devcon->DrawIndexed(object.IndicesTotal,			// Number of indices to draw. Three non-unique indices in the index buffer, each pointing to one set of unique vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of non-unique indices in the index buffer.
-			0,												// The location of the first index read by the GPU from the index buffer.
-			0);												// A value added to each index before reading a vertex from the vertex buffer.
-
-		// Draw the second occurrence of the current object to the scene using different transformations than those used by the first occurrence of the current object.
-		//
-		// Prepare to draw the second occurrence of the current object using an updated constant buffer and updated final matrix.
-		// The second occurrence of the current object rotates counterclockwise.
-		// The second occurrence of the current object is drawn at a different position, i.e., at (x, y, z).
-		//
-		// Update the transformation matrices used to draw the second occurrence of the current object.
-		//   A transformation matrix to rotate	  the second occurrence of the current object counterclockwise:	object.ConstantBuffer.matRotate
-		//   A transformation matrix to translate the second occurrence of the current object above the origin:	object.ConstantBuffer.matFinal
-		// object.ConstantBuffer.matRotate:
-		Angle2 = fmod(Angle2 - 0.0008727f, 6.283185f);      // Decrement Angle2 by 5% of 1 degree (5% of 0.0174532 radians = 0.0008727f) and then apply mod 360 degrees (mod 6.283185f radians). This generates angles from 359 - 0 degrees then back to 359 degrees.
-		matRotateY = XMMatrixRotationY(Angle2);				// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
-		object.ConstantBuffer.matRotate = matRotateY;		// The final rotation matrix is the product of all defined rotation matrices. Here, only matRotateY is defined.
-		// object.ConstantBuffer.matFinal:
-		// XMMatrixTranslation function:
-		//   Builds a translation matrix from the specified offsets.
-		matTranslate = XMMatrixTranslation(x,				// Translation along the x-axis.
-			y,												// Translation along the y-axis.
-			z);												// Translation along the z-axis.
-		// The world transformation is a function of scaling, rotation, and translation (movement). Here, only rotation and translation are used.
-		matWorld = object.ConstantBuffer.matRotate * matTranslate;			 // Apply the rotation matrix first, then the translation matrix. This results in the object rotating in place as it moves, i.e., the object does not orbit as it moves.
-		// Define a final matrix to transform the second occurrence of the current object.
-		object.ConstantBuffer.matFinal = matWorld * matView * matProjection; // Update the final transformation matrix (matFinal) by multiplying the updated world matrix (matWorld) by the original view (matView) and projection (matProjection) matrices.
-		//
-		// Update the constant buffer used to draw the second occurrence of the current object.
-		devcon->VSSetConstantBuffers(0,						// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
-			1,												// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
-			object.pCBuffer.GetAddressOf());				// &pCBuffer is the address of a pointer, pCBuffer, to the constant buffer interface.
-		devcon->UpdateSubresource(object.pCBuffer.Get(),	// A pointer to the destination resource, in this case the constant buffer interface.
-			0,												// A zero-based index that identifies the destination subresource.
-			0,												// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
-			&object.ConstantBuffer,							// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
-			0,												// The size of one row of the source data.
-			0);												// The size of one depth slice of source data.
-		//
-		// Draw the second occurrence of the current object using the updated constant buffer.
-		devcon->DrawIndexed(object.IndicesTotal,			// Number of indices to draw. Three non-unique indices in the index buffer, each pointing to one set of unique vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of non-unique indices in the index buffer.
-			0,												// The location of the first index read by the GPU from the index buffer.
-			0);												// A value added to each index before reading a vertex from the vertex buffer.
-
-		// End: 6. Render the objects.
 	}
 
 	//***

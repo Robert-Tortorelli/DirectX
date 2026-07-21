@@ -151,8 +151,6 @@
     <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include=".editorconfig" />
-    <None Include="packages.config" />
     <None Include="shaders.hlsl">
       <FileType>Document</FileType>
     </None>
@@ -161,11 +159,32 @@
     <None Include="Text.Blender-Cube.obj">
       <FileType>Document</FileType>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Text.Gemini-Valley and Mountain Scene (normalized).obj">
+    <None Include="Text.Gemini-Valley and Mountain Scene %28normalized%29.obj.DISABLED">
       <FileType>Document</FileType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Wavefront .obj file repository\Text.Blender-Cube.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Wavefront .obj file repository\Text.Blender-Pyramid.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Wavefront .obj file repository\Text.Blender-Suzanne.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Wavefront .obj file repository\Text.Gemini-Valley and Mountain Scene (normalized).obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Wavefront .obj file repository\Text.Gemini-Valley and Mountain Scene.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Wavefront .obj file repository\Text.obj">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Wavefront .obj file repository\#read-only set on all files.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
