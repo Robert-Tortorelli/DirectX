@@ -159,9 +159,6 @@
     <None Include="Text.Blender-Cube.obj">
       <FileType>Document</FileType>
     </None>
-    <None Include="Text.Gemini-Valley and Mountain Scene %28normalized%29.obj.DISABLED">
-      <FileType>Document</FileType>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="Wavefront .obj file repository\Text.Blender-Cube.obj">

@@ -17,12 +17,12 @@
 //   Menu: Help/ About
 // - Return values:
 //   The following return values are passed from the indicated function to the caller:
-//	 RC 0:					(all functions)			Normal termination.
-//	 RC 1:					objReader function:		Error opening the Wavefront .obj file.
-//	 RC 2:					objReader function:		Error in	  the Wavefront .obj file: Required vertex attributes are missing.
-//	 RC 3:					objReader function:		Error finding any Wavefront .obj file.
-//   RC DefWindowProc():	WindowProc function:	Default window message processing.
-//   RC msg.wParam:			WinMain function:		Exit value returned to the operating system.
+//	 RC 0:					(all functions)				Normal termination.
+//	 RC 1:					objFileProcessor function:	Error opening the Wavefront .obj file.
+//	 RC 2:					objFileProcessor function:	Error in	  the Wavefront .obj file: Required vertex attributes are missing.
+//	 RC 3:					objFileProcessor function:	Error finding any Wavefront .obj file.
+//   RC DefWindowProc():	WindowProc function:		Default window message processing.
+//   RC msg.wParam:			WinMain function:			Exit value returned to the operating system.
 //
 // Authorship:
 // Robert John Tortorelli
@@ -223,13 +223,14 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 			   nCmdShow);									// Indicates if the main program window will be minimized, maximized, or shown normally.
 
 	// Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
-	// objReader function:
-	if (int objReaderRC = objReader(); objReaderRC != 0) // Call the objReader function and test whether its return value is nonzero, indicating an error.
+	// Find all Wavefront .obj files in the current directory, and parse each one.
+	// objFileProcessor function:
+	if (int objFileProcessorRC = objFileProcessor(); objFileProcessorRC != 0) // Call the objFileProcessor function and test whether its return value is nonzero, indicating an error.
 	{
-		// The objReader function terminated abnormally. Terminate the WinMain function with the return value of the objReader function.
-		return objReaderRC;
+		// The objFileProcessor function terminated abnormally. Terminate the WinMain function with the return value of the objFileProcessor function.
+		return objFileProcessorRC;
 	}
-	// The objReader function terminated normally.
+	// The objFileProcessor function terminated normally.
 
 	// Initialize and prepare Direct3D for use.
 	if (int InitD3DRC = InitD3D(hWnd); InitD3DRC != 0)		// Call the InitD3D function and test whether its return value is nonzero, indicating an error.
@@ -682,7 +683,7 @@ static INT_PTR CALLBACK InputTextDlgProc(HWND hDlg,			// The HWND handle for the
 //
 //     7. Call the InitGraphics function to load and initialize all graphics data.
 //        The return value of the InitGraphics function is checked for an error and returned to the caller if it failed.
-//        Note: The objReader function is called before the InitD3D function and the InitGraphics function because the objReader function defines the variables needed to load and initialize all graphics data.
+//        Note: The objFileProcessor function is called before the InitD3D function and the InitGraphics function because the objFileProcessor function defines the variables needed to load and initialize all graphics data.
 static int InitD3D(HWND hWnd)								// The HWND handle for the window.
 {
 	//***
@@ -1210,14 +1211,8 @@ static int InitGraphics(void)
 
 			// DirectX::CreateWICTextureFromFile function:
 			//   Loads a Windows Imaging Component (WIC)-supported bitmap file from disk, creates a Direct3D 11 resource from it, and optionally a Direct3D 11 shader resource view.
-			const wchar_t* textureImageFilename;
-			if (textureImageSwitch)
-			{
-				textureImageFilename = L"Wood.png";
-				textureImageSwitch = false;
-			}
-			else
-				textureImageFilename = L"150-IMG-20251030-WA0001.png";
+			// *TEST*
+			const wchar_t* textureImageFilename = L"Wood.png";
 			CreateWICTextureFromFile(dev.Get(),				// A pointer to the device interface.
 				textureImageFilename,						// The filename of the texture image file.
 				NULL,										// NULL, as in most use cases for rendering you only need the shader resource view interface (the parameter below).

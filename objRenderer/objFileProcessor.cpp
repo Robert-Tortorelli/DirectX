@@ -30,6 +30,7 @@ using std::vector;
 using std::istringstream;
 
 // Function Prototypes.
+int objFileProcessor(void);
 static int objParser(const std::string& filename);
 
 //***
@@ -46,11 +47,9 @@ vector<OBJECT> OurObjects;
 // Other Declarations.
 //***
 
-// Indices of variable OurObjects, the array of OBJECT structures.
-int OurObjectsi = -1;										// The index variable OurObjectsi of array variable   OurObjects[OurObjectsi].
-int OurSubMeshesi = -1;										// The index variable OurSubMeshesi of array variable OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].
-int OurVerticesi = -1;										// The index variable OurVerticesi of array variable  OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[OurVerticesi].
-int OurIndicesi = -1;										// The index variable OurIndicesi of array variable   OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurIndices[OurIndicesi].
+// Declare index variables used to render the 3D objects specified in all Wavefront .obj files.
+// Index variable OurObjectsi must be global because it is incremented in successive calls to the objParser function to process multiple 3D objects.
+int OurObjectsi = -1;										// The index variable OurObjectsi of array variable OurObjects[OurObjectsi].
 
 // End: Other Declarations.
 
@@ -58,10 +57,10 @@ int OurIndicesi = -1;										// The index variable OurIndicesi of array variab
 // Function Definitions.
 //***
 
-// objReader function: Definition
-//   This function finds a Wavefront .obj file, calls the objParser function to read and parse it, then repeats this process for the next such file if there is one, until all such files in the current directory have been processed.
+// objFileProcessor function: Definition
+//   This function finds all Wavefront .obj files in the current directory, and calls the objParser function to open, read, and parse each one.
 //   It is called by the WinMain function, and runs one time.
-int objReader(void)
+int objFileProcessor(void)
 {
 	// Get the path to the current executable and store it in variable exePath.
 	std::filesystem::path exePath = std::filesystem::current_path();
@@ -90,7 +89,7 @@ int objReader(void)
 			else
 			{
 				// The objParser function unsuccessfully parsed one Wavefront .obj file.
-				// Terminate the objReader function and return to the calling function with a return value indicating an error.
+				// Terminate the objFileProcessor function and return to the calling function with a return value indicating an error.
 				return objParserRC;
 			}
 		}
@@ -101,24 +100,29 @@ int objReader(void)
 	if (!OurObjects.empty())
 	{
 		// At least one Wavefront .obj file was found.
-		// Terminate the objReader function and return to the calling function with a return value indicating success.
+		// Terminate the objFileProcessor function and return to the calling function with a return value indicating success.
 		return 0;
 	}
 	else
 	{
 		// No Wavefront .obj file was found.
-		// Terminate the objReader function and return to the calling function with a return value indicating an error.
+		// Terminate the objFileProcessor function and return to the calling function with a return value indicating an error.
 		return 3;
 	}
 
-	// End: objReader function
+	// End: objFileProcessor function
 }
 
 // objParser function: Definition
-//   This function parses one or more Wavefront .obj files to define the variables needed to render the 3D object specified in each file.
-//   It is called by the objReader function, and runs one time for each Wavefront .obj file read by the objReader function.
+//   This function opens, reads, and parses one Wavefront .obj file to define the variables needed to render the 3D object specified in the file.
+//   It is called by the objFileProcessor function, and runs one time for each Wavefront .obj file found by the objFileProcessor function.
 static int objParser(const std::string& filename)
 {
+	// Declare index variables used to render the 3D object specified in one Wavefront .obj file.
+	int OurSubMeshesi = 0;									// The index variable OurSubMeshesi of array variable OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi]. *TEST* (Not incremented in this program, so not -1; but will be incremented when parsing multiple submeshes is supported in a single Wavefront .obj file)
+	int OurVerticesi = -1;									// The index variable OurVerticesi of array variable  OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[OurVerticesi].
+	int OurIndicesi = -1;									// The index variable OurIndicesi of array variable   OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurIndices[OurIndicesi].
+
 	// Declare variables used to parse the Wavefront .obj file.
 	// Intermediate arrays to temporarily store all of the vertex attributes found in the Wavefront .obj file, in preparation for using these vertex attributes to populate the array variable OurVertices:
 	//   Each intermediate array is a one-dimensional array of structures, where each array element (each structure) contains vertex attributes of a given type, v, vt, or vn, for one vertex.
@@ -169,11 +173,11 @@ static int objParser(const std::string& filename)
 	// Prepare for each Wavefront .obj file.
 	OurObjects.emplace_back();								// Add a new element to the dynamic array variable OurObjects.
 	++OurObjectsi;											// Increment for each Wavefront .obj file.
-	// Prepare for each submesh in the Wavefront .obj file.
+	// Prepare for the first submesh in the Wavefront .obj file.
 	OurObjects[OurObjectsi].OurSubMeshes.emplace_back();	// Add a new element to the dynamic array variable OurSubMeshes.
-	++OurSubMeshesi;										// Increment for each submesh in the Wavefront .obj file.
-	OurVerticesi = -1;										// Reset	 for each submesh in the Wavefront .obj file.
-	OurIndicesi = -1;										// Reset	 for each submesh in the Wavefront .obj file.
+	OurSubMeshesi = 0;										// Reset for each submesh in the Wavefront .obj file. *TEST* (Not incremented in this program, so not -1; but will be incremented when parsing multiple submeshes is supported in a single Wavefront .obj file)
+	OurVerticesi = -1;										// Reset for each submesh in the Wavefront .obj file.
+	OurIndicesi = -1;										// Reset for each submesh in the Wavefront .obj file.
 
 	// Parse the Wavefront .obj file.
 	while (getline(obj, stringtext))						// Read an entire statement, from the input file stream object obj, into the string variable stringtext. At eof getline becomes false and the while loop is exited.
