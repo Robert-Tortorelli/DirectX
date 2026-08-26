@@ -15,20 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="objRenderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="objFileProcessor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="objRenderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClInclude Include="objRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders.hlsl" />
@@ -55,5 +45,9 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Wavefront .obj file repository\#read-only set on all files.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="objRenderer.cpp" />
+    <ClCompile Include="objFileProcessor.cpp" />
   </ItemGroup>
 </Project>

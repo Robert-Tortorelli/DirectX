@@ -26,9 +26,6 @@
 // DirectXMath Header File.
 #include <directxmath.h>                                    // The DirectXMath API provides SIMD-friendly C++ types and functions for common linear algebra and graphics math operations common to DirectX programs.
 
-// Function Prototypes.
-int objFileProcessor(void);
-
 //***
 // Structure Declarations.
 // Structures declarations appear before variable declarations that reference them.
@@ -73,7 +70,7 @@ struct VERTEX {												// Vertex attributes.
 // This structure represents a constant buffer used in the graphics rendering pipeline.
 // It contains information that is passed to the vertex shader stage of the pipeline and can be used to transform geometric vertices and calculate lighting effects on them.
 //
-// The matFinal member is  the 4x4 final transformation matrix that represents the combined world, view, and projection transformations that are applied to the geometric vertices of the geometry being rendered.
+// The matFinal member  is the 4x4 final transformation matrix that represents the combined world, view, and projection transformations that are applied to the geometric vertices of the geometry being rendered.
 //
 // The matRotate member is the 4x4 final rotation matrix       that represents a rotation transformation                                that is  applied to the geometric vertices of the geometry being rendered.
 // It is a component of the world transformation, and therefore of the matFinal matrix.

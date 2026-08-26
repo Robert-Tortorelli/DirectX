@@ -30,7 +30,7 @@ using std::vector;
 using std::istringstream;
 
 // Function Prototypes.
-int objFileProcessor(void);
+// Functions called in this source file before being defined in this source file.
 static int objParser(const std::string& filename);
 
 //***
@@ -47,7 +47,6 @@ vector<OBJECT> OurObjects;
 // Other Declarations.
 //***
 
-// Declare index variables used to render the 3D objects specified in all Wavefront .obj files.
 // Index variable OurObjectsi must be global because it is incremented in successive calls to the objParser function to process multiple 3D objects.
 int OurObjectsi = -1;										// The index variable OurObjectsi of array variable OurObjects[OurObjectsi].
 
@@ -57,10 +56,10 @@ int OurObjectsi = -1;										// The index variable OurObjectsi of array variab
 // Function Definitions.
 //***
 
-// objFileProcessor function: Definition
+// objFileFinder function: Definition
 //   This function finds all Wavefront .obj files in the current directory, and calls the objParser function to open, read, and parse each one.
 //   It is called by the WinMain function, and runs one time.
-int objFileProcessor(void)
+int objFileFinder(void)
 {
 	// Get the path to the current executable and store it in variable exePath.
 	std::filesystem::path exePath = std::filesystem::current_path();
@@ -89,7 +88,7 @@ int objFileProcessor(void)
 			else
 			{
 				// The objParser function unsuccessfully parsed one Wavefront .obj file.
-				// Terminate the objFileProcessor function and return to the calling function with a return value indicating an error.
+				// Terminate the objFileFinder function and return to the calling function with a return value indicating an error.
 				return objParserRC;
 			}
 		}
@@ -100,25 +99,25 @@ int objFileProcessor(void)
 	if (!OurObjects.empty())
 	{
 		// At least one Wavefront .obj file was found.
-		// Terminate the objFileProcessor function and return to the calling function with a return value indicating success.
+		// Terminate the objFileFinder function and return to the calling function with a return value indicating success.
 		return 0;
 	}
 	else
 	{
 		// No Wavefront .obj file was found.
-		// Terminate the objFileProcessor function and return to the calling function with a return value indicating an error.
+		// Terminate the objFileFinder function and return to the calling function with a return value indicating an error.
 		return 3;
 	}
 
-	// End: objFileProcessor function
+	// End: objFileFinder function
 }
 
 // objParser function: Definition
 //   This function opens, reads, and parses one Wavefront .obj file to define the variables needed to render the 3D object specified in the file.
-//   It is called by the objFileProcessor function, and runs one time for each Wavefront .obj file found by the objFileProcessor function.
+//   It is called by the objFileFinder function, and runs one time for each Wavefront .obj file found by the objFileFinder function.
 static int objParser(const std::string& filename)
 {
-	// Declare index variables used to render the 3D object specified in one Wavefront .obj file.
+	// Declare index variables.
 	int OurSubMeshesi = 0;									// The index variable OurSubMeshesi of array variable OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi]. *TEST* (Not incremented in this program, so not -1; but will be incremented when parsing multiple submeshes is supported in a single Wavefront .obj file)
 	int OurVerticesi = -1;									// The index variable OurVerticesi of array variable  OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[OurVerticesi].
 	int OurIndicesi = -1;									// The index variable OurIndicesi of array variable   OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurIndices[OurIndicesi].
@@ -170,14 +169,11 @@ static int objParser(const std::string& filename)
 	}
 	// The Wavefront .obj file opened successfully.
 
-	// Prepare for each Wavefront .obj file.
+	// Prepare for the new object in the Wavefront .obj file.
 	OurObjects.emplace_back();								// Add a new element to the dynamic array variable OurObjects.
 	++OurObjectsi;											// Increment for each Wavefront .obj file.
-	// Prepare for the first submesh in the Wavefront .obj file.
+	// Prepare for the first submesh in the Wavefront .obj file. *TEST* Processing will change when parsing multiple submeshes is supported in a single Wavefront .obj file.
 	OurObjects[OurObjectsi].OurSubMeshes.emplace_back();	// Add a new element to the dynamic array variable OurSubMeshes.
-	OurSubMeshesi = 0;										// Reset for each submesh in the Wavefront .obj file. *TEST* (Not incremented in this program, so not -1; but will be incremented when parsing multiple submeshes is supported in a single Wavefront .obj file)
-	OurVerticesi = -1;										// Reset for each submesh in the Wavefront .obj file.
-	OurIndicesi = -1;										// Reset for each submesh in the Wavefront .obj file.
 
 	// Parse the Wavefront .obj file.
 	while (getline(obj, stringtext))						// Read an entire statement, from the input file stream object obj, into the string variable stringtext. At eof getline becomes false and the while loop is exited.

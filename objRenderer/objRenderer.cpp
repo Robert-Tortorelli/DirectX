@@ -17,12 +17,12 @@
 //   Menu: Help/ About
 // - Return values:
 //   The following return values are passed from the indicated function to the caller:
-//	 RC 0:					(all functions)				Normal termination.
-//	 RC 1:					objFileProcessor function:	Error opening the Wavefront .obj file.
-//	 RC 2:					objFileProcessor function:	Error in	  the Wavefront .obj file: Required vertex attributes are missing.
-//	 RC 3:					objFileProcessor function:	Error finding any Wavefront .obj file.
-//   RC DefWindowProc():	WindowProc function:		Default window message processing.
-//   RC msg.wParam:			WinMain function:			Exit value returned to the operating system.
+//	 RC 0:					(all functions)			Normal termination.
+//	 RC 1:					objFileFinder function:	Error opening the Wavefront .obj file.
+//	 RC 2:					objFileFinder function:	Error in	  the Wavefront .obj file: Required vertex attributes are missing.
+//	 RC 3:					objFileFinder function:	Error finding any Wavefront .obj file.
+//   RC DefWindowProc():	WindowProc function:	Default window message processing.
+//   RC msg.wParam:			WinMain function:		Exit value returned to the operating system.
 //
 // Authorship:
 // Robert John Tortorelli
@@ -62,6 +62,9 @@ using namespace DirectX;									// The DirectX namespace is used to access the 
 using namespace D2D1;										// The D2D1	   namespace is used to access the DirectX Direct2D API.
 
 // Function Prototypes.
+// Functions called in this source file and defined in another source file.
+int objFileFinder(void);
+// Functions called in this source file before being defined in this source file.
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
 // The following functions are called asynchronously.
 // The following functions may be called in any order, and they may be called multiple times, or not at all, depending on user interaction and other factors.
@@ -224,13 +227,13 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 
 	// Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
 	// Find all Wavefront .obj files in the current directory, and parse each one.
-	// objFileProcessor function:
-	if (int objFileProcessorRC = objFileProcessor(); objFileProcessorRC != 0) // Call the objFileProcessor function and test whether its return value is nonzero, indicating an error.
+	// objFileFinder function:
+	if (int objFileFinderRC = objFileFinder(); objFileFinderRC != 0) // Call the objFileFinder function and test whether its return value is nonzero, indicating an error.
 	{
-		// The objFileProcessor function terminated abnormally. Terminate the WinMain function with the return value of the objFileProcessor function.
-		return objFileProcessorRC;
+		// The objFileFinder function terminated abnormally. Terminate the WinMain function with the return value of the objFileFinder function.
+		return objFileFinderRC;
 	}
-	// The objFileProcessor function terminated normally.
+	// The objFileFinder function terminated normally.
 
 	// Initialize and prepare Direct3D for use.
 	if (int InitD3DRC = InitD3D(hWnd); InitD3DRC != 0)		// Call the InitD3D function and test whether its return value is nonzero, indicating an error.
@@ -683,7 +686,6 @@ static INT_PTR CALLBACK InputTextDlgProc(HWND hDlg,			// The HWND handle for the
 //
 //     7. Call the InitGraphics function to load and initialize all graphics data.
 //        The return value of the InitGraphics function is checked for an error and returned to the caller if it failed.
-//        Note: The objFileProcessor function is called before the InitD3D function and the InitGraphics function because the objFileProcessor function defines the variables needed to load and initialize all graphics data.
 static int InitD3D(HWND hWnd)								// The HWND handle for the window.
 {
 	//***
