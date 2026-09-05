@@ -44,12 +44,12 @@ struct VERTEX {												// Vertex attributes.
 // SUBMESH and OBJECT 'named structure' data types.
 //
 // SUBMESH 'named structure' data type.
-// The set of attributes of one submesh within one object.
-// SUBMESH contains a dynamically allocated array of faces (triangles) that share the same material, e.g., the same texture image. A 3D object is comprised of one or more submeshes, each with its own texture image and vertex and index data.
+// The set of attributes of one submesh.
+// One submesh within one object uses one material, e.g., the same texture image.
 //
 // OBJECT 'named structure' data type.
 // The set of attributes of one object.
-// OBJECT contains a dynamically allocated array of SUBMESH structures.
+// A 3D object is comprised of one or more submeshes.
 //
 // OurVertices and OurIndices.
 // OurVertices (used to initialize the DirectX vertex buffer), a variable containing values formatted for DirectX, is the array of unique sets of vertex attributes of a single 3D object.
@@ -89,28 +89,21 @@ struct SUBMESH {
 	// CPU-side data.
 	std::string OurMaterialName;							// The material name of the submesh. In this case the material name of the description of the texture image. It is not used in rendering but for informational purposes only.
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pTextureView; // Smart pointer to a shader resource view interface. A shader resource view interface specifies the subresource a shader can access during rendering. In this case the texture image.
-
-	// CPU-side buffer data.
-	//   OurVertices:	 Holds the data used to initialize the GPU-side vertex   buffer via pVBuffer, the pointer to the vertex   buffer interface.
-	//   OurIndices:	 Holds the data used to initialize the GPU-side index    buffer via pIBuffer, the pointer to the index    buffer interface.
-	std::vector<VERTEX> OurVertices;						// The dynamically allocated array of VERTEX structures, where each array element represents a unique set of vertex attributes describing one or more triangle vertices.
-	int VertexAttributeSetsTotal = 0;						// The total number of array elements in array variable OurVertices (OurVertices.size()), e.g., 24 array elements specify a cube. Manually initialized as type int does not have a default constructor.
-
-	std::vector<DWORD> OurIndices;							// The dynamically allocated array of DWORD indices,     where each array element points to  a unique set of vertex attributes in an OurVertices array element. Multiple array elements will point to the same OurVertices array element.
+	// OurIndices:	 Holds the data used to initialize the GPU-side index buffer via pIBuffer, the pointer to the index buffer interface.
+	std::vector<DWORD> OurIndices;							// The dynamically allocated array of DWORD indices, where each array element points to  a unique set of vertex attributes in an OurVertices array element. Multiple array elements will point to the same OurVertices array element.
 	int IndicesTotal = 0;									// The total number of array elements in array variable OurIndices	(OurIndices.size()),  e.g., 36 array elements specify a cube. Manually initialized as type int does not have a default constructor.
 
-	// GPU-side buffer data.
-	Microsoft::WRL::ComPtr<ID3D11Buffer> pVBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the vertex buffer.
-
+	// GPU-side data.
 	Microsoft::WRL::ComPtr<ID3D11Buffer> pIBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the index buffer.
 };
 
 struct OBJECT {
 	// CPU-side data.
 	std::string OurObjectName;								// The name of the object. It is optional, and not used in rendering but for informational purposes only.
-
+	//   OurVertices:	 Holds the data used to initialize the GPU-side vertex buffer via pVBuffer, the pointer to the vertex buffer interface.
+	std::vector<VERTEX> OurVertices;						// The dynamically allocated array of VERTEX structures, where each array element represents a unique set of vertex attributes describing one or more triangle vertices.
+	int VertexAttributeSetsTotal = 0;						// The total number of array elements in array variable OurVertices (OurVertices.size()), e.g., 24 array elements specify a cube. Manually initialized as type int does not have a default constructor.
 	std::vector<SUBMESH> OurSubMeshes;						// The dynamically allocated array of SUBMESH structures. Each submesh groups faces sharing the same material. Each array element (SUBMESH structure) contains the set of attributes of one submesh, including the texture image and the vertex and index data for that submesh.
-
 	struct {
 		DirectX::XMMATRIX matFinal;							// The final transformation matrix.
 		DirectX::XMMATRIX matRotate;						// The final rotation matrix.
@@ -119,7 +112,8 @@ struct OBJECT {
 		DirectX::XMFLOAT4 AmbientColor;						// Ambient     light's color (whiter color == brighter color).
 	} ConstantBuffer;
 
-	// GPU-side buffer data.
+	// GPU-side data.
+	Microsoft::WRL::ComPtr<ID3D11Buffer> pVBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the vertex buffer.
 	Microsoft::WRL::ComPtr<ID3D11Buffer> pCBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the constant buffer.
 };
 

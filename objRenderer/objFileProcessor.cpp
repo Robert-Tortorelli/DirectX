@@ -119,7 +119,7 @@ static int objParser(const std::string& filename)
 {
 	// Declare index variables.
 	int OurSubMeshesi = 0;									// The index variable OurSubMeshesi of array variable OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi]. *TEST* (Not incremented in this program, so not -1; but will be incremented when parsing multiple submeshes is supported in a single Wavefront .obj file)
-	int OurVerticesi = -1;									// The index variable OurVerticesi of array variable  OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[OurVerticesi].
+	int OurVerticesi = -1;									// The index variable OurVerticesi of array variable  OurObjects[OurObjectsi].OurVertices[OurVerticesi].
 	int OurIndicesi = -1;									// The index variable OurIndicesi of array variable   OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurIndices[OurIndicesi].
 
 	// Declare variables used to parse the Wavefront .obj file.
@@ -281,18 +281,18 @@ static int objParser(const std::string& filename)
 				// Therefore, in the first entry to this "for i loop" (OurIndicesi = 2) its three iterations adjust the indices of array variable OurIndices to 0 (= 2 - 2), 2 (= 2 - 0), 1 (= 2 - 1).
 				int VertexDrawOrderAdjust = (i == 0) ? 2 : (i - 1);
 				bool unique = true;																													// Define a semaphore to indicate whether the candidate set of vertex attributes is unique.
-				for (int j = 0; j <= OurVerticesi; j++)
+				/*for (int j = 0; j <= OurVerticesi; j++)																							// *TEST* From GitHub Copilot: This "for j loop" is not used in this program because it is inefficient. It is replaced by the more efficient std::find_if algorithm, which uses a lambda function to compare the candidate set of vertex attributes with the existing sets of vertex attributes in array variable OurVertices.
 				{
-					if (OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[j].GeometricVertex.x ==			v[fv].x			 &&
-						OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[j].GeometricVertex.y ==			v[fv].y			 &&
-						OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[j].GeometricVertex.z ==			v[fv].z * -1.0f	 &&			// Invert the geometric vertex's Z coordinate,			to adjust it from the Wavefront .obj file format to the DirectX format.
+					if (OurObjects[OurObjectsi].OurVertices[j].GeometricVertex.x ==			v[fv].x			 &&
+						OurObjects[OurObjectsi].OurVertices[j].GeometricVertex.y ==			v[fv].y			 &&
+						OurObjects[OurObjectsi].OurVertices[j].GeometricVertex.z ==			v[fv].z * -1.0f	 &&			// Invert the geometric vertex's Z coordinate,			to adjust it from the Wavefront .obj file format to the DirectX format.
 
-						OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[j].VertexTextureCoordinate.x ==	vt[fvt].x		 &&
-						OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[j].VertexTextureCoordinate.y ==	1.0f - vt[fvt].y &&			// Invert the vertex texture coordinate's V coordinate, to adjust it from the Wavefront .obj file format to the DirectX format.
+						OurObjects[OurObjectsi].OurVertices[j].VertexTextureCoordinate.x ==	vt[fvt].x		 &&
+						OurObjects[OurObjectsi].OurVertices[j].VertexTextureCoordinate.y ==	1.0f - vt[fvt].y &&			// Invert the vertex texture coordinate's V coordinate, to adjust it from the Wavefront .obj file format to the DirectX format.
 
-						OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[j].VertexNormalVector.x ==		vn[fvn].x		 &&
-						OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[j].VertexNormalVector.y ==		vn[fvn].y		 &&
-						OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[j].VertexNormalVector.z ==		vn[fvn].z * -1.0f)			// Invert the vertex normal vector's Z coordinate,		to adjust it from the Wavefront .obj file format to the DirectX format.
+						OurObjects[OurObjectsi].OurVertices[j].VertexNormalVector.x ==		vn[fvn].x		 &&
+						OurObjects[OurObjectsi].OurVertices[j].VertexNormalVector.y ==		vn[fvn].y		 &&
+						OurObjects[OurObjectsi].OurVertices[j].VertexNormalVector.z ==		vn[fvn].z * -1.0f)			// Invert the vertex normal vector's Z coordinate,		to adjust it from the Wavefront .obj file format to the DirectX format.
 					{
 						// The candidate set of vertex attributes is non-unique, so:
 						//   No new set of vertex attributes is created and stored in the array variable OurVertices.
@@ -302,25 +302,25 @@ static int objParser(const std::string& filename)
 						OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurIndices[OurIndicesi - VertexDrawOrderAdjust] = j;					// The element of array variable OurIndices is adjusted by VertexDrawOrderAdjust to adjust the drawing order of triangle vertices from counter-clockwise (Wavefront .obj file format) to clockwise (DirectX format).
 						break;
 					}
-				}
+				}*/
 				if (unique)
 				{
 					// The candidate set of vertex attributes is unique, so a new set of vertex attributes is created and stored in the array variable OurVertices.
 					// Create a new element of dynamic array variable OurVertices, and assign the candidate set of vertex attributes to it.
 					// One of the three new elements of array variable OurIndices is assigned the index (the value of variable OurVerticesi) of the element of array variable OurVertices[OurVerticesi], which contains the new set of vertex attributes stored in the array variable OurVertices.
-					OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices.emplace_back();													// Add a new element to this dynamic array variable. This is the only OurVertices.emplace_back() statement, executed once for each unique set of vertex attributes in all face element statements.
+					OurObjects[OurObjectsi].OurVertices.emplace_back();													// Add a new element to this dynamic array variable. This is the only OurVertices.emplace_back() statement, executed once for each unique set of vertex attributes in all face element statements.
 					OurVerticesi++;																													// Update the index variable OurVerticesi of array variable OurVertices[OurVerticesi].
 
-					OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[OurVerticesi].GeometricVertex.x =		  v[fv].x;
-					OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[OurVerticesi].GeometricVertex.y =		  v[fv].y;
-					OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[OurVerticesi].GeometricVertex.z =		  v[fv].z * -1.0f;		// Invert the geometric vertex's Z coordinate,			to adjust it from the Wavefront .obj file format to the DirectX format.
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].GeometricVertex.x =		  v[fv].x;
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].GeometricVertex.y =		  v[fv].y;
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].GeometricVertex.z =		  v[fv].z * -1.0f;		// Invert the geometric vertex's Z coordinate,			to adjust it from the Wavefront .obj file format to the DirectX format.
 
-					OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[OurVerticesi].VertexTextureCoordinate.x = vt[fvt].x;
-					OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[OurVerticesi].VertexTextureCoordinate.y = 1.0f - vt[fvt].y;		// Invert the vertex texture coordinate's V coordinate, to adjust it from the Wavefront .obj file format to the DirectX format.
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].VertexTextureCoordinate.x = vt[fvt].x;
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].VertexTextureCoordinate.y = 1.0f - vt[fvt].y;		// Invert the vertex texture coordinate's V coordinate, to adjust it from the Wavefront .obj file format to the DirectX format.
 
-					OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[OurVerticesi].VertexNormalVector.x =	  vn[fvn].x;
-					OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[OurVerticesi].VertexNormalVector.y =	  vn[fvn].y;
-					OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices[OurVerticesi].VertexNormalVector.z =	  vn[fvn].z * -1.0f;	// Invert the vertex normal vector's Z coordinate,		to adjust it from the Wavefront .obj file format to the DirectX format.
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].VertexNormalVector.x =	  vn[fvn].x;
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].VertexNormalVector.y =	  vn[fvn].y;
+					OurObjects[OurObjectsi].OurVertices[OurVerticesi].VertexNormalVector.z =	  vn[fvn].z * -1.0f;	// Invert the vertex normal vector's Z coordinate,		to adjust it from the Wavefront .obj file format to the DirectX format.
 
 					OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurIndices[OurIndicesi - VertexDrawOrderAdjust] = OurVerticesi;				// The element of array variable OurIndices is adjusted by VertexDrawOrderAdjust to adjust the drawing order of triangle vertices from counter-clockwise (Wavefront .obj file format) to clockwise (DirectX format).
 				}
@@ -333,7 +333,7 @@ static int objParser(const std::string& filename)
 	obj.close();
 
 	// Assign the total number of array elements in array variable OurVertices to the variable VertexAttributeSetsTotal.
-	OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].VertexAttributeSetsTotal = static_cast<int>(OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurVertices.size());
+	OurObjects[OurObjectsi].VertexAttributeSetsTotal = static_cast<int>(OurObjects[OurObjectsi].OurVertices.size());
 	// Assign the total number of array elements in array variable OurIndices  to the variable IndicesTotal.
 	OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].IndicesTotal =			   static_cast<int>(OurObjects[OurObjectsi].OurSubMeshes[OurSubMeshesi].OurIndices.size());
 

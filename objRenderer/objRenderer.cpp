@@ -1134,7 +1134,7 @@ static int InitGraphics(void)
 			//***
 
 			// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-			bdBufferVertex.ByteWidth = sizeof(VERTEX) * submesh.VertexAttributeSetsTotal; // Assigned a value specifying the size of the vertex buffer in bytes. The vertex buffer resource's size is the size of the VERTEX structure * the total number of elements in array variable OurVertices (VertexAttributeSetsTotal).
+			bdBufferVertex.ByteWidth = sizeof(VERTEX) * object.VertexAttributeSetsTotal; // Assigned a value specifying the size of the vertex buffer in bytes. The vertex buffer resource's size is the size of the VERTEX structure * the total number of elements in array variable OurVertices (VertexAttributeSetsTotal).
 			bdBufferVertex.Usage = D3D11_USAGE_DYNAMIC;									  // Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	  A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
 			bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER;						  // Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.			A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_VERTEX_BUFFER: Bind a buffer as a vertex buffer to the input-assembler stage of the graphics pipeline.
 			bdBufferVertex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;						  // Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.			A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	  The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
@@ -1143,14 +1143,14 @@ static int InitGraphics(void)
 			//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the vertex buffer object.
 			dev->CreateBuffer(&bdBufferVertex,				// A pointer to a buffer resource description structure that describes the buffer, in this case the vertex buffer, as per bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER.
 				NULL,										// A pointer to a D3D11_SUBRESOURCE_DATA structure that describes the initialization data; use NULL to allocate space only (with the exception that it cannot be NULL if bdBufferVertex.Usage is D3D11_USAGE_IMMUTABLE).
-				submesh.pVBuffer.GetAddressOf());			// The newly created vertex buffer object. &pVBuffer is the address of a pointer, pVBuffer, to the buffer interface that represents this object.
+				object.pVBuffer.GetAddressOf());			// The newly created vertex buffer object. &pVBuffer is the address of a pointer, pVBuffer, to the buffer interface that represents this object.
 
 			// Assign the vertex information by mapping the vertex buffer interface (variable pVBuffer) to a mapped subresource (variable msBufferVertex), and copying the vertex information from array variable OurVertices to the GPU's vertex buffer memory via a pointer to the mapped subresource (variable msBufferVertex.pData).
 			//
 			// ID3D11DeviceContext::Map member function:
 			//   Gets a pointer to the data contained in a subresource, and denies the GPU access to that subresource.
 			//   The third parameter is a set of flags that allows us to control the CPUs access to the buffer while it's mapped.
-			devcon->Map(submesh.pVBuffer.Get(),				// A pointer to the vertex buffer interface.
+			devcon->Map(object.pVBuffer.Get(),				// A pointer to the vertex buffer interface.
 				NULL,										// Index number of the subresource.
 				D3D11_MAP_WRITE_DISCARD,					// Flag that specifies the CPU's read and write permissions for a resource. A value of the D3D11_MAP enumerated type, i.e., D3D11_MAP_WRITE_DISCARD: Resource is mapped for writing; the previous contents of the resource will be undefined. The resource must have been created with write access and dynamic usage. "Previous contents of buffer are erased, and new buffer is opened for writing" DirectxTutorial.com.
 				NULL,										// Flag that specifies how the CPU should respond when an program calls the ID3D11DeviceContext::Map method on a resource that is being used by the GPU. A value of the D3D11_MAP_FLAG enumerated type. "D3D11_MAP_FLAG_DO_NOT_WAIT cannot be used with D3D11_MAP_WRITE_DISCARD or D3D11_MAP_WRITE_NOOVERWRITE" Microsoft.com. "It can be NULL or D3D11_MAP_FLAG_DO_NOT_WAIT. This flag forces the program to continue, even if the GPU is still working with the buffer" DirectxTutorial.com.
@@ -1159,11 +1159,11 @@ static int InitGraphics(void)
 			// memcpy function:
 			//   Copy a block of memory.
 			memcpy(msBufferVertex.pData,					// Pointer to the destination memory block, in this case the vertex buffer's memory block.
-				&submesh.OurVertices[0],					// Pointer to the source memory block, in this case the array variable OurVertices's memory block. .OurVertices[0] is specified to get a pointer to the start of the vertex data array, so the entire array can be copied efficiently into the vertex buffer.
+				&object.OurVertices[0],					// Pointer to the source memory block, in this case the array variable OurVertices's memory block. .OurVertices[0] is specified to get a pointer to the start of the vertex data array, so the entire array can be copied efficiently into the vertex buffer.
 				bdBufferVertex.ByteWidth);					// Number of bytes to copy, in this case the size of the vertex buffer in bytes.
 			// D3D11DeviceContext::Unmap member function:
 			//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
-			devcon->Unmap(submesh.pVBuffer.Get(),			// A pointer to the vertex buffer interface.
+			devcon->Unmap(object.pVBuffer.Get(),			// A pointer to the vertex buffer interface.
 				NULL);										// A subresource to be unmapped.
 
 			// End: 2. Create the next pointer to the vertex buffer interface (variable pVBuffer) and assign values to it from the array variable OurVertices.
@@ -1588,7 +1588,7 @@ static int RenderFrame(void)
 			//       colors :	[col0] [col1] [col2] ...
 			devcon->IASetVertexBuffers(0,									// The first input slot for binding. The first vertex buffer is explicitly bound to the start slot; this causes each additional vertex buffer in the array to be implicitly bound to each subsequent input slot.
 				1,															// The number of vertex buffers in the array.
-				submesh.pVBuffer.GetAddressOf(),	// &pVBuffer is the address of a pointer, pVBuffer, to an array of (in this case an array of one) vertex buffer interfaces.
+				object.pVBuffer.GetAddressOf(),	// &pVBuffer is the address of a pointer, pVBuffer, to an array of (in this case an array of one) vertex buffer interfaces.
 				&stride,													// &stride is the address of stride, and therefore a pointer to the array of (in this case an array of one) stride values (one stride value for each buffer in the vertex buffer array).
 				&offset);													// &offset is the address of offset, and therefore a pointer to the array of (in this case an array of one) offset values (one offset value for each buffer in the vertex buffer array).
 

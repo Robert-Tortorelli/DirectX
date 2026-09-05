@@ -152,11 +152,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Text.Blender-Cube.obj">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Wavefront .obj file repository\Text.Blender-Cube.obj">
       <FileType>Document</FileType>
     </None>
