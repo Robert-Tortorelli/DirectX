@@ -61,40 +61,6 @@ using Microsoft::WRL::ComPtr;								// The ComPtr smart pointer is a template c
 using namespace DirectX;									// The DirectX namespace is used to access the DirectX Direct3D and DirectXMath APIs.
 using namespace D2D1;										// The D2D1	   namespace is used to access the DirectX Direct2D API.
 
-// Function Prototypes.
-// Functions called in this source file and defined in another source file.
-int objFileFinder(void);
-// Functions called in this source file before being defined in this source file.
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
-// The following functions are called asynchronously.
-// The following functions may be called in any order, and they may be called multiple times, or not at all, depending on user interaction and other factors.
-static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-static INT_PTR CALLBACK InputTextDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-// The following functions are called synchronously in the order listed.
-static int InitD3D(HWND hWnd);
-static void InitPipeline(void);
-static int InitGraphics(void);
-static void InitD2D_DW(void);
-static void InitMenu(HWND hWnd);
-static int RenderFrame(void);
-static void RenderText(const wchar_t* pBannerText);
-static void ShutdownDirectX(void);
-// Note:
-// DirectX member functions associated with a stage of the graphics pipeline usually have names prefixed with two capital letters identifying the related stage, e.g., the OMSetRenderTargets member function is related to the output-merger stage of the graphics pipeline.
-// In addition to these DirectX member functions, other code may also be associated with a stage of the graphics pipeline (the code's comments will indicate this).
-// In this program:
-//   Member Function:								Graphics Pipeline Stage:		Member Function appears in this Internal Function:
-//   ID3D11DeviceContext::OMSetRenderTargets		Output-Merger					InitD3D()
-//   ID3D11DeviceContext::RSSetViewports			Rasterizer						InitD3D()
-//   ID3D11DeviceContext::VSSetShader				Vertex Shader					InitPipeline()
-//   ID3D11DeviceContext::PSSetShader				Pixel Shader					InitPipeline()
-//   ID3D11Device::CreateInputLayout				Input-Assembler					InitPipeline()
-//   ID3D11DeviceContext::IASetInputLayout			Input-Assembler					InitPipeline()
-//   ID3D11DeviceContext::VSSetConstantBuffers		Vertex Shader					InitPipeline()
-//   ID3D11DeviceContext::IASetVertexBuffers		Input-Assembler					RenderFrame()
-//   ID3D11DeviceContext::IASetIndexBuffer			Input-Assembler					RenderFrame()
-//   ID3D11DeviceContext::IASetPrimitiveTopology	Input-Assembler					RenderFrame()
-
 //***
 // DirectX Declarations.
 //***
@@ -146,6 +112,38 @@ static float z = 0.0f;										// A modifier to the z-coordinate of the object'
 XMVECTOR CameraEyePosition;									// A variable to save the camera position so it can be included in program diagnostics.
 
 // End: Other Declarations.
+
+// Function Prototypes.
+// Functions called in this source file and defined in another source file.
+int objFileFinder(void);
+// Functions called in this source file before being defined in this source file.
+//   The following functions are called asynchronously. They may be called in any order, and multiple times, or not at all, depending on user interaction and other factors.
+static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+static INT_PTR CALLBACK InputTextDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+//   The following functions are called synchronously in the order listed.
+static int InitD3D(HWND hWnd);
+static void InitPipeline(void);
+static int InitGraphics(void);
+static void InitD2D_DW(void);
+static void InitMenu(HWND hWnd);
+static int RenderFrame(void);
+static void RenderText(const wchar_t* pBannerText);
+static void ShutdownDirectX(void);
+// Note:
+// DirectX member functions associated with a stage of the graphics pipeline usually have names prefixed with two capital letters identifying the related stage, e.g., the OMSetRenderTargets member function is related to the output-merger stage of the graphics pipeline.
+// In addition to these DirectX member functions, other code may also be associated with a stage of the graphics pipeline (the code's comments will indicate this).
+// In this program:
+//   Member Function:								Graphics Pipeline Stage:		Member Function appears in this Internal Function:
+//   ID3D11DeviceContext::OMSetRenderTargets		Output-Merger					InitD3D()
+//   ID3D11DeviceContext::RSSetViewports			Rasterizer						InitD3D()
+//   ID3D11DeviceContext::VSSetShader				Vertex Shader					InitPipeline()
+//   ID3D11DeviceContext::PSSetShader				Pixel Shader					InitPipeline()
+//   ID3D11Device::CreateInputLayout				Input-Assembler					InitPipeline()
+//   ID3D11DeviceContext::IASetInputLayout			Input-Assembler					InitPipeline()
+//   ID3D11DeviceContext::VSSetConstantBuffers		Vertex Shader					InitPipeline()
+//   ID3D11DeviceContext::IASetVertexBuffers		Input-Assembler					RenderFrame()
+//   ID3D11DeviceContext::IASetIndexBuffer			Input-Assembler					RenderFrame()
+//   ID3D11DeviceContext::IASetPrimitiveTopology	Input-Assembler					RenderFrame()
 
 //***
 // Function Definitions.
@@ -909,7 +907,7 @@ static int InitD3D(HWND hWnd)								// The HWND handle for the window.
 //
 //     2. Create the input-layout object and set it to the input-assembler stage of the graphics pipeline.
 //
-//     For all objects in the array variable OurObjects:
+//     For all objects in array variable OurObjects:
 //       3. Create the next pointer to the constant buffer interface (variable pCBuffer) and set it to the vertex shader stage of the graphics pipeline.
 static void InitPipeline(void)
 {
@@ -1032,7 +1030,7 @@ static void InitPipeline(void)
 
 	// End: 2. Create the input-layout object and set it to the input-assembler stage of the graphics pipeline.
 
-	// For all objects in the array variable OurObjects:
+	// For all objects in array variable OurObjects:
 	for (auto& object : OurObjects) {						// Process all objects in OurObjects.
 		//***
 		// 3. Create the next pointer to the constant buffer interface (variable pCBuffer) and set it to the vertex shader stage of the graphics pipeline.
@@ -1095,10 +1093,10 @@ static void InitPipeline(void)
 //
 //     1. Create the structures used to define vertex buffers, and index buffers.
 //
-//     For all objects in the array variable OurObjects:
-//       2. Create the next pointer to the vertex buffer interface (variable pVBuffer) and assign values to it from the array variable OurVertices.
+//     For all objects in array variable OurObjects:
+//       2. Create the next pointer to the vertex buffer interface (variable pVBuffer) and assign values to it from array variable OurVertices.
 //
-//       3. Create the next pointer to the index buffer interface (variable pIBuffer) and assign values to it from the array variable OurIndices.
+//       3. Create the next pointer to the index buffer interface (variable pIBuffer) and assign values to it from array variable OurIndices.
 //
 //       4. Create the next pointer to the shader resource view interface for a texture image (variable pTextureView) and assign values to the texture image from an image file.
 static int InitGraphics(void)
@@ -1126,18 +1124,18 @@ static int InitGraphics(void)
 
 	// End: 1. Create the structures used to define vertex buffers, and index buffers.
 
-	// For all objects in the array variable OurObjects:
+	// For all objects in array variable OurObjects:
 	for (auto& object : OurObjects) {						// Process all objects in OurObjects.
 		for (auto& submesh : object.OurSubMeshes) {			// Process all submeshes in the current object.
 			//***
-			// 2. Create the next pointer to the vertex buffer interface (variable pVBuffer) and assign values to it from the array variable OurVertices.
+			// 2. Create the next pointer to the vertex buffer interface (variable pVBuffer) and assign values to it from array variable OurVertices.
 			//***
 
 			// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-			bdBufferVertex.ByteWidth = sizeof(VERTEX) * object.VertexAttributeSetsTotal; // Assigned a value specifying the size of the vertex buffer in bytes. The vertex buffer resource's size is the size of the VERTEX structure * the total number of elements in array variable OurVertices (VertexAttributeSetsTotal).
-			bdBufferVertex.Usage = D3D11_USAGE_DYNAMIC;									  // Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	  A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
-			bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER;						  // Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.			A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_VERTEX_BUFFER: Bind a buffer as a vertex buffer to the input-assembler stage of the graphics pipeline.
-			bdBufferVertex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;						  // Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.			A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	  The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
+			bdBufferVertex.ByteWidth = sizeof(VERTEX) * object.VertexAttributeSetsTotal;	// Assigned a value specifying the size of the vertex buffer in bytes. The vertex buffer resource's size is the size of the VERTEX structure * the total number of elements in array variable OurVertices (VertexAttributeSetsTotal).
+			bdBufferVertex.Usage = D3D11_USAGE_DYNAMIC;										// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	  A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
+			bdBufferVertex.BindFlags = D3D11_BIND_VERTEX_BUFFER;							// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_VERTEX_BUFFER: Bind a buffer as a vertex buffer to the input-assembler stage of the graphics pipeline.
+			bdBufferVertex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;							// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	  The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
 
 			// ID3D11Device::CreateBuffer member function:
 			//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the vertex buffer object.
@@ -1159,24 +1157,24 @@ static int InitGraphics(void)
 			// memcpy function:
 			//   Copy a block of memory.
 			memcpy(msBufferVertex.pData,					// Pointer to the destination memory block, in this case the vertex buffer's memory block.
-				&object.OurVertices[0],					// Pointer to the source memory block, in this case the array variable OurVertices's memory block. .OurVertices[0] is specified to get a pointer to the start of the vertex data array, so the entire array can be copied efficiently into the vertex buffer.
+				&object.OurVertices[0],						// Pointer to the source memory block, in this case array variable OurVertices's memory block. .OurVertices[0] is specified to get a pointer to the start of the vertex data array, so the entire array can be copied efficiently into the vertex buffer.
 				bdBufferVertex.ByteWidth);					// Number of bytes to copy, in this case the size of the vertex buffer in bytes.
 			// D3D11DeviceContext::Unmap member function:
 			//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
 			devcon->Unmap(object.pVBuffer.Get(),			// A pointer to the vertex buffer interface.
 				NULL);										// A subresource to be unmapped.
 
-			// End: 2. Create the next pointer to the vertex buffer interface (variable pVBuffer) and assign values to it from the array variable OurVertices.
+			// End: 2. Create the next pointer to the vertex buffer interface (variable pVBuffer) and assign values to it from array variable OurVertices.
 
 			//***
-			// 3. Create the next pointer to the index buffer interface (variable pIBuffer) and assign values to it from the array variable OurIndices.
+			// 3. Create the next pointer to the index buffer interface (variable pIBuffer) and assign values to it from array variable OurIndices.
 			//***
 
 			// Assign values to the buffer resource description D3D11_BUFFER_DESC structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-			bdBufferIndex.ByteWidth = sizeof(DWORD) * submesh.IndicesTotal;				  // Assigned a value specifying the size of the index buffer in bytes. Three indices in the index buffer, each pointing to one set of vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of triangles comprising the object. Therefore IndicesTotal * 3.
-			bdBufferIndex.Usage = D3D11_USAGE_DYNAMIC;									  // Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	 A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
-			bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER;							  // Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_INDEX_BUFFER: Bind a buffer as an index buffer to the input-assembler stage of the graphics pipeline.
-			bdBufferIndex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;						  // Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	 The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
+			bdBufferIndex.ByteWidth = sizeof(DWORD) * submesh.IndicesTotal;					// Assigned a value specifying the size of the index buffer in bytes. Three indices in the index buffer, each pointing to one vertex attribute set in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of triangles comprising the object. Therefore IndicesTotal * 3.
+			bdBufferIndex.Usage = D3D11_USAGE_DYNAMIC;										// Assigned a value that identifies how the buffer is expected to be read from and written to. Frequency of update is a key factor.	A value of the D3D11_USAGE enumerated type,			  i.e., D3D11_USAGE_DYNAMIC:	 A resource that is accessible by both the GPU (read only) and the CPU (write only). A dynamic resource is a good choice for a resource that will be updated by the CPU at least once per frame. To update a dynamic resource, use a Map member function.
+			bdBufferIndex.BindFlags = D3D11_BIND_INDEX_BUFFER;								// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_BIND_FLAG enumerated type,		  i.e., D3D11_BIND_INDEX_BUFFER: Bind a buffer as an index buffer to the input-assembler stage of the graphics pipeline.
+			bdBufferIndex.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;							// Assigned values in any combination by a bitwise OR operation specifying the flags for binding to graphics pipeline stages.		A value of the D3D11_CPU_ACCESS_FLAG enumerated type, i.e., D3D11_CPU_ACCESS_WRITE:	 The resource is to be mappable so that the CPU can change its contents. Resources created with this flag cannot be set as outputs of the graphics pipeline and must be created with either dynamic or staging usage (see D3D11_USAGE).
 
 			// ID3D11Device::CreateBuffer member function:
 			//   Create a buffer object (vertex buffer, index buffer, or shader constant buffer), in this case the index buffer object.
@@ -1198,14 +1196,14 @@ static int InitGraphics(void)
 			// memcpy function:
 			//   Copy a block of memory.
 			memcpy(msBufferIndex.pData,						// Pointer to the destination memory block, in this case the index buffer's memory block.
-				&submesh.OurIndices[0],						// Pointer to the source memory block, in this case the array variable OurIndices's memory block. .OurIndices[0] is specified to get a pointer to the start of the index data array, so the entire array can be copied efficiently into the index buffer.
+				&submesh.OurIndices[0],						// Pointer to the source memory block, in this case array variable OurIndices's memory block. .OurIndices[0] is specified to get a pointer to the start of the index data array, so the entire array can be copied efficiently into the index buffer.
 				bdBufferIndex.ByteWidth);					// Number of bytes to copy, in this case the size of the index buffer in bytes.
 			// D3D11DeviceContext::Unmap member function:
 			//   Invalidate the pointer to a resource and re-enable the GPU's access to that resource. Disable the CPU's access to that resource.
 			devcon->Unmap(submesh.pIBuffer.Get(),			// A pointer to the index buffer interface.
 				NULL);										// A subresource to be unmapped.
 
-			// End: 3. Create the next pointer to the index buffer interface (variable pIBuffer) and assign values to it from the array variable OurIndices.
+			// End: 3. Create the next pointer to the index buffer interface (variable pIBuffer) and assign values to it from array variable OurIndices.
 
 			//***
 			// 4. Create the next pointer to the shader resource view interface for a texture image (variable pTextureView) and assign values to the texture image from an image file.
@@ -1374,7 +1372,7 @@ static void InitMenu(HWND hWnd)								// The HWND handle for the window.
 //
 //     2. Render text to the scene.
 //
-//     For all objects in the array variable OurObjects:
+//     For all objects in array variable OurObjects:
 //       3. Define the final transformation matrix, matFinal.
 //
 //       4. Assign values that determine the attributes of light.
@@ -1421,7 +1419,7 @@ static int RenderFrame(void)
 
 	// End: 2. Render text to the scene.
 
-	// For all objects in the array variable OurObjects:
+	// For all objects in array variable OurObjects:
 	for (auto& object : OurObjects) {						// Process all objects in OurObjects.
 		for (auto& submesh : object.OurSubMeshes) {			// Process all submeshes in the current object.
 			// This for loop performs these tasks:

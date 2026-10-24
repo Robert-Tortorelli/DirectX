@@ -32,7 +32,7 @@
 //***
 
 // VERTEX 'named structure' data type.
-// The set of vertex attributes of one of the three vertices of a triangle.
+// The vertex attribute set of one of the three vertices of a triangle.
 // The input element description structure is used to define the input-layout object that describes the VERTEX structure.
 // If the VERTEX structure is changed then the input element description structure (defined in objRenderer.cpp) must be changed accordingly.
 struct VERTEX {												// Vertex attributes.
@@ -53,9 +53,9 @@ struct VERTEX {												// Vertex attributes.
 //
 // OurVertices and OurIndices.
 // OurVertices (used to initialize the DirectX vertex buffer), a variable containing values formatted for DirectX, is the array of unique sets of vertex attributes of a single 3D object.
-// OurIndices  (used to initialize the DirectX index  buffer), a variable containing values formatted for DirectX, is the array of non-unique indices of OurVertices, each pointing to an associated unique set of vertex attributes in OurVertices.
-// One unique set of vertex attributes in OurVertices, OurVertices(y), may be referenced more than once by duplicate (non-unique) indices in OurIndices:
-// e.g., OurIndices(x1) and OurIndices(x2) = y (y is the duplicate (non-unique) index in OurIndices), both pointing to the same unique set of vertex attributes of OurVertices(y), e.g., OurIndices(x1) = y so OurVertices(OurIndices(x1)) = OurVertices(y).
+// OurIndices  (used to initialize the DirectX index  buffer), a variable containing values formatted for DirectX, is the array of non-unique indices of OurVertices, each pointing to an associated unique vertex attribute set in OurVertices.
+// One unique vertex attribute set in OurVertices, OurVertices(y), may be referenced more than once by duplicate (non-unique) indices in OurIndices:
+// e.g., OurIndices(x1) and OurIndices(x2) = y (y is the duplicate (non-unique) index in OurIndices), both pointing to the same unique vertex attribute set of OurVertices(y), e.g., OurIndices(x1) = y so OurVertices(OurIndices(x1)) = OurVertices(y).
 //
 // VertexAttributeSetsTotal.
 // A cube's 6 sides				 are each comprised of 4 corners (vertices) so there are 4 unique sets of vertex attributes per side   for a total of 6 x 4 = 24 unique sets of vertex attributes.
@@ -90,8 +90,8 @@ struct SUBMESH {
 	std::string OurMaterialName;							// The material name of the submesh. In this case the material name of the description of the texture image. It is not used in rendering but for informational purposes only.
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pTextureView; // Smart pointer to a shader resource view interface. A shader resource view interface specifies the subresource a shader can access during rendering. In this case the texture image.
 	// OurIndices:	 Holds the data used to initialize the GPU-side index buffer via pIBuffer, the pointer to the index buffer interface.
-	std::vector<DWORD> OurIndices;							// The dynamically allocated array of DWORD indices, where each array element points to  a unique set of vertex attributes in an OurVertices array element. Multiple array elements will point to the same OurVertices array element.
-	int IndicesTotal = 0;									// The total number of array elements in array variable OurIndices	(OurIndices.size()),  e.g., 36 array elements specify a cube. Manually initialized as type int does not have a default constructor.
+	std::vector<DWORD> OurIndices;							// The dynamic array of DWORD indices, where each array element points to a unique vertex attribute set in an OurVertices array element. Multiple array elements will point to the same OurVertices array element.
+	int IndicesTotal = 0;									// The total number of array elements in array variable OurIndices (OurIndices.size()), e.g., 36 array elements specify a cube. Manually initialized as type int does not have a default constructor.
 
 	// GPU-side data.
 	Microsoft::WRL::ComPtr<ID3D11Buffer> pIBuffer;			// Smart pointer to a buffer interface. A buffer interface accesses a buffer resource, which is unstructured memory. In this case the index buffer.
@@ -101,9 +101,9 @@ struct OBJECT {
 	// CPU-side data.
 	std::string OurObjectName;								// The name of the object. It is optional, and not used in rendering but for informational purposes only.
 	//   OurVertices:	 Holds the data used to initialize the GPU-side vertex buffer via pVBuffer, the pointer to the vertex buffer interface.
-	std::vector<VERTEX> OurVertices;						// The dynamically allocated array of VERTEX structures, where each array element represents a unique set of vertex attributes describing one or more triangle vertices.
+	std::vector<VERTEX> OurVertices;						// The dynamic array of VERTEX structures, where each array element represents a unique vertex attribute set describing one or more triangle vertices.
 	int VertexAttributeSetsTotal = 0;						// The total number of array elements in array variable OurVertices (OurVertices.size()), e.g., 24 array elements specify a cube. Manually initialized as type int does not have a default constructor.
-	std::vector<SUBMESH> OurSubMeshes;						// The dynamically allocated array of SUBMESH structures. Each submesh groups faces sharing the same material. Each array element (SUBMESH structure) contains the set of attributes of one submesh, including the texture image and the vertex and index data for that submesh.
+	std::vector<SUBMESH> OurSubMeshes;						// The dynamic array of SUBMESH structures. Each submesh groups faces sharing the same material. Each array element (SUBMESH structure) contains the set of attributes of one submesh, including the texture image and the vertex and index data for that submesh.
 	struct {
 		DirectX::XMMATRIX matFinal;							// The final transformation matrix.
 		DirectX::XMMATRIX matRotate;						// The final rotation matrix.
@@ -126,6 +126,6 @@ struct OBJECT {
 //***
 
 // OurObjects.
-extern std::vector<OBJECT> OurObjects;						// The dynamically allocated array of OBJECT structures, with each array element containing the set of attributes of one named object.
+extern std::vector<OBJECT> OurObjects;						// The dynamic array of OBJECT structures, with each array element containing the set of attributes of one named object.
 
 // End: External Variable Declarations.
