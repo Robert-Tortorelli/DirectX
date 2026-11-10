@@ -244,7 +244,11 @@ static int objParser(const string& filename)
 			lineStream >> vn[vni].x >> vn[vni].y >> vn[vni].z;	// The >> operator extracts the next three values from the lineStream input stream object and stores them in the intermediate array variables vn[vni].x, then vn[vni].y, then vn[vni].z.
 		} else if (type == "f")
 		{
-			// The statement read is a face element statement, therefore all vertex attribute statements in the Wavefront .obj file have previously been parsed and stored in the intermediate array variables v, vt, and vn.
+			// The statement read is a face element statement, therefore all vertex attribute statements and all material statements in the Wavefront .obj file have been parsed and stored.
+			// Begin populating the array variable OurObjects.
+			//   The current face element statement will be parsed to assemble a triangle's three vertex attribute sets, which are used to populate three elements of array variable OurVertices, while also populating three elements of array variable OurIndices with the indices of array variable OurVertices corresponding to the three vertex attribute sets.
+			//   *TEST* Material statements have been parsed and stored, and will be used to assign a texture image filename to the current submesh.
+			//
 			// This program requires that all three types of vertex attribute statements be specified in the Wavefront .obj file.
 			// Check if any of the intermediate arrays v, vt, or vn is empty, i.e., if geometric vertex statements, vertex texture coordinate statements, or vertex normal vector statements are not specified in the Wavefront .obj file.
 			// This can occur when the Wavefront .obj file is valid but only contains geometric vertex statements and face element statements, but not vertex texture coordinate statements and vertex normal vector statements.
@@ -335,7 +339,7 @@ static int objParser(const string& filename)
 				}
 				else
 				{
-					// The candidate vertex attribute set is unique, so a new vertex attribute set is created and stored in array variable OurVertices.
+					// The candidate vertex attribute set is unique, so a new vertex attribute set is assembled and stored in array variable OurVertices.
 					//
 					// Create a new element of dynamic array variable OurVertices, and assign the candidate vertex attribute set to it.
 					OurObjects[OurObjectsi].OurVertices.emplace_back();													// Add a new element to dynamic array variable OurVertices. This is the only OurVertices.emplace_back() statement, executed once for each unique vertex attribute set in all face element statements.

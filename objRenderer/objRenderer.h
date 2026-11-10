@@ -87,8 +87,8 @@ struct VERTEX {												// Vertex attributes.
 // It is used to add a basic level of illumination to a scene and can be used to simulate global illumination effects.
 struct SUBMESH {
 	// CPU-side data.
-	std::string OurMaterialName;							// The material name of the submesh. In this case the material name of the description of the texture image. It is not used in rendering but for informational purposes only.
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pTextureView; // Smart pointer to a shader resource view interface. A shader resource view interface specifies the subresource a shader can access during rendering. In this case the texture image.
+	std::string OurMaterialName;							// The name of the material description used by the submesh, in this case the name of a texture material description. It is optional, and not used in rendering but for informational purposes only.
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pTextureView;	// Smart pointer to a shader resource view interface. A shader resource view interface specifies the subresource a shader can access during rendering. In this case the texture image.
 	// OurIndices:	 Holds the data used to initialize the GPU-side index buffer via pIBuffer, the pointer to the index buffer interface.
 	std::vector<DWORD> OurIndices;							// The dynamic array of DWORD indices, where each array element points to a unique vertex attribute set in an OurVertices array element. Multiple array elements will point to the same OurVertices array element.
 	int IndicesTotal = 0;									// The total number of array elements in array variable OurIndices (OurIndices.size()), e.g., 36 array elements specify a cube. Manually initialized as type int does not have a default constructor.

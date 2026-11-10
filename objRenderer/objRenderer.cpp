@@ -226,7 +226,7 @@ int WINAPI WinMain(HINSTANCE hInstance,						// The "handle to an instance" or "
 	// Read and parse all 3D object's descriptive information from their Wavefront .obj files and use it to define the variables needed to render these 3D objects.
 	// Find all Wavefront .obj files in the current directory, and parse each one.
 	// objFileFinder function:
-	if (int objFileFinderRC = objFileFinder(); objFileFinderRC != 0) // Call the objFileFinder function and test whether its return value is nonzero, indicating an error.
+	if (int objFileFinderRC = objFileFinder(); objFileFinderRC != 0)	// Call the objFileFinder function and test whether its return value is nonzero, indicating an error.
 	{
 		// The objFileFinder function terminated abnormally. Terminate the WinMain function with the return value of the objFileFinder function.
 		return objFileFinderRC;
@@ -436,9 +436,9 @@ static LRESULT CALLBACK WindowProc(HWND hWnd,				// The HWND handle for the wind
 			constexpr int VK_S = 0x53;						// Virtual key code for 'S' and 's'.
 			constexpr int VK_D = 0x44;						// Virtual key code for 'D' and 'd'.
 			constexpr int VK_I = 0x49;						// Virtual key code for 'I' and 'i'.
-			// constexpr int VK_J = 0x4A;						// Virtual key code for 'J' and 'j'.
+			// constexpr int VK_J = 0x4A;					// Virtual key code for 'J' and 'j'.
 			constexpr int VK_K = 0x4B;						// Virtual key code for 'K' and 'k'.
-			// constexpr int VK_L = 0x4C;						// Virtual key code for 'L' and 'l'.
+			// constexpr int VK_L = 0x4C;					// Virtual key code for 'L' and 'l'.
 			//
 			// WM_KEYDOWN window message:
 			//   This window message is posted to the thread message queue of the window with the keyboard focus when a non-system key is pressed.
@@ -636,16 +636,16 @@ static INT_PTR CALLBACK InputTextDlgProc(HWND hDlg,			// The HWND handle for the
 			wchar_t textBuffer[256];
 			// GetDlgItemText function:
 			//   Retrieves the title or text associated with a control (e.g., an Edit control) in a dialog box.
-			GetDlgItemText(hDlg,						// A handle to the dialog box that contains the control.
-				IDC_EDIT_TEXT,							// The identifier of the control whose title or text is to be retrieved.
-				textBuffer,								// The buffer to receive the title or text.
-				256);									// The maximum length, in characters, of the string to be copied to the buffer pointed to by the third argument. Alternatively: sizeof(textBuffer) / sizeof(textBuffer[0]
+			GetDlgItemText(hDlg,							// A handle to the dialog box that contains the control.
+				IDC_EDIT_TEXT,								// The identifier of the control whose title or text is to be retrieved.
+				textBuffer,									// The buffer to receive the title or text.
+				256);										// The maximum length, in characters, of the string to be copied to the buffer pointed to by the third argument. Alternatively: sizeof(textBuffer) / sizeof(textBuffer[0]
 			// Process the retrieved text (e.g., display it, store it, etc.) as needed.
 			MessageBox(hDlg, textBuffer, L"Entered Text", MB_OK | MB_ICONINFORMATION);
 			// EndDialog function:
 			//   Destroys a modal dialog box, causing the system to end any processing for the dialog box.
-			EndDialog(hDlg,								// A handle to the dialog box to be destroyed.
-				LOWORD(wParam));						// The value to be returned to the application from the function that created the dialog box.
+			EndDialog(hDlg,									// A handle to the dialog box to be destroyed.
+				LOWORD(wParam));							// The value to be returned to the application from the function that created the dialog box.
 			InputTextDlgProcRC = TRUE;
 		}
 		else if (LOWORD(wParam) == IDCANCEL) {
@@ -852,14 +852,14 @@ static int InitD3D(HWND hWnd)								// The HWND handle for the window.
 	
 	// Declare the viewport parameter (the viewport structure) of the RSSetViewports function.
 	// It is used to define the dimensions of the viewport.
-	D3D11_VIEWPORT viewport = {};							// Defines the dimensions of the viewport.
+	D3D11_VIEWPORT viewport = {};								// Defines the dimensions of the viewport.
 	// Assign values to the dimensions of the viewport D3D11_VIEWPORT structure's members. Any subordinate members (variable.member.subordinatemember) are described in the comments.
-	viewport.TopLeftX = 0;									// Assigned a value specifying the x position of the left hand side of the viewport. Ranges between D3D11_VIEWPORT_BOUNDS_MIN and D3D11_VIEWPORT_BOUNDS_MAX.
-	viewport.TopLeftY = 0;									// Assigned a value specifying the y position of the top of the viewport.			 Ranges between D3D11_VIEWPORT_BOUNDS_MIN and D3D11_VIEWPORT_BOUNDS_MAX.
+	viewport.TopLeftX = 0;										// Assigned a value specifying the x position of the left hand side of the viewport. Ranges between D3D11_VIEWPORT_BOUNDS_MIN and D3D11_VIEWPORT_BOUNDS_MAX.
+	viewport.TopLeftY = 0;										// Assigned a value specifying the y position of the top of the viewport.			 Ranges between D3D11_VIEWPORT_BOUNDS_MIN and D3D11_VIEWPORT_BOUNDS_MAX.
 	viewport.Width = static_cast<FLOAT>(ClientRectangleWidth);	// Assigned a value specifying the width of the viewport.							 Width	must be >= 0. TopLeftX + Width	must be <= D3D11_VIEWPORT_BOUNDS_MAX.
 	viewport.Height = static_cast<FLOAT>(ClientRectangleHeight);// Assigned a value specifying the height of the viewport.							 Height	must be >= 0. TopLeftY + Height	must be <= D3D11_VIEWPORT_BOUNDS_MAX.
-	viewport.MinDepth = 0;									// Assigned a value specifying the minimum depth of the viewport.					 Ranges between 0 and 1. (The closest an object can be on the depth buffer (z-buffer))
-	viewport.MaxDepth = 1;									// Assigned a value specifying the maximum depth of the viewport.					 Ranges between 0 and 1. (The farthest an object can be on the depth buffer (z-buffer))
+	viewport.MinDepth = 0;										// Assigned a value specifying the minimum depth of the viewport.					 Ranges between 0 and 1. (The closest an object can be on the depth buffer (z-buffer))
+	viewport.MaxDepth = 1;										// Assigned a value specifying the maximum depth of the viewport.					 Ranges between 0 and 1. (The farthest an object can be on the depth buffer (z-buffer))
 
 	// ID3D11DeviceContext::RSSetViewports member function:
 	//   Set the array of (in this case an array of one) viewports to the rasterizer stage of the graphics pipeline.
@@ -868,8 +868,8 @@ static int InitD3D(HWND hWnd)								// The HWND handle for the window.
 	//   In Direct3D, this rectangle exists as coordinates within a Direct3D surface that the system uses as a rendering target.
 	//   The projection transformation converts geometric vertices into the coordinate system used for the viewport.
 	//   A viewport is also used to specify the range of depth values on a render target surface into which a scene will be rendered (usually 0.0 to 1.0).
-	devcon->RSSetViewports(1,								// Number of viewports to bind.
-		&viewport);											// The address "&viewport" of (and therefore a pointer to) an array that, in this program, will be a one element array of D3D11_VIEWPORT structures to bind to the device.
+	devcon->RSSetViewports(1,									// Number of viewports to bind.
+		&viewport);												// The address "&viewport" of (and therefore a pointer to) an array that, in this program, will be a one element array of D3D11_VIEWPORT structures to bind to the device.
 
 	// End: 5. Set the viewport to the rasterizer stage of the graphics pipeline.
 
@@ -877,7 +877,7 @@ static int InitD3D(HWND hWnd)								// The HWND handle for the window.
 	// 6. Initialize the graphics pipeline.
 	//***
 
-	InitPipeline();											// Call the InitPipeline function.
+	InitPipeline();												 // Call the InitPipeline function.
 
 	// End: 6. Initialize the graphics pipeline.
 
@@ -885,7 +885,7 @@ static int InitD3D(HWND hWnd)								// The HWND handle for the window.
 	// 7. Load and initialize all graphics data.
 	//***
 
-	if (int InitGraphicsRC = InitGraphics(); InitGraphicsRC != 0) // Call the InitGraphics function and test whether its return value is nonzero, indicating an error.
+	if (int InitGraphicsRC = InitGraphics(); InitGraphicsRC != 0)// Call the InitGraphics function and test whether its return value is nonzero, indicating an error.
 	{
 		// The InitGraphics function terminated abnormally. Terminate the InitD3D function with the return value of the InitGraphics function.
 		return InitGraphicsRC;
@@ -1216,7 +1216,7 @@ static int InitGraphics(void)
 			CreateWICTextureFromFile(dev.Get(),				// A pointer to the device interface.
 				textureImageFilename,						// The filename of the texture image file.
 				NULL,										// NULL, as in most use cases for rendering you only need the shader resource view interface (the parameter below).
-				// Otherwise, you would specify &pTexture:
+															// Otherwise, you would specify &pTexture:
 															// &pTexture	 is the address of a pointer, pTexture,		to the resource				interface for the resource	  created, in this case a texture image.
 				submesh.pTextureView.GetAddressOf());		// &pTextureView is the address of a pointer, pTextureView, to the shader resource view interface for the subresource created, in this case a texture image.
 
@@ -1252,7 +1252,7 @@ static void InitD2D_DW(void)
 
 	// RenderTargetProperties function:
 	//   Creates a D2D1_RENDER_TARGET_PROPERTIES structure, which contains rendering options (hardware or software), pixel format (via the PixelFormat function), DPI information, remoting options, and Direct3D support requirements for a render target.
-	D2D1_RENDER_TARGET_PROPERTIES D2Drtp =					// D2Drtp is the Direct2D render target properties structure and the return value of the RenderTargetProperties function.
+	D2D1_RENDER_TARGET_PROPERTIES D2Drtp =						// D2Drtp is the Direct2D render target properties structure and the return value of the RenderTargetProperties function.
 		RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,	// A value that specifies whether the render target must use hardware rendering or software rendering. The default value, D2D1_RENDER_TARGET_TYPE_DEFAULT, specifies that hardware rendering be used; if hardware rendering is not available, the render target uses software rendering. Note that WIC bitmap render targets do not support hardware rendering.
 			// PixelFormat function:
 			//   Creates a D2D1_PIXEL_FORMAT structure, which contains the data format and alpha mode for a bitmap or render target.
@@ -1295,7 +1295,7 @@ static void InitD2D_DW(void)
 		//         Static members are shared among all instances of the class and can be accessed using the class name followed by the scope resolution operator ::.
 		//       In summary, ColorF(ColorF::White) creates a new instance of the ColorF class, initialized with the predefined color value White. This is equivalent to creating a color object with the color white.
 		ColorF(ColorF::White),								// The red, green, blue, and alpha values of the brush's color. In this case, the color is white (fully opaque).
-		pBrush.GetAddressOf());							// The newly created ID2D1SolidColorBrush brush object. &pBrush is the address of a pointer, pBrush, to the ID2D1SolidColorBrush brush interface that represents this object.
+		pBrush.GetAddressOf());								// The newly created ID2D1SolidColorBrush brush object. &pBrush is the address of a pointer, pBrush, to the ID2D1SolidColorBrush brush interface that represents this object.
 
 	// DWriteCreateFactory function:
 	//   Creates a DirectWrite factory object that is used for subsequent creation of individual DirectWrite objects; identifying the type of DirectWrite factory object to be created by a reference to a DirectWrite factory interface's globally unique identifier (GUID) (in this case, __uuidof(IDWriteFactory), a universally unique identifier (UUID)).
@@ -1449,17 +1449,17 @@ static int RenderFrame(void)
 			XMMATRIX matRotateY, matWorld, matView, matProjection, matTranslate;
 
 			// To support incremental changes to affected rendered objects, the following variables must be declared static to preserve their values though multiple calls to the RenderFrame function.
-			static float Angle = 0.0f;							// The angle in radians (0 radians = 0 degrees).
-			static float Angle2 = 0.0f;							// The angle in radians (0 radians = 0 degrees).
+			static float Angle = 0.0f;						// The angle in radians (0 radians = 0 degrees).
+			static float Angle2 = 0.0f;						// The angle in radians (0 radians = 0 degrees).
 
 			// Define the world matrix, matWorld.
 			// XMMatrixRotationY function:
 			//   Builds a matrix that rotates around the y axis.
 			// This matrix is updated each frame, causing the object to rotate clockwise.
-			Angle = fmod(Angle + 0.0008727f, 6.283185f);		// Increment Angle by 5% of 1 degree (5% of 0.0174532 radians = 0.0008727f) and then apply mod 360 degrees (mod 6.283185f radians). This generates angles from 0 - 359 degrees then back to 0 degrees.
-			matRotateY = XMMatrixRotationY(Angle);				// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
-			object.ConstantBuffer.matRotate = matRotateY;		// The final rotation matrix is the product of all defined rotation matrices.				Here, only matRotateY is defined.
-			// The world transformation is a function of scaling, rotation, and translation (movement).														Here, only rotation   is defined.
+			Angle = fmod(Angle + 0.0008727f, 6.283185f);	// Increment Angle by 5% of 1 degree (5% of 0.0174532 radians = 0.0008727f) and then apply mod 360 degrees (mod 6.283185f radians). This generates angles from 0 - 359 degrees then back to 0 degrees.
+			matRotateY = XMMatrixRotationY(Angle);			// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
+			object.ConstantBuffer.matRotate = matRotateY;	// The final rotation matrix is the product of all defined rotation matrices. Here, only matRotateY is defined.
+			// The world transformation is a function of scaling, rotation, and translation (movement).									  Here, only rotation   is defined.
 			matWorld = object.ConstantBuffer.matRotate;
 
 			// Define the view matrix, matView.
@@ -1477,11 +1477,11 @@ static int RenderFrame(void)
 			// Variable EyePosition: The camera position vector.
 			// The camera position's x- and y-coordinates			   equal		those of the second object, even as it moves.
 			// The camera position's					  z-coordinate differs from those of the second object, and can be manually adjusted by keyboard keys.
-			XMVECTOR EyePosition = XMVectorSet(x,				// The x component of the vector to return.
-				y,												// The y component of the vector to return.
-				zCamera + 5.0f,									// The z component of the vector to return.
+			XMVECTOR EyePosition = XMVectorSet(x,			// The x component of the vector to return.
+				y,											// The y component of the vector to return.
+				zCamera + 5.0f,								// The z component of the vector to return.
 				0.0f);
-			CameraEyePosition = EyePosition;					// Save the camera position to a global variable so it can be included in program diagnostics.
+			CameraEyePosition = EyePosition;				// Save the camera position to a global variable so it can be included in program diagnostics.
 			//
 			// Variable FocusPosition: The focal point position vector.
 			// The camera points at the second occurrence of the current object even as this second occurrence of the current object moves. Thus the second occurrence of the current object *appears* stationary, while the first occurrence of the current object (which is stationary) *appears* to move in the direction opposite to how the second occurrence of the current object moves.
@@ -1497,15 +1497,15 @@ static int RenderFrame(void)
 			{
 				// EyePosition and FocusPosition are equal.
 				// Make them unequal: Increment the camera position's z-coordinate a trivial amount.
-				EyePosition = XMVectorSet(x,					// The x component of the vector to return.
-					y,											// The y component of the vector to return.
-					zCamera + 5.001f,							// The z component of the vector to return.
+				EyePosition = XMVectorSet(x,				// The x component of the vector to return.
+					y,										// The y component of the vector to return.
+					zCamera + 5.001f,						// The z component of the vector to return.
 					0.0f);
 			}
 			//
 			// Compute the view matrix, matView, using the camera position, focal point position, and up direction.
-			matView = XMMatrixLookAtLH(EyePosition,				// Position of the camera.
-				FocusPosition,									// Position of the focal point (a position the camera is pointed at).
+			matView = XMMatrixLookAtLH(EyePosition,			// Position of the camera.
+				FocusPosition,								// Position of the focal point (a position the camera is pointed at).
 				UpDirection);
 
 			// Define the projection matrix, matProjection.
@@ -1570,8 +1570,8 @@ static int RenderFrame(void)
 
 			// Specify the vertex buffers to draw.
 			//   This program uses only one vertex buffer per object.
-			UINT stride = sizeof(VERTEX);						// A "stride" is the size (in bytes) of the elements that are to be used from a vertex buffer.								  Define an array of strides when multiple vertex buffers are used.
-			UINT offset = 0;									// An "offset" is the number of bytes between the first element of the vertex buffer and the first element that will be used. Define an array of offsets when multiple vertex buffers are used.
+			UINT stride = sizeof(VERTEX);					// A "stride" is the size (in bytes) of the elements that are to be used from a vertex buffer.								  Define an array of strides when multiple vertex buffers are used.
+			UINT offset = 0;								// An "offset" is the number of bytes between the first element of the vertex buffer and the first element that will be used. Define an array of offsets when multiple vertex buffers are used.
 			// ID3D11DeviceContext::IASetVertexBuffers member function:
 			//   Set the array of (in this case an array of one) vertex buffers to the input-assembler stage of the graphics pipeline.
 			//   For drawing multiple objects you bind one vertex buffer at a time per object before drawing that object.
@@ -1584,18 +1584,18 @@ static int RenderFrame(void)
 			//       positions:	[pos0][pos1][pos2]...
 			//       normals:	[norm0] [norm1] [norm2] ...
 			//       colors :	[col0] [col1] [col2] ...
-			devcon->IASetVertexBuffers(0,									// The first input slot for binding. The first vertex buffer is explicitly bound to the start slot; this causes each additional vertex buffer in the array to be implicitly bound to each subsequent input slot.
-				1,															// The number of vertex buffers in the array.
-				object.pVBuffer.GetAddressOf(),	// &pVBuffer is the address of a pointer, pVBuffer, to an array of (in this case an array of one) vertex buffer interfaces.
-				&stride,													// &stride is the address of stride, and therefore a pointer to the array of (in this case an array of one) stride values (one stride value for each buffer in the vertex buffer array).
-				&offset);													// &offset is the address of offset, and therefore a pointer to the array of (in this case an array of one) offset values (one offset value for each buffer in the vertex buffer array).
+			devcon->IASetVertexBuffers(0,					// The first input slot for binding. The first vertex buffer is explicitly bound to the start slot; this causes each additional vertex buffer in the array to be implicitly bound to each subsequent input slot.
+				1,											// The number of vertex buffers in the array.
+				object.pVBuffer.GetAddressOf(),				// &pVBuffer is the address of a pointer, pVBuffer, to an array of (in this case an array of one) vertex buffer interfaces.
+				&stride,									// &stride is the address of stride, and therefore a pointer to the array of (in this case an array of one) stride values (one stride value for each buffer in the vertex buffer array).
+				&offset);									// &offset is the address of offset, and therefore a pointer to the array of (in this case an array of one) offset values (one offset value for each buffer in the vertex buffer array).
 
 			// Specify the index buffers to use when drawing.
 			// ID3D11DeviceContext::IASetIndexBuffer member function:
 			//   Set the index buffer to the input-assembler stage of the graphics pipeline.
-			devcon->IASetIndexBuffer(submesh.pIBuffer.Get(),	// A pointer, pIBuffer, to the index buffer interface.
-				DXGI_FORMAT_R32_UINT,													// A value of the DXGI_FORMAT enumerated type, i.e., DXGI_FORMAT_R32_UINT: A single-component, 32-bit unsigned-integer format that supports 32 bits for the red channel.
-				0);																		// The offset (in bytes) from the start of the index buffer to the first index to use.
+			devcon->IASetIndexBuffer(submesh.pIBuffer.Get(),// A pointer, pIBuffer, to the index buffer interface.
+				DXGI_FORMAT_R32_UINT,						// A value of the DXGI_FORMAT enumerated type, i.e., DXGI_FORMAT_R32_UINT: A single-component, 32-bit unsigned-integer format that supports 32 bits for the red channel.
+				0);											// The offset (in bytes) from the start of the index buffer to the first index to use.
 
 			// Specify the primitive type used, i.e., the triangle primitive.
 			// ID3D11DeviceContext::IASetPrimitiveTopology member function:
@@ -1605,9 +1605,9 @@ static int RenderFrame(void)
 			// Specify the shader resource view interface for the texture image to use when drawing.
 			// ID3D11DeviceContext::PSSetShaderResources member function:
 			//   Bind an array of shader resources to the pixel shader stage of the graphics pipeline.
-			devcon->PSSetShaderResources(0,										// Index into the device's zero-based array (in this case an array of one) to begin setting shader resources to.
-				1,																// Number of shader resources to set.
-				submesh.pTextureView.GetAddressOf());// &pTextureView is the address of a pointer, pTextureView, to the array of (in this case an array of one) shader resource view interfaces for the subresources created, in this case a texture image.
+			devcon->PSSetShaderResources(0,					// Index into the device's zero-based array (in this case an array of one) to begin setting shader resources to.
+				1,											// Number of shader resources to set.
+				submesh.pTextureView.GetAddressOf());		// &pTextureView is the address of a pointer, pTextureView, to the array of (in this case an array of one) shader resource view interfaces for the subresources created, in this case a texture image.
 
 			// End: 5. Specify the next pointer to the vertex buffer interface (variable pVBuffer), the next pointer to the index buffer interface (variable pIBuffer), the primitive type, and the next pointer to the shader resource view interface for a texture image (variable pTextureView), to the graphics pipeline.
 
@@ -1628,26 +1628,26 @@ static int RenderFrame(void)
 			// Update the constant buffer used to draw the first occurrence of the current object.
 			// ID3D11DeviceContext::VSSetConstantBuffers member function:
 			//   Set the constant buffer to the vertex shader stage of the graphics pipeline.
-			devcon->VSSetConstantBuffers(0,						// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
-				1,												// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
-				object.pCBuffer.GetAddressOf());				// &pCBuffer is the address of a pointer, pCBuffer, to the constant buffer interface.
+			devcon->VSSetConstantBuffers(0,					// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
+				1,											// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
+				object.pCBuffer.GetAddressOf());			// &pCBuffer is the address of a pointer, pCBuffer, to the constant buffer interface.
 			// ID3D11DeviceContext::UpdateSubresource member function:
 			//   The CPU copies data from memory				  to a subresource created in non-mappable memory.
 			//   Specifically:
 			//   The CPU copies data from the C++ constant buffer to the HLSL constant buffer used by the GPU's vertex shader.
-			devcon->UpdateSubresource(object.pCBuffer.Get(),	// A pointer to the destination resource, in this case the constant buffer interface.
-				0,												// A zero-based index that identifies the destination subresource.
-				0,												// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
-				&object.ConstantBuffer,							// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
-				0,												// The size of one row of the source data.
-				0);												// The size of one depth slice of source data.
+			devcon->UpdateSubresource(object.pCBuffer.Get(),// A pointer to the destination resource, in this case the constant buffer interface.
+				0,											// A zero-based index that identifies the destination subresource.
+				0,											// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
+				&object.ConstantBuffer,						// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
+				0,											// The size of one row of the source data.
+				0);											// The size of one depth slice of source data.
 			//
 			// Draw the first occurrence of the current object using the updated constant buffer.
 			// ID3D11DeviceContext::DrawIndexed member function:
 			//   Draw indexed, non-instanced primitives.
-			devcon->DrawIndexed(submesh.IndicesTotal,			// Number of indices to draw. Three non-unique indices in the index buffer, each pointing to one set of unique vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of non-unique indices in the index buffer.
-				0,												// The location of the first index read by the GPU from the index buffer.
-				0);												// A value added to each index before reading a vertex from the vertex buffer.
+			devcon->DrawIndexed(submesh.IndicesTotal,		// Number of indices to draw. Three non-unique indices in the index buffer, each pointing to one set of unique vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of non-unique indices in the index buffer.
+				0,											// The location of the first index read by the GPU from the index buffer.
+				0);											// A value added to each index before reading a vertex from the vertex buffer.
 
 			// Draw the second occurrence of the current object to the scene using different transformations than those used by the first occurrence of the current object.
 			//
@@ -1659,35 +1659,35 @@ static int RenderFrame(void)
 			//   A transformation matrix to rotate	  the second occurrence of the current object counterclockwise:	object.ConstantBuffer.matRotate
 			//   A transformation matrix to translate the second occurrence of the current object above the origin:	object.ConstantBuffer.matFinal
 			// object.ConstantBuffer.matRotate:
-			Angle2 = fmod(Angle2 - 0.0008727f, 6.283185f);      // Decrement Angle2 by 5% of 1 degree (5% of 0.0174532 radians = 0.0008727f) and then apply mod 360 degrees (mod 6.283185f radians). This generates angles from 359 - 0 degrees then back to 359 degrees.
-			matRotateY = XMMatrixRotationY(Angle2);				// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
-			object.ConstantBuffer.matRotate = matRotateY;		// The final rotation matrix is the product of all defined rotation matrices. Here, only matRotateY is defined.
+			Angle2 = fmod(Angle2 - 0.0008727f, 6.283185f);	// Decrement Angle2 by 5% of 1 degree (5% of 0.0174532 radians = 0.0008727f) and then apply mod 360 degrees (mod 6.283185f radians). This generates angles from 359 - 0 degrees then back to 359 degrees.
+			matRotateY = XMMatrixRotationY(Angle2);			// Angle is the angle of rotation around the y axis, in radians. Angles are measured clockwise when looking along the rotation axis toward the origin.
+			object.ConstantBuffer.matRotate = matRotateY;	// The final rotation matrix is the product of all defined rotation matrices. Here, only matRotateY is defined.
 			// object.ConstantBuffer.matFinal:
 			// XMMatrixTranslation function:
 			//   Builds a translation matrix from the specified offsets.
-			matTranslate = XMMatrixTranslation(x,				// Translation along the x-axis.
-				y,												// Translation along the y-axis.
-				z);												// Translation along the z-axis.
+			matTranslate = XMMatrixTranslation(x,			// Translation along the x-axis.
+				y,											// Translation along the y-axis.
+				z);											// Translation along the z-axis.
 			// The world transformation is a function of scaling, rotation, and translation (movement). Here, only rotation and translation are used.
-			matWorld = object.ConstantBuffer.matRotate * matTranslate;			 // Apply the rotation matrix first, then the translation matrix. This results in the object rotating in place as it moves, i.e., the object does not orbit as it moves.
+			matWorld = object.ConstantBuffer.matRotate * matTranslate;			// Apply the rotation matrix first, then the translation matrix. This results in the object rotating in place as it moves, i.e., the object does not orbit as it moves.
 			// Define a final matrix to transform the second occurrence of the current object.
-			object.ConstantBuffer.matFinal = matWorld * matView * matProjection; // Update the final transformation matrix (matFinal) by multiplying the updated world matrix (matWorld) by the original view (matView) and projection (matProjection) matrices.
+			object.ConstantBuffer.matFinal = matWorld * matView * matProjection;// Update the final transformation matrix (matFinal) by multiplying the updated world matrix (matWorld) by the original view (matView) and projection (matProjection) matrices.
 			//
 			// Update the constant buffer used to draw the second occurrence of the current object.
-			devcon->VSSetConstantBuffers(0,						// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
-				1,												// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
-				object.pCBuffer.GetAddressOf());				// &pCBuffer is the address of a pointer, pCBuffer, to the constant buffer interface.
-			devcon->UpdateSubresource(object.pCBuffer.Get(),	// A pointer to the destination resource, in this case the constant buffer interface.
-				0,												// A zero-based index that identifies the destination subresource.
-				0,												// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
-				&object.ConstantBuffer,							// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
-				0,												// The size of one row of the source data.
-				0);												// The size of one depth slice of source data.
+			devcon->VSSetConstantBuffers(0,					// Index into the device's zero-based array to begin setting constant buffers to (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - 1).
+				1,											// Number of buffers to set (ranges from 0 to D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - StartSlot).
+				object.pCBuffer.GetAddressOf());			// &pCBuffer is the address of a pointer, pCBuffer, to the constant buffer interface.
+			devcon->UpdateSubresource(object.pCBuffer.Get(),// A pointer to the destination resource, in this case the constant buffer interface.
+				0,											// A zero-based index that identifies the destination subresource.
+				0,											// A pointer to a box that defines the portion of the destination subresource to copy the resource data into. For a constant buffer, set this parameter to NULL, as it is not possible to use this member function to partially update a constant buffer.
+				&object.ConstantBuffer,						// &ConstantBuffer is the address of ConstantBuffer, and therefore a pointer to the source data in memory, in this case the C++ constant buffer structure.
+				0,											// The size of one row of the source data.
+				0);											// The size of one depth slice of source data.
 			//
 			// Draw the second occurrence of the current object using the updated constant buffer.
-			devcon->DrawIndexed(submesh.IndicesTotal,			// Number of indices to draw. Three non-unique indices in the index buffer, each pointing to one set of unique vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of non-unique indices in the index buffer.
-				0,												// The location of the first index read by the GPU from the index buffer.
-				0);												// A value added to each index before reading a vertex from the vertex buffer.
+			devcon->DrawIndexed(submesh.IndicesTotal,		// Number of indices to draw. Three non-unique indices in the index buffer, each pointing to one set of unique vertex attributes in the vertex buffer, describe each triangle primitive, and IndicesTotal is the total number of non-unique indices in the index buffer.
+				0,											// The location of the first index read by the GPU from the index buffer.
+				0);											// A value added to each index before reading a vertex from the vertex buffer.
 
 			// End: 6. Render the objects.
 		}
